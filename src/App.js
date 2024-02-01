@@ -77,6 +77,7 @@ function App() {
           maxNumFaces: 1,
           minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5,
+          refineLandmarks: true,
         });
 
         faceMesh.onResults(onResults);
