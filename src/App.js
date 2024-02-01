@@ -22,30 +22,28 @@ function App() {
 
         const canvasElement = canvasRef.current;
         const canvasCtx = canvasElement.getContext("2d");
+
+        //resets face mesh so it can be updated for next image
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        canvasCtx.drawImage(
-          results.image,
-          0,
-          0,
-          canvasElement.width,
-          canvasElement.height
-        );
+        canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
+
+        //create landmarks for each point of interest
         if (results.multiFaceLandmarks) {
           for (const landmarks of results.multiFaceLandmarks) {
             connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
               color: "#eae8fd",
               lineWidth: 1,
             });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYE, {
+            /*connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYE, {
               color: "#F50B0B",
-            });
+            });*/
             connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
               color: "#F50B0B",
             });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYE, {
+            /*connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYE, {
               color: "#18FF00",
-            });
+            });*/
             connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
               color: "#18FF00",
             });
@@ -66,6 +64,7 @@ function App() {
         canvasCtx.restore();
       }
 
+      //instantiate FaceMesh
       useEffect(() => {
         const faceMesh = new FaceMesh({
           locateFile: (file) => {
@@ -73,6 +72,7 @@ function App() {
           },
         });
 
+        //apply options for facemesh (ps: refinelandmarks is what enables the option to use iris tracking)
         faceMesh.setOptions({
           maxNumFaces: 1,
           minDetectionConfidence: 0.5,
@@ -80,8 +80,10 @@ function App() {
           refineLandmarks: true,
         });
 
+        //update facemesh
         faceMesh.onResults(onResults);
 
+        //apply facemesh to webcam
         if (typeof webcamRef.current !== "undefined" && webcamRef.current !== null) {
           camera = new cam.Camera(webcamRef.current.video, {
             onFrame: async () => {
@@ -109,7 +111,7 @@ function App() {
             width:640,
             height:480
       }}/>
-
+      
       <canvas
         ref={canvasRef}
           style={{
