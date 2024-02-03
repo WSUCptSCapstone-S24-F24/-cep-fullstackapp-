@@ -1,9 +1,7 @@
 # CEP-FullStackApp
 
 <div style="text-align: center;">
-
-  ![alt text](image.png)
-
+  <img src="image.png" alt="">
 </div>
 
 ## Project summary
