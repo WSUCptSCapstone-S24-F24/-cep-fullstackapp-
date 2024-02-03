@@ -1,54 +1,70 @@
-Update your `README.md` using the template below. We are specifically interested in the installation instructions (e.g., all the gems, how to load real or seed data, etc.). This sample README was developed for a Rails project, so you can swap the "Gems" section of the "Installation" instructions to include add-ons that are relevant to you.
+# CEP-FullStackApp
 
-If any of the sections in this template grows to more than one screen, consider placing it in its own file and linking to it from this file. Those files could live in a subdirectory called `docs`.
+<div style="text-align: center;">
 
-**Make sure to check out the repo anew and test your installation instructions.**
+  ![alt text](image.png)
 
-Provide a README file with the following information:
-
-# Project Name
+</div>
 
 ## Project summary
 
 ### One-sentence description of the project
 
-TODO: A 20-second elevator pitch of your project - its core idea summarized in one sentence.
+Our project is to determine if eye tracking that utilizing Google’s Mediapipe could have potential to be implemented in Cephable.
 
 ### Additional information about the project
 
-TODO: Write a compelling/creative/informative project description / summary
+This system would need a variety of benchmarks to determine if it can be a viable option. This include:
+
+* An app to allow us to use a webcam.
+* Iris detection, in which we can use our webcam to detect where our pupils are on the screen.
+* Multi-screen setup, which will track our entire face and each one of our eyes.
+* Coordinate system to track where our pupils are looking at on the screen.
+* Virtual boxes on the screen to be used as targets for our eyes to follow.
+* A system to track our accuracy when hitting these boxes.
+
+To further explain this list, our final software hopes to achieve a desktop windows application created in electron, written in typescript or javascript to use a webcam that will have three webcam ports, which include our face, a left eye and right eye cam footage.
+
+We will use Mediapipe to implement their iris detection solution. This would involve us first using two virtual boxes on the left and right side of the screen to detect if we can successfully look left and right on our screen using just our pupil. More and more virtual boxes would be added along with a system to track how accurate our detection is being received.
+
+The final goal is for the user to potentially be able to watch videos, do homework, play games, type messages with just the use of their eyes.
 
 ## Installation
 
 ### Prerequisites
 
-TODO: List what a user needs to have installed before running the installation instructions below (e.g., git, which versions of Ruby/Rails)
+* Git
+* Node.js
+* Connection to a webcam
 
 ### Add-ons
 
-TODO: List which add-ons are included in the project, and the purpose each add-on serves in your app.
+* React
+  * React uses for making an application UI
+* Electron
+  * Electron enable us to make a desktop application
+* MediaPipe
+  * Used for tracking iris
 
 ### Installation Steps
 
 TODO: Describe the installation process (making sure you mention `bundle install`).
-Instructions need to be such that a user can just copy/paste the commands to get things set up and running. 
+Instructions need to be such that a user can just copy/paste the commands to get things set up and running.
 
+1. Download files by `git clone https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-.git`
+2. Install all packages by `npm install`
+3. Run `npm run build`
+4. Run `npm run electron-start`
 
 ## Functionality
 
-TODO: Write usage instructions. Structuring it as a walkthrough can help structure this section,
-and showcase your features.
-
+After start the application by `npm run electron-start`, the application automaticlly open and start tracking your iris by a webcam.
 
 ## Known Problems
 
-TODO: Describe any known issues, bugs, odd behaviors or code smells. 
-Provide steps to reproduce the problem and/or name a file or a function where the problem lives.
-
+* For the specific enviroment, the application uses lots of GPU memory
 
 ## Contributing
-
-TODO: Leave the steps below if you want others to contribute to your project.
 
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
@@ -58,9 +74,8 @@ TODO: Leave the steps below if you want others to contribute to your project.
 
 ## Additional Documentation
 
-TODO: Provide links to additional documentation that may exist in the repo, e.g.,
-  * Sprint reports
-  * User links
+* Sprint reports
+* User links
 
 ## License
 
