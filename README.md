@@ -53,11 +53,11 @@ The final goal is for the user to potentially be able to watch videos, do homewo
 
 ## Functionality
 
-After start the application by `npm run electron-start`, the application automaticlly open and start tracking your iris by a webcam.
+After start the application by `npm run electron-start`, the application automatically open and start tracking your iris by a webcam.
 
 ## Known Problems
 
-* For the specific enviroment, the application uses lots of GPU memory
+* For the specific environment, the application uses lots of GPU memory
 
 ## Contributing
 
