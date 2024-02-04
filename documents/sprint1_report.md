@@ -21,14 +21,6 @@ Here are links to the issues that we completed in this sprint:
 * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/6
 * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/7
 
- Reminders (Remove this section when you save the file):
-  * Each issue should be assigned to a milestone
-  * Each completed issue should be assigned to a pull request
-  * Each completed pull request should include a link to a "Before and After" video
-  * All team members who contributed to the issue should be assigned to it on GitHub
-  * Each issue should be assigned story points using a label
-  * Story points contribution of each team member should be indicated in a comment
- 
  ## Incomplete Issues/User Stories
  Here are links to issues we worked on but did not complete in this sprint:
  
@@ -37,6 +29,10 @@ Here are links to the issues that we completed in this sprint:
 ## Code Files for Review
 Please review the following code files, which were actively developed during this sprint, for quality:
  * [src/index.tsx](https://github.com/your_repo/file_extension)
+
+## Demo
+Here is the link to the demo:
+https://youtu.be/jjsaA6MvPJs
  
 ## Retrospective Summary
 Here's what went well:
