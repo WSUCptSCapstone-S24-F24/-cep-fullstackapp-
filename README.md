@@ -31,8 +31,8 @@ The final goal is for the user to potentially be able to watch videos, do homewo
 
 ### Prerequisites
 
-* Git
-* Node.js
+* Git (https://git-scm.com/downloads)
+* Node.js (https://nodejs.org/en/download)
 * Connection to a webcam
 
 ### Add-ons
@@ -45,9 +45,6 @@ The final goal is for the user to potentially be able to watch videos, do homewo
   * Used for tracking iris
 
 ### Installation Steps
-
-TODO: Describe the installation process (making sure you mention `bundle install`).
-Instructions need to be such that a user can just copy/paste the commands to get things set up and running.
 
 1. Download files by `git clone https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-.git`
 2. Install all packages by `npm install`
@@ -77,5 +74,24 @@ After start the application by `npm run electron-start`, the application automat
 
 ## License
 
-If you haven't already, add a file called `LICENSE.txt` with the text of the appropriate license.
-We recommend using the MIT license: <https://choosealicense.com/licenses/mit/>
+MIT License
+
+Copyright (c) 2024 Invisible Input
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
