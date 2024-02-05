@@ -6,7 +6,7 @@
 * Implemented the base face and iris tracking
 
 ## Work Summary (Developer Facing)
-In our recent sprint, our team learned how to utilize TypeScript, React, Electron, and Mediapipe, enabling us to develop a basic desktop application capable of tracking faces and irises through a webcam. To enhance efficiency, we divided the project into two main components: the frontend which built a React-Electron application, and the backend, which focused on implementing the face tracking feature. We encountered a challenge during the merging phase due to the frontend was primarily written in TypeScript, while the backend was developed in JavaScript. However, we successfully resolved this issue by deepening our understanding of the difference between TypeScript and JavaScript.
+In our recent sprint, our team learned how to utilize TypeScript, React, Electron, and Mediapipe, enabling us to develop a basic desktop application capable of tracking faces and irises through a webcam. To enhance efficiency, we divided the project into two main components: the frontend which built a React-Electron application, and the backend, which focused on implementing the face tracking feature. We encountered a challenge during the merging phase due to the frontend was primarily written in TypeScript, while the backend was developed in JavaScript. However, we successfully resolved this issue by deepening our understanding of the difference between TypeScript and JavaScript. We now have a good understanding of how we can use Electron, React, and MediaPipe to progress our project.
 
 ## Unfinished Work
 We finished all work in this sprint.
@@ -14,12 +14,13 @@ We finished all work in this sprint.
 ## Completed Issues/User Stories
 Here are links to the issues that we completed in this sprint:
 
-* https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/1
-* https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/3
-* https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/4
-* https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/5
-* https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/6
-* https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/7
+ * [Create project description](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/1#issue-2097137351)
+ * [Yuuki](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/pull/2)
+ * [Connect mediapipe to electron](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/3)
+ * [Mediapipe facemesh onto webcam](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/4#issue-2117301260)
+ * [Update repo readme](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/5#issue-2117301454)
+ * [Change project language from javascript to typescript](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/6#issue-2117301976)
+ * [Create project requirements](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/7#issue-2117302152)
 
  ## Incomplete Issues/User Stories
  Here are links to issues we worked on but did not complete in this sprint:
@@ -28,7 +29,7 @@ Here are links to the issues that we completed in this sprint:
 
 ## Code Files for Review
 Please review the following code files, which were actively developed during this sprint, for quality:
- * [src/index.tsx](https://github.com/your_repo/file_extension)
+ * [/src/index.tsx](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/src/index.tsx)
 
 ## Demo
 Here is the link to the demo:
