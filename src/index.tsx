@@ -83,11 +83,15 @@ function App() {
           const leftIrisLandmark = landmarks[leftIrisIndex];
           const rightIrisLandmark = landmarks[rightIrisIndex];
 
+          //if you wish to view each iris coordinates
           if (leftIrisLandmark){
-            //console.log(`Left IRIS: x=${leftIrisLandmark.x}, y=${leftIrisLandmark.y}`);
+            //console.log(`LEFT IRIS: x=${leftIrisLandmark.x}, y=${leftIrisLandmark.y}`);
+          }
+          if (rightIrisIndex){
+            //console.log(`RIGHT IRIS: x=${rightIrisLandmark.x}, y=${rightIrisLandmark.y}`);
           }
 
-          //draw canvases for each 
+          //draw canvases for each iris
           drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
           drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
 
@@ -103,20 +107,23 @@ function App() {
         if (!ctx) return;
 
         
-
+        //enlarges are image to video size
         pointX = pointX * video.videoWidth;
         pointY = pointY * video.videoHeight;
 
-        console.log(`pointX : ${pointX}, pointY : ${pointY}`);
+        //console.log(`pointX : ${pointX}, pointY : ${pointY}`);
 
+        //zooms in our camera to focus on the specific point
         const newWidth = canvas.width / zoom;
         const newHeight = canvas.height / zoom;
 
         const newX = pointX - newWidth / 2;
         const newY = pointY - newHeight / 2;
 
+        //reset our canvas (so images are cleared after each frame)
         ctx.clearRect(0,0, canvas.width, canvas.height);
 
+        //draw image
         ctx.drawImage(
           video,
           newX, newY,
@@ -192,26 +199,26 @@ function App() {
       }}
       />
 
-      <h2>Left Eye</h2>
+      <h2 style={{ position: "absolute", top: "420px", left: "150px"}}>Left Eye</h2>
       <canvas 
       ref={leftEyeRef} 
         style={{ 
           position: "absolute", 
           top: "480px", 
-          left: "0", 
+          left: "50px", 
           zIndex: 10, 
           width: 320, 
           height: 240 
           }} 
       />
 
-        <h2>Right Eye</h2>
+        <h2 style={{ position: "absolute", top: "420px", right: "160px"}}>Right Eye</h2>
         <canvas
          ref={rightEyeRef} 
           style={{ 
             position: "absolute", 
             top: "480px", 
-            right: "0", 
+            right: "50px", 
             zIndex: 10, 
             width: 320, 
             height: 240 
