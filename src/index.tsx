@@ -16,6 +16,10 @@ function App() {
   
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
+
+    const leftEyeRef = useRef<any>(null);
+    const rightEyeRef = useRef<any>(null);
+
     const connect = window.drawConnectors;
     var camera = null;
 
@@ -37,7 +41,8 @@ function App() {
         canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
 
         //create landmarks for each point of interest
-        if (results.multiFaceLandmarks) {
+        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+
           for (const landmarks of results.multiFaceLandmarks) {
             connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
               color: "#eae8fd",
@@ -68,9 +73,61 @@ function App() {
               color: "#F50B0B",
             });
           }
+
+          const landmarks = results.multiFaceLandmarks[0];
+          //get both indexes on the landmarking grid
+          const leftIrisIndex = 473;
+          const rightIrisIndex = 468;
+
+          //grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
+          const leftIrisLandmark = landmarks[leftIrisIndex];
+          const rightIrisLandmark = landmarks[rightIrisIndex];
+
+          if (leftIrisLandmark){
+            //console.log(`Left IRIS: x=${leftIrisLandmark.x}, y=${leftIrisLandmark.y}`);
+          }
+
+          //draw canvases for each 
+          drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
+          drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
+
         }
         canvasCtx.restore();
       }
+
+
+      function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
+        if (!canvas || !video || !pointX || !pointY) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        
+
+        pointX = pointX * video.videoWidth;
+        pointY = pointY * video.videoHeight;
+
+        console.log(`pointX : ${pointX}, pointY : ${pointY}`);
+
+        const newWidth = canvas.width / zoom;
+        const newHeight = canvas.height / zoom;
+
+        const newX = pointX - newWidth / 2;
+        const newY = pointY - newHeight / 2;
+
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        ctx.drawImage(
+          video,
+          newX, newY,
+          newWidth, newHeight,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+      }
+
 
       //instantiate FaceMesh
       useEffect(() => {
@@ -134,6 +191,32 @@ function App() {
             height:480
       }}
       />
+
+      <h2>Left Eye</h2>
+      <canvas 
+      ref={leftEyeRef} 
+        style={{ 
+          position: "absolute", 
+          top: "480px", 
+          left: "0", 
+          zIndex: 10, 
+          width: 320, 
+          height: 240 
+          }} 
+      />
+
+        <h2>Right Eye</h2>
+        <canvas
+         ref={rightEyeRef} 
+          style={{ 
+            position: "absolute", 
+            top: "480px", 
+            right: "0", 
+            zIndex: 10, 
+            width: 320, 
+            height: 240 
+            }}
+        />
     </div>
   );
 }
