@@ -19,6 +19,7 @@ function App() {
 
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
+    const headRef = useRef<any>(null);
 
     const connect = window.drawConnectors;
     var camera = null;
@@ -78,10 +79,12 @@ function App() {
           //get both indexes on the landmarking grid
           const leftIrisIndex = 473;
           const rightIrisIndex = 468;
+          const noseIndex = 4;
 
           //grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
           const leftIrisLandmark = landmarks[leftIrisIndex];
           const rightIrisLandmark = landmarks[rightIrisIndex];
+          const noseLandmark = landmarks[noseIndex];
 
           //if you wish to view each iris coordinates
           if (leftIrisLandmark){
@@ -94,6 +97,7 @@ function App() {
           //draw canvases for each iris
           drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
           drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
+          drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
 
         }
         canvasCtx.restore();
@@ -224,6 +228,19 @@ function App() {
             height: 240 
             }}
         />
+
+        <h2 style={{ position: "absolute", top: "540px", right: "920px"}}>Head</h2>
+        <canvas
+         ref={headRef} 
+          style={{ 
+            position: "absolute", 
+            top: "600px",
+            right: "790px",
+            zIndex: 10, 
+            width: 320, 
+            height: 240 
+            }}
+        /> 
     </div>
   );
 }
