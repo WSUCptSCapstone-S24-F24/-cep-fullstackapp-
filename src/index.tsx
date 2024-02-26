@@ -2,7 +2,7 @@ import { FaceMesh } from '@mediapipe/face_mesh'
 import * as Facemesh from '@mediapipe/face_mesh'
 import * as cam from '@mediapipe/camera_utils'
 import Webcam from 'react-webcam'
-import {useRef, useEffect} from 'react'
+import {useRef, useEffect, useState} from 'react'
 import React from 'react'
 import ReactDOM from 'react-dom'
 
@@ -16,13 +16,43 @@ function App() {
   
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
+    const clickCanvasRef = useRef<any>(null);
 
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
     const headRef = useRef<any>(null);
 
+    const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
+
     const connect = window.drawConnectors;
     var camera = null;
+
+    //saves our x,y coordinates on the screen where we click
+    const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+      const rect = clickCanvasRef.current?.getBoundingClientRect();
+      const x = event.clientX - (rect?.left ?? 0);
+      const y = event.clientY - (rect?.top ?? 0);
+      setClickCoords({x,y});
+      drawOnClick(x,y);
+      console.log(`Clicked at: ${x}, ${y}`);
+    }
+
+    //creates a little red dot at cursor click location
+    const drawOnClick = (x: number, y:number) => {
+      const canvas = clickCanvasRef.current;
+      if(canvas){
+        const ctx = canvas.getContext('2d');
+        if (ctx){
+          ctx.clearRect(0,0, canvas.width, canvas.height);
+
+          ctx.beginPath();
+          ctx.arc(x,y,5,0,2 * Math.PI);
+          ctx.fillStyle = 'red';
+          ctx.fill();
+        }
+      }
+    };
+
 
     function onResults(results:any) {
         // const video = webcamRef.current.video;
@@ -171,9 +201,26 @@ function App() {
           camera.start();
         }
       }, []);
-
+      
   return (
     <div>
+      <canvas
+        ref={clickCanvasRef}
+        width="1920"
+        height="1080"
+        onClick={handleCanvasClick}
+        style={{
+          position: "absolute",
+          marginRight: 'auto',
+          marginLeft: 'auto',
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          zIndex: 11, // Ensure this is below your facemesh canvas if you want clicks on the face to be registered
+          cursor: 'crosshair',
+        }}
+      />
+
       <Webcam 
         ref={webcamRef}
           style={{
@@ -190,6 +237,7 @@ function App() {
       
       <canvas
         ref={canvasRef}
+          onClick={handleCanvasClick}
           style={{
             position:"absolute",
             marginRight:'auto',
@@ -202,6 +250,8 @@ function App() {
             height:480
       }}
       />
+
+      
 
       <h2 style={{ position: "absolute", top: "420px", left: "150px"}}>Left Eye</h2>
       <canvas 
@@ -240,7 +290,7 @@ function App() {
             width: 320, 
             height: 240 
             }}
-        /> 
+        />
     </div>
   );
 }
