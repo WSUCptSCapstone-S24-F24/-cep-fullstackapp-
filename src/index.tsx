@@ -24,8 +24,39 @@ function App() {
 
     const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
 
+    //global iris coordinates
+    const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+    const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+
+
     const connect = window.drawConnectors;
     var camera = null;
+
+    //function to shorten our coordinates to tenthousandth place
+    function roundToTenThousandth(value: number):number{
+      return Math.round(value * 10000) / 10000;
+    }
+
+    //will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
+    function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
+      setLeftIrisCoordinate({
+        x: roundToTenThousandth(leftIrisCoord.x),
+        y: roundToTenThousandth(leftIrisCoord.y)
+      });
+
+      setRightIrisCoordinate({
+        x: roundToTenThousandth(rightIrisCoord.x),
+        y: roundToTenThousandth(rightIrisCoord.y)
+      });
+    }
+
+    //prints our coordinates to console
+    function printIrisCoordinates(){
+      if (leftIrisCoordinate && rightIrisCoordinate){
+        console.log(`Left Iris Coord: ${leftIrisCoordinate.x}, ${leftIrisCoordinate.y}`);
+        console.log(`Right Iris Coord: ${rightIrisCoordinate.x}, ${rightIrisCoordinate.y}`);
+      }
+    }
 
     //saves our x,y coordinates on the screen where we click
     const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -35,7 +66,10 @@ function App() {
       setClickCoords({x,y});
       drawOnClick(x,y);
       console.log(`Clicked at: ${x}, ${y}`);
+
+      printIrisCoordinates();
     }
+
 
     //creates a little red dot at cursor click location
     const drawOnClick = (x: number, y:number) => {
@@ -123,6 +157,9 @@ function App() {
           if (rightIrisIndex){
             //console.log(`RIGHT IRIS: x=${rightIrisLandmark.x}, y=${rightIrisLandmark.y}`);
           }
+
+          //save iris coordinates to a global variable
+          applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
 
           //draw canvases for each iris
           drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
