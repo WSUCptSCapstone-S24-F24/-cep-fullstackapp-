@@ -28,9 +28,61 @@ function App() {
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
 
-
     const connect = window.drawConnectors;
     var camera = null;
+
+    interface CalibrationPoint{
+      irisX: number,
+      irisY: number,
+      screenX: number,
+      screenY: number;
+    }
+
+    //LINEAR REGRESSION ALGORITHM START
+    const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+
+    const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
+      const n = irisCoords.length;
+      const sumX = irisCoords.reduce((a,b) => a + b, 0);
+      const sumY = screenCoords.reduce((a,b) => a + b, 0);
+      const sumXx = irisCoords.reduce((a,b) => a + b * b, 0);
+      const sumXy = irisCoords.reduce((a,b,i) => a + b * screenCoords[i], 0);
+
+      const slope = (n * sumXy - sumX * sumY) / (n * sumXx - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      return {slope, intercept};
+    }
+
+    //predicts screen coordinates based on iris coord - > uses linear regression
+    const predictScreenPosition = (coefficientsX: {slope: number, intercept: number}, coefficientsY: {slope: number, intercept: number}, 
+      irisX: number, irisY: number): { screenX: number, screenY: number } => {
+        const predictedScreenX = coefficientsX.slope * irisX + coefficientsX.intercept;
+        const predictedScreenY  = coefficientsY.slope * irisY + coefficientsY.intercept;
+
+        return {screenX: predictedScreenX, screenY: predictedScreenY};
+      }
+
+    //main function to call with set of data points
+    const calibrateAndPredict = (calibrationData: CalibrationPoint[]) => {
+      const irisX = calibrationData.map(data => data.irisX);
+      const screenX = calibrationData.map(data => data.screenX);
+      const irisY = calibrationData.map(data => data.irisY);
+      const screenY = calibrationData.map(data => data.screenY);
+
+      //calculate coefficients for x and y mappings
+      const coefficientsX = linearRegression(irisX, screenX);
+      const coefficientsY = linearRegression(irisY, screenY);
+
+      //predict screen position for each iris position
+      const irisPositionToPredict = {irisX: 0.5, irisY: 0.5};
+      const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
+
+      console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
+
+    }
+    //LINEAR REGRESSION ALGORITHM END
+
 
     //function to shorten our coordinates to tenthousandth place
     function roundToTenThousandth(value: number):number{
@@ -58,6 +110,8 @@ function App() {
       }
     }
 
+    
+
     //saves our x,y coordinates on the screen where we click
     const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = clickCanvasRef.current?.getBoundingClientRect();
@@ -68,8 +122,25 @@ function App() {
       console.log(`Clicked at: ${x}, ${y}`);
 
       printIrisCoordinates();
+      addCalibrationPointsToArray(x,y);
     }
 
+    //takes the average of the two iris x,y coord and click coords and adds to calibrationPointsArray
+    function addCalibrationPointsToArray(clickCoordX: number, clickCoordY: number){
+      if (leftIrisCoordinate && rightIrisCoordinate){
+        const newPoint = {
+          irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
+          irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2,
+          screenX: clickCoordX,
+          screenY: clickCoordY
+        };
+        
+        setCalibrationPoints([...calibrationPoints, newPoint]);
+      }
+
+      console.log(`CalibrationPointsArray: ${calibrationPoints}`);
+      console.log(`Calibration Array Length: ${calibrationPoints.length}`)
+    }
 
     //creates a little red dot at cursor click location
     const drawOnClick = (x: number, y:number) => {
