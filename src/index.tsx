@@ -17,6 +17,7 @@ function App() {
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
     const clickCanvasRef = useRef<any>(null);
+    const crosshairCanvasRef = useRef<any>(null);
 
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
@@ -27,7 +28,7 @@ function App() {
     //global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
-
+  
     const connect = window.drawConnectors;
     var camera = null;
 
@@ -74,12 +75,36 @@ function App() {
       const coefficientsX = linearRegression(irisX, screenX);
       const coefficientsY = linearRegression(irisY, screenY);
 
+
+
       //predict screen position for each iris position
-      const irisPositionToPredict = {irisX: 0.5, irisY: 0.5};
-      const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
+      if (leftIrisCoordinate && rightIrisCoordinate){
+        const irisPositionToPredict = {irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2, irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2};
+        const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
 
-      console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
+        //this is where we will call the draw function
+        console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
+        drawCrosshair(crosshairCanvasRef.current, predictedPosition.screenX, predictedPosition.screenY);
+      }
+        
+    }
 
+    function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
+      if (!canvas || !x || !y) return;
+    
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y);
+      ctx.lineTo(x + 10, y);
+      ctx.moveTo(x, y - 10);
+      ctx.lineTo(x, y + 10);
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
     //LINEAR REGRESSION ALGORITHM END
 
@@ -110,8 +135,6 @@ function App() {
       }
     }
 
-    
-
     //saves our x,y coordinates on the screen where we click
     const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = clickCanvasRef.current?.getBoundingClientRect();
@@ -134,11 +157,11 @@ function App() {
           screenX: clickCoordX,
           screenY: clickCoordY
         };
-        
+
         setCalibrationPoints([...calibrationPoints, newPoint]);
       }
 
-      console.log(`CalibrationPointsArray: ${calibrationPoints}`);
+      console.log(`CalibrationPointsArray: ${JSON.stringify(calibrationPoints, null, 2)}`);
       console.log(`Calibration Array Length: ${calibrationPoints.length}`)
     }
 
@@ -148,7 +171,7 @@ function App() {
       if(canvas){
         const ctx = canvas.getContext('2d');
         if (ctx){
-          ctx.clearRect(0,0, canvas.width, canvas.height);
+          //ctx.clearRect(0,0, canvas.width, canvas.height);
 
           ctx.beginPath();
           ctx.arc(x,y,5,0,2 * Math.PI);
@@ -236,11 +259,13 @@ function App() {
           drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
           drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
           drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
-
         }
         canvasCtx.restore();
       }
 
+
+      //once we have applied the calibration, we will draw the crosshair on the screen
+      calibrateAndPredict(calibrationPoints);
 
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
         if (!canvas || !video || !pointX || !pointY) return;
@@ -313,6 +338,21 @@ function App() {
   return (
     <div>
       <canvas
+        ref={crosshairCanvasRef}
+        width="1920"
+        height="1080"
+        style={{
+          position: "absolute",
+          marginRight: 'auto',
+          marginLeft: 'auto',
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          zIndex: 10, 
+          cursor: 'crosshair',
+        }}
+      />
+      <canvas
         ref={clickCanvasRef}
         width="1920"
         height="1080"
@@ -324,7 +364,7 @@ function App() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 11, // Ensure this is below your facemesh canvas if you want clicks on the face to be registered
+          zIndex: 11, 
           cursor: 'crosshair',
         }}
       />
