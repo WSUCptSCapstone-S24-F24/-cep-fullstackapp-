@@ -28,6 +28,10 @@ function App() {
     //global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+
+    //average
+    //(leftIrisCoordinate.x + rightIrisCoordinate.x) / 2;
+    //(leftIrisCoordinate.y + rightIrisCoordinate.y) / 2;
   
     const connect = window.drawConnectors;
     var camera = null;
@@ -77,13 +81,13 @@ function App() {
 
 
 
-      //predict screen position for each iris position
+      //predict screen position for each iris position (USING LEFT IRIS ONLY
       if (leftIrisCoordinate && rightIrisCoordinate){
         const irisPositionToPredict = {irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2, irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2};
         const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
 
         //this is where we will call the draw function
-        console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
+        //console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
         drawCrosshair(crosshairCanvasRef.current, predictedPosition.screenX, predictedPosition.screenY);
       }
         
@@ -103,27 +107,21 @@ function App() {
       ctx.moveTo(x, y - 10);
       ctx.lineTo(x, y + 10);
       ctx.strokeStyle = 'green';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 4;
       ctx.stroke();
     }
     //LINEAR REGRESSION ALGORITHM END
 
-
-    //function to shorten our coordinates to tenthousandth place
-    function roundToTenThousandth(value: number):number{
-      return Math.round(value * 10000) / 10000;
-    }
-
     //will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
       setLeftIrisCoordinate({
-        x: roundToTenThousandth(leftIrisCoord.x),
-        y: roundToTenThousandth(leftIrisCoord.y)
+        x: leftIrisCoord.x,
+        y: leftIrisCoord.y
       });
 
       setRightIrisCoordinate({
-        x: roundToTenThousandth(rightIrisCoord.x),
-        y: roundToTenThousandth(rightIrisCoord.y)
+        x: rightIrisCoord.x,
+        y: rightIrisCoord.y
       });
     }
 
@@ -148,7 +146,7 @@ function App() {
       addCalibrationPointsToArray(x,y);
     }
 
-    //takes the average of the two iris x,y coord and click coords and adds to calibrationPointsArray
+    //takes the iris x,y coord and click coords and adds to calibrationPointsArray (LEFT IRIS ONLY)
     function addCalibrationPointsToArray(clickCoordX: number, clickCoordY: number){
       if (leftIrisCoordinate && rightIrisCoordinate){
         const newPoint = {
@@ -408,7 +406,7 @@ function App() {
           position: "absolute", 
           top: "480px", 
           left: "50px", 
-          zIndex: 10, 
+          zIndex: 9, 
           width: 320, 
           height: 240 
           }} 
@@ -421,20 +419,7 @@ function App() {
             position: "absolute", 
             top: "480px", 
             right: "50px", 
-            zIndex: 10, 
-            width: 320, 
-            height: 240 
-            }}
-        />
-
-        <h2 style={{ position: "absolute", top: "540px", right: "920px"}}>Head</h2>
-        <canvas
-         ref={headRef} 
-          style={{ 
-            position: "absolute", 
-            top: "600px",
-            right: "790px",
-            zIndex: 10, 
+            zIndex: 9, 
             width: 320, 
             height: 240 
             }}
