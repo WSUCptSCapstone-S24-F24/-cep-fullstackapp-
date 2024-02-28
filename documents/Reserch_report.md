@@ -25,10 +25,20 @@ Linear regression is a statistical technique used to model the relationship betw
 - **Calculating the Regression Line using Least Squares Method:**
 The most common method for finding the regression line in linear regression is the Least Squares Method. It minimizes the sum of squared prediction errors to determine the most reliable relationship.
 
-## Method 3: Iris Cordination
+## Method 3: Gaze estimation by Iris Cordination
 
-Presentation of the results obtained.
+**Step 1: Identify the Position of the Iris and the Center of the Eye Using MediaPipe**
+
+The first step is using MediaPipe to accurately locate the iris within the eye and identifies the specific coordinates of the iris and the center of the eye.
+
+**Step 2: Determine Where the Person is Looking Based on the Iris's Position Relative to the Eye's Center**
+
+Once the iris and the center of the eye are identified, the next step involves calculating the iris's position relative to the eye's center. By analyzing this relative position, it's possible to infer the gaze direction of the person. The assumption is that if the iris is located towards the upper part of the eye, the person is looking up, and similarly, if the iris is towards the lower part, the person is looking down.
 
 ## References
 
-List of references used in the report.
+Online eye tracking: Webcam eye-tracking software. GazeRecorder. (2021, September 21). https://gazerecorder.com/ 
+
+Mali, K. (2024, January 23). Everything you need to know about linear regression!. Analytics Vidhya. https://www.analyticsvidhya.com/blog/2021/10/everything-you-need-to-know-about-linear-regression/ 
+
+P. Miah, M. R. Gulshan and N. Jahan, "Mouse Cursor Movement and Control using Eye Gaze- A Human Computer Interaction," 2022 International Conference on Artificial Intelligence of Things (ICAIoT), Istanbul, Turkey, 2022, pp. 1-6, doi: 10.1109/ICAIoT57170.2022.10121742. keywords: {Human computer interaction;Three-dimensional displays;Image recognition;MIMICs;Speech recognition;Cameras;Mice;Eye Gaze;Human Computer Interaction;Feature-based Classification;Conventional Mouse},
