@@ -5,6 +5,7 @@ import Webcam from 'react-webcam'
 import {useRef, useEffect, useState} from 'react'
 import React from 'react'
 import ReactDOM from 'react-dom'
+import VirtualBox from './virtual_box'
 
 declare global {
   interface Window {
@@ -28,6 +29,9 @@ function App() {
     // global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+
+    // Virtual box boolean 
+    const [isInside, setIsInside] = useState(false);
 
   
     const connect = window.drawConnectors;
@@ -347,7 +351,7 @@ function App() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 10, 
+          zIndex: 12, 
           cursor: 'crosshair',
         }}
       />
@@ -363,7 +367,7 @@ function App() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 11, 
+          zIndex: 12, 
           cursor: 'crosshair',
         }}
       />
@@ -377,7 +381,7 @@ function App() {
             left:0,
             right:0,
             textAlign:'center',
-            zIndex:9,
+            zIndex:5,
             width:640,
             height:480
       }}/>
@@ -392,13 +396,15 @@ function App() {
             left:0,
             right:0,
             textAlign:'center',
-            zIndex:9,
+            zIndex:10,
             width:640,
             height:480
       }}
       />
 
-      
+      <div>
+        <VirtualBox onObjectInside={setIsInside} />
+      </div>
 
       <h2 style={{ position: "absolute", top: "420px", left: "150px"}}>Left Eye</h2>
       <canvas 
@@ -407,7 +413,7 @@ function App() {
           position: "absolute", 
           top: "480px", 
           left: "50px", 
-          zIndex: 9, 
+          zIndex: 5, 
           width: 320, 
           height: 240 
           }} 
@@ -420,7 +426,7 @@ function App() {
             position: "absolute", 
             top: "480px", 
             right: "50px", 
-            zIndex: 9, 
+            zIndex: 5, 
             width: 320, 
             height: 240 
             }}
