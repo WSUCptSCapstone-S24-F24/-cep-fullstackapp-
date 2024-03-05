@@ -2,7 +2,7 @@ import { FaceMesh } from '@mediapipe/face_mesh'
 import * as Facemesh from '@mediapipe/face_mesh'
 import * as cam from '@mediapipe/camera_utils'
 import Webcam from 'react-webcam'
-import {useRef, useEffect} from 'react'
+import {useRef, useEffect, useState} from 'react'
 import React from 'react'
 import ReactDOM from 'react-dom'
 
@@ -16,13 +16,169 @@ function App() {
   
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
+    const clickCanvasRef = useRef<any>(null);
+    const crosshairCanvasRef = useRef<any>(null);
 
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
     const headRef = useRef<any>(null);
 
+    const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
+
+    //global iris coordinates
+    const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+    const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+
+    //average
+    //(leftIrisCoordinate.x + rightIrisCoordinate.x) / 2;
+    //(leftIrisCoordinate.y + rightIrisCoordinate.y) / 2;
+  
     const connect = window.drawConnectors;
     var camera = null;
+
+    interface CalibrationPoint{
+      irisX: number,
+      irisY: number,
+      screenX: number,
+      screenY: number;
+    }
+
+    //LINEAR REGRESSION ALGORITHM START
+    const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+
+    const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
+      const n = irisCoords.length;
+      const sumX = irisCoords.reduce((a,b) => a + b, 0);
+      const sumY = screenCoords.reduce((a,b) => a + b, 0);
+      const sumXx = irisCoords.reduce((a,b) => a + b * b, 0);
+      const sumXy = irisCoords.reduce((a,b,i) => a + b * screenCoords[i], 0);
+
+      const slope = (n * sumXy - sumX * sumY) / (n * sumXx - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+
+      return {slope, intercept};
+    }
+
+    //predicts screen coordinates based on iris coord - > uses linear regression
+    const predictScreenPosition = (coefficientsX: {slope: number, intercept: number}, coefficientsY: {slope: number, intercept: number}, 
+      irisX: number, irisY: number): { screenX: number, screenY: number } => {
+        const predictedScreenX = coefficientsX.slope * irisX + coefficientsX.intercept;
+        const predictedScreenY  = coefficientsY.slope * irisY + coefficientsY.intercept;
+
+        return {screenX: predictedScreenX, screenY: predictedScreenY};
+      }
+
+    //main function to call with set of data points
+    const calibrateAndPredict = (calibrationData: CalibrationPoint[]) => {
+      const irisX = calibrationData.map(data => data.irisX);
+      const screenX = calibrationData.map(data => data.screenX);
+      const irisY = calibrationData.map(data => data.irisY);
+      const screenY = calibrationData.map(data => data.screenY);
+
+      //calculate coefficients for x and y mappings
+      const coefficientsX = linearRegression(irisX, screenX);
+      const coefficientsY = linearRegression(irisY, screenY);
+
+
+
+      //predict screen position for each iris position (USING LEFT IRIS ONLY
+      if (leftIrisCoordinate && rightIrisCoordinate){
+        const irisPositionToPredict = {irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2, irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2};
+        const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
+
+        //this is where we will call the draw function
+        //console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
+        drawCrosshair(crosshairCanvasRef.current, predictedPosition.screenX, predictedPosition.screenY);
+      }
+        
+    }
+
+    function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
+      if (!canvas || !x || !y) return;
+    
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y);
+      ctx.lineTo(x + 10, y);
+      ctx.moveTo(x, y - 10);
+      ctx.lineTo(x, y + 10);
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+    //LINEAR REGRESSION ALGORITHM END
+
+    //will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
+    function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
+      setLeftIrisCoordinate({
+        x: leftIrisCoord.x,
+        y: leftIrisCoord.y
+      });
+
+      setRightIrisCoordinate({
+        x: rightIrisCoord.x,
+        y: rightIrisCoord.y
+      });
+    }
+
+    //prints our coordinates to console
+    function printIrisCoordinates(){
+      if (leftIrisCoordinate && rightIrisCoordinate){
+        console.log(`Left Iris Coord: ${leftIrisCoordinate.x}, ${leftIrisCoordinate.y}`);
+        console.log(`Right Iris Coord: ${rightIrisCoordinate.x}, ${rightIrisCoordinate.y}`);
+      }
+    }
+
+    //saves our x,y coordinates on the screen where we click
+    const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+      const rect = clickCanvasRef.current?.getBoundingClientRect();
+      const x = event.clientX - (rect?.left ?? 0);
+      const y = event.clientY - (rect?.top ?? 0);
+      setClickCoords({x,y});
+      drawOnClick(x,y);
+      console.log(`Clicked at: ${x}, ${y}`);
+
+      printIrisCoordinates();
+      addCalibrationPointsToArray(x,y);
+    }
+
+    //takes the iris x,y coord and click coords and adds to calibrationPointsArray (LEFT IRIS ONLY)
+    function addCalibrationPointsToArray(clickCoordX: number, clickCoordY: number){
+      if (leftIrisCoordinate && rightIrisCoordinate){
+        const newPoint = {
+          irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
+          irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2,
+          screenX: clickCoordX,
+          screenY: clickCoordY
+        };
+
+        setCalibrationPoints([...calibrationPoints, newPoint]);
+      }
+
+      console.log(`CalibrationPointsArray: ${JSON.stringify(calibrationPoints, null, 2)}`);
+      console.log(`Calibration Array Length: ${calibrationPoints.length}`)
+    }
+
+    //creates a little red dot at cursor click location
+    const drawOnClick = (x: number, y:number) => {
+      const canvas = clickCanvasRef.current;
+      if(canvas){
+        const ctx = canvas.getContext('2d');
+        if (ctx){
+          //ctx.clearRect(0,0, canvas.width, canvas.height);
+
+          ctx.beginPath();
+          ctx.arc(x,y,5,0,2 * Math.PI);
+          ctx.fillStyle = 'red';
+          ctx.fill();
+        }
+      }
+    };
+
 
     function onResults(results:any) {
         // const video = webcamRef.current.video;
@@ -94,15 +250,20 @@ function App() {
             //console.log(`RIGHT IRIS: x=${rightIrisLandmark.x}, y=${rightIrisLandmark.y}`);
           }
 
+          //save iris coordinates to a global variable
+          applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
+
           //draw canvases for each iris
           drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
           drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
           drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
-
         }
         canvasCtx.restore();
       }
 
+
+      //once we have applied the calibration, we will draw the crosshair on the screen
+      calibrateAndPredict(calibrationPoints);
 
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
         if (!canvas || !video || !pointX || !pointY) return;
@@ -171,9 +332,41 @@ function App() {
           camera.start();
         }
       }, []);
-
+      
   return (
     <div>
+      <canvas
+        ref={crosshairCanvasRef}
+        width="1920"
+        height="1080"
+        style={{
+          position: "absolute",
+          marginRight: 'auto',
+          marginLeft: 'auto',
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          zIndex: 10, 
+          cursor: 'crosshair',
+        }}
+      />
+      <canvas
+        ref={clickCanvasRef}
+        width="1920"
+        height="1080"
+        onClick={handleCanvasClick}
+        style={{
+          position: "absolute",
+          marginRight: 'auto',
+          marginLeft: 'auto',
+          left: 0,
+          right: 0,
+          textAlign: 'center',
+          zIndex: 11, 
+          cursor: 'crosshair',
+        }}
+      />
+
       <Webcam 
         ref={webcamRef}
           style={{
@@ -190,6 +383,7 @@ function App() {
       
       <canvas
         ref={canvasRef}
+          onClick={handleCanvasClick}
           style={{
             position:"absolute",
             marginRight:'auto',
@@ -203,6 +397,8 @@ function App() {
       }}
       />
 
+      
+
       <h2 style={{ position: "absolute", top: "420px", left: "150px"}}>Left Eye</h2>
       <canvas 
       ref={leftEyeRef} 
@@ -210,7 +406,7 @@ function App() {
           position: "absolute", 
           top: "480px", 
           left: "50px", 
-          zIndex: 10, 
+          zIndex: 9, 
           width: 320, 
           height: 240 
           }} 
@@ -223,24 +419,11 @@ function App() {
             position: "absolute", 
             top: "480px", 
             right: "50px", 
-            zIndex: 10, 
+            zIndex: 9, 
             width: 320, 
             height: 240 
             }}
         />
-
-        <h2 style={{ position: "absolute", top: "540px", right: "920px"}}>Head</h2>
-        <canvas
-         ref={headRef} 
-          style={{ 
-            position: "absolute", 
-            top: "600px",
-            right: "790px",
-            zIndex: 10, 
-            width: 320, 
-            height: 240 
-            }}
-        /> 
     </div>
   );
 }
