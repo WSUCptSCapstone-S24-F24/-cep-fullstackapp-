@@ -15,28 +15,33 @@ declare global {
 
 function App() {
   
+  // All of our references
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
     const clickCanvasRef = useRef<any>(null);
     const crosshairCanvasRef = useRef<any>(null);
-
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
     const headRef = useRef<any>(null);
 
-    const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
-
-    // global iris coordinates
-    const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
-    const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
-
-    // Virtual box boolean 
-    const [isInside, setIsInside] = useState(false);
-
-  
     const connect = window.drawConnectors;
     var camera = null;
+    
+    // All variables using a useState should be placed inside a useEffect
 
+    const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
+    // --Global iris coordinates
+    const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+    const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+    // --Global predicted position
+    const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
+    // --Our array which holds the set of coordinates for a point
+    const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+
+  
+
+
+    // Package of points that take up one slot in our calibrationPoints array
     interface CalibrationPoint{
       irisX: number,
       irisY: number,
@@ -44,11 +49,42 @@ function App() {
       screenY: number;
     }
 
-    //LINEAR REGRESSION ALGORITHM START
+    // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
+    useEffect(() => {
+      if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
 
-    // Our array which holds the set of coordinates for a point
-    const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+      const irisPositionToPredict = {
+        irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
+        irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2,
+      };
 
+      // Calculate coefficients for x,y mapping
+      const irisX = calibrationPoints.map(data => data.irisX);
+      const screenX = calibrationPoints.map(data => data.screenX);
+      const irisY = calibrationPoints.map(data => data.irisY);
+      const screenY = calibrationPoints.map(data => data.screenY);
+
+      const coefficientsX = linearRegression(irisX, screenX);
+      const coefficientsY = linearRegression(irisY, screenY);
+
+      // These will be our eye tracking crosshair predicted points
+      const predictedScreenX = coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
+      const predictedScreenY  = coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+
+      // Which will update to our global variable here
+      updateCrosshairPosition({
+        x: predictedScreenX,
+        y: predictedScreenY,
+      });
+
+      // We will draw the crosshair
+      if (crosshairCanvasRef.current) {
+        drawCrosshair(crosshairCanvasRef.current, predictedScreenX, predictedScreenY);
+      }
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
+
+    // This function will get the line of best fit between all of our points
+    // Returns the slope and intercept of the line of best fit
     const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
       const n = irisCoords.length;
       const sumX = irisCoords.reduce((a,b) => a + b, 0);
@@ -62,39 +98,6 @@ function App() {
       return {slope, intercept};
     }
 
-    // Predicts screen coordinates based on iris coord - > uses linear regression
-    const predictScreenPosition = (coefficientsX: {slope: number, intercept: number}, coefficientsY: {slope: number, intercept: number}, 
-      irisX: number, irisY: number): { screenX: number, screenY: number } => {
-        const predictedScreenX = coefficientsX.slope * irisX + coefficientsX.intercept;
-        const predictedScreenY  = coefficientsY.slope * irisY + coefficientsY.intercept;
-
-        return {screenX: predictedScreenX, screenY: predictedScreenY};
-      }
-
-    // Main function to call with set of data points
-    const calibrateAndPredict = (calibrationData: CalibrationPoint[]) => {
-      const irisX = calibrationData.map(data => data.irisX);
-      const screenX = calibrationData.map(data => data.screenX);
-      const irisY = calibrationData.map(data => data.irisY);
-      const screenY = calibrationData.map(data => data.screenY);
-
-      // Calculate coefficients for x and y mappings
-      const coefficientsX = linearRegression(irisX, screenX);
-      const coefficientsY = linearRegression(irisY, screenY);
-
-
-
-      // Predict screen position for each iris position 
-      if (leftIrisCoordinate && rightIrisCoordinate){
-        const irisPositionToPredict = {irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2, irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2};
-        const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
-
-        // This is where we will call the draw function
-        //console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
-        drawCrosshair(crosshairCanvasRef.current, predictedPosition.screenX, predictedPosition.screenY);
-      }
-        
-    }
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -114,7 +117,6 @@ function App() {
       ctx.lineWidth = 4;
       ctx.stroke();
     }
-    //LINEAR REGRESSION ALGORITHM END
 
     // Will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
@@ -267,7 +269,7 @@ function App() {
 
 
       // Once we have applied the calibration, we will draw the crosshair on the screen
-      calibrateAndPredict(calibrationPoints);
+      //calibrateAndPredict(calibrationPoints);
 
       // This function will crop our webcam and create a zoomed in video at inputted point
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
@@ -304,7 +306,6 @@ function App() {
           canvas.height
         );
       }
-
 
       // Instantiate FaceMesh
       useEffect(() => {
@@ -351,7 +352,7 @@ function App() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 12, 
+          zIndex: 11, 
           cursor: 'crosshair',
         }}
       />
@@ -367,7 +368,7 @@ function App() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 12, 
+          zIndex: 13, 
           cursor: 'crosshair',
         }}
       />
@@ -402,10 +403,6 @@ function App() {
       }}
       />
 
-      <div>
-        <VirtualBox onObjectInside={setIsInside} />
-      </div>
-
       <h2 style={{ position: "absolute", top: "420px", left: "150px"}}>Left Eye</h2>
       <canvas 
       ref={leftEyeRef} 
@@ -431,6 +428,7 @@ function App() {
             height: 240 
             }}
         />
+        <VirtualBox crosshairPosition={predictedCrosshairPosition} />
     </div>
   );
 }

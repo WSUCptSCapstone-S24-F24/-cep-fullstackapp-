@@ -2,35 +2,36 @@ import React from 'react';
 
 // Information on Virtual Box
 interface VirtualBoxInfo {
-    onObjectInside: (isInside: boolean) => void;
+    crosshairPosition: {x: number, y: number};
 }
 
-const VirtualBox: React.FC<VirtualBoxInfo> = ({ onObjectInside }) => {
+const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition }) => {
     const boxRef = React.useRef<HTMLDivElement>(null);
+    const [isInside, setIsInside] = React.useState(false);
 
-    // Will check if the cursor is within the bounds of the box
-    const checkObjectInside = (objPosition: {x: number, y: number}) => {
+    React.useEffect(() =>{
         if (!boxRef.current) return;
 
+        // Will check if the crosshair is within the bounds of the virtual box
         const box = boxRef.current.getBoundingClientRect();
         const isInside = 
-        objPosition.x >= box.left &&
-        objPosition.x <= box.right &&
-        objPosition.y >= box.top &&
-        objPosition.y <= box.bottom;
+        crosshairPosition.x >= box.left &&
+        crosshairPosition.x <= box.right &&
+        crosshairPosition.y >= box.top &&
+        crosshairPosition.y <= box.bottom;
 
-        onObjectInside(isInside);
-    };
+        setIsInside(isInside);
+    }, [crosshairPosition])
 
     return (
         <div
           ref={boxRef}
           style={{
-            border: '2px dashed black',
+            border: `2px solid ${isInside ? 'red' : 'green'}`, // Will change box color depending on if crosshair is inside the bounds of the box
             height: '200px',
             width: '200px',
             position: 'relative',
-            zIndex: 6
+            zIndex: 4
           }}
         />
     );
