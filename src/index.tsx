@@ -25,13 +25,10 @@ function App() {
 
     const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
 
-    //global iris coordinates
+    // global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
 
-    //average
-    //(leftIrisCoordinate.x + rightIrisCoordinate.x) / 2;
-    //(leftIrisCoordinate.y + rightIrisCoordinate.y) / 2;
   
     const connect = window.drawConnectors;
     var camera = null;
@@ -44,6 +41,8 @@ function App() {
     }
 
     //LINEAR REGRESSION ALGORITHM START
+
+    // Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
 
     const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
@@ -59,7 +58,7 @@ function App() {
       return {slope, intercept};
     }
 
-    //predicts screen coordinates based on iris coord - > uses linear regression
+    // Predicts screen coordinates based on iris coord - > uses linear regression
     const predictScreenPosition = (coefficientsX: {slope: number, intercept: number}, coefficientsY: {slope: number, intercept: number}, 
       irisX: number, irisY: number): { screenX: number, screenY: number } => {
         const predictedScreenX = coefficientsX.slope * irisX + coefficientsX.intercept;
@@ -68,31 +67,32 @@ function App() {
         return {screenX: predictedScreenX, screenY: predictedScreenY};
       }
 
-    //main function to call with set of data points
+    // Main function to call with set of data points
     const calibrateAndPredict = (calibrationData: CalibrationPoint[]) => {
       const irisX = calibrationData.map(data => data.irisX);
       const screenX = calibrationData.map(data => data.screenX);
       const irisY = calibrationData.map(data => data.irisY);
       const screenY = calibrationData.map(data => data.screenY);
 
-      //calculate coefficients for x and y mappings
+      // Calculate coefficients for x and y mappings
       const coefficientsX = linearRegression(irisX, screenX);
       const coefficientsY = linearRegression(irisY, screenY);
 
 
 
-      //predict screen position for each iris position (USING LEFT IRIS ONLY
+      // Predict screen position for each iris position 
       if (leftIrisCoordinate && rightIrisCoordinate){
         const irisPositionToPredict = {irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2, irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2};
         const predictedPosition = predictScreenPosition(coefficientsX, coefficientsY, irisPositionToPredict.irisX, irisPositionToPredict.irisY);
 
-        //this is where we will call the draw function
+        // This is where we will call the draw function
         //console.log(`Predicted Screen Position: (${predictedPosition.screenX}, ${predictedPosition.screenY})`);
         drawCrosshair(crosshairCanvasRef.current, predictedPosition.screenX, predictedPosition.screenY);
       }
         
     }
 
+    // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
       if (!canvas || !x || !y) return;
     
@@ -112,7 +112,7 @@ function App() {
     }
     //LINEAR REGRESSION ALGORITHM END
 
-    //will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
+    // Will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
       setLeftIrisCoordinate({
         x: leftIrisCoord.x,
@@ -125,7 +125,7 @@ function App() {
       });
     }
 
-    //prints our coordinates to console
+    // Prints our coordinates to console
     function printIrisCoordinates(){
       if (leftIrisCoordinate && rightIrisCoordinate){
         console.log(`Left Iris Coord: ${leftIrisCoordinate.x}, ${leftIrisCoordinate.y}`);
@@ -133,7 +133,7 @@ function App() {
       }
     }
 
-    //saves our x,y coordinates on the screen where we click
+    // Saves our x,y coordinates on the screen where we click
     const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
       const rect = clickCanvasRef.current?.getBoundingClientRect();
       const x = event.clientX - (rect?.left ?? 0);
@@ -146,7 +146,7 @@ function App() {
       addCalibrationPointsToArray(x,y);
     }
 
-    //takes the iris x,y coord and click coords and adds to calibrationPointsArray (LEFT IRIS ONLY)
+    // Takes the iris x,y coord and click coords and adds to calibrationPointsArray
     function addCalibrationPointsToArray(clickCoordX: number, clickCoordY: number){
       if (leftIrisCoordinate && rightIrisCoordinate){
         const newPoint = {
@@ -163,7 +163,7 @@ function App() {
       console.log(`Calibration Array Length: ${calibrationPoints.length}`)
     }
 
-    //creates a little red dot at cursor click location
+    // Creates a little red dot at cursor click location
     const drawOnClick = (x: number, y:number) => {
       const canvas = clickCanvasRef.current;
       if(canvas){
@@ -192,12 +192,12 @@ function App() {
         const canvasElement = canvasRef.current;
         const canvasCtx = canvasElement.getContext("2d");
 
-        //resets face mesh so it can be updated for next image
+        // Resets face mesh so it can be updated for next image
         canvasCtx.save();
         canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
         canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
 
-        //create landmarks for each point of interest
+        // Create landmarks for each point of interest
         if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
           for (const landmarks of results.multiFaceLandmarks) {
@@ -232,17 +232,17 @@ function App() {
           }
 
           const landmarks = results.multiFaceLandmarks[0];
-          //get both indexes on the landmarking grid
+          // Get both indexes on the landmarking grid
           const leftIrisIndex = 473;
           const rightIrisIndex = 468;
           const noseIndex = 4;
 
-          //grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
+          // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
           const leftIrisLandmark = landmarks[leftIrisIndex];
           const rightIrisLandmark = landmarks[rightIrisIndex];
           const noseLandmark = landmarks[noseIndex];
 
-          //if you wish to view each iris coordinates
+          // If you wish to view each iris coordinates (uncomment the bottom logs)
           if (leftIrisLandmark){
             //console.log(`LEFT IRIS: x=${leftIrisLandmark.x}, y=${leftIrisLandmark.y}`);
           }
@@ -250,10 +250,10 @@ function App() {
             //console.log(`RIGHT IRIS: x=${rightIrisLandmark.x}, y=${rightIrisLandmark.y}`);
           }
 
-          //save iris coordinates to a global variable
+          // Saves iris coordinates to a global variable
           applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
 
-          //draw canvases for each iris
+          // Draw canvases for each iris
           drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
           drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
           drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
@@ -262,9 +262,10 @@ function App() {
       }
 
 
-      //once we have applied the calibration, we will draw the crosshair on the screen
+      // Once we have applied the calibration, we will draw the crosshair on the screen
       calibrateAndPredict(calibrationPoints);
 
+      // This function will crop our webcam and create a zoomed in video at inputted point
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
         if (!canvas || !video || !pointX || !pointY) return;
 
@@ -272,23 +273,23 @@ function App() {
         if (!ctx) return;
 
         
-        //enlarges are image to video size
+        // Enlarges are image to video size
         pointX = pointX * video.videoWidth;
         pointY = pointY * video.videoHeight;
 
         //console.log(`pointX : ${pointX}, pointY : ${pointY}`);
 
-        //zooms in our camera to focus on the specific point
+        // Zooms in our camera to focus on the specific point
         const newWidth = canvas.width / zoom;
         const newHeight = canvas.height / zoom;
 
         const newX = pointX - newWidth / 2;
         const newY = pointY - newHeight / 2;
 
-        //reset our canvas (so images are cleared after each frame)
+        // Reset our canvas (so images are cleared after each frame)
         ctx.clearRect(0,0, canvas.width, canvas.height);
 
-        //draw image
+        // Draw video
         ctx.drawImage(
           video,
           newX, newY,
@@ -301,7 +302,7 @@ function App() {
       }
 
 
-      //instantiate FaceMesh
+      // Instantiate FaceMesh
       useEffect(() => {
         const faceMesh = new FaceMesh({
           locateFile: (file) => {
@@ -309,7 +310,7 @@ function App() {
           },
         });
 
-        //apply options for facemesh (ps: refinelandmarks is what enables the option to use iris tracking)
+        // Apply options for facemesh (ps: refinelandmarks is what enables the option to use iris tracking)
         faceMesh.setOptions({
           maxNumFaces: 1,
           minDetectionConfidence: 0.5,
@@ -317,10 +318,10 @@ function App() {
           refineLandmarks: true,
         });
 
-        //update facemesh
+        // Update facemesh
         faceMesh.onResults(onResults);
 
-        //apply facemesh to webcam
+        // Apply facemesh to webcam
         if (typeof webcamRef.current !== "undefined" && webcamRef.current !== null) {
           camera = new cam.Camera(webcamRef.current.video, {
             onFrame: async () => {
