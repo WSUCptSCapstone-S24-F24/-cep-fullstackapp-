@@ -73,7 +73,7 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition, name, height,
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                transform: 'translate(-50%, -50%)', // Centers the dot
+                transform: 'scale(1.3) translate(-50%, -50%)', // Centers the dot
                 }}
             />
             {/*Dispay distance crosshair is from center point*/}
