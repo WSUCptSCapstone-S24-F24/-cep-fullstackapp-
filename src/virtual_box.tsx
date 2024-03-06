@@ -3,9 +3,14 @@ import React from 'react';
 // Information on Virtual Box
 interface VirtualBoxInfo {
     crosshairPosition: {x: number, y: number};
+    height: string;
+    width: string;
+    top?: string;
+    left?: string;
+    right?: string;
 }
 
-const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition }) => {
+const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition, height, width, top = '0', left = '0', right='0'}) => {
     const boxRef = React.useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = React.useState(false);
 
@@ -28,9 +33,12 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition }) => {
           ref={boxRef}
           style={{
             border: `2px solid ${isInside ? 'red' : 'green'}`, // Will change box color depending on if crosshair is inside the bounds of the box
-            height: '200px',
-            width: '200px',
+            height: height,
+            width: width,
             position: 'relative',
+            top: top,
+            left: left,
+            right: right,
             zIndex: 4
           }}
         />

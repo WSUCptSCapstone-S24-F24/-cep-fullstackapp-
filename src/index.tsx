@@ -428,7 +428,11 @@ function App() {
             height: 240 
             }}
         />
-        <VirtualBox crosshairPosition={predictedCrosshairPosition} />
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', height: '100vh' }} >
+          <VirtualBox crosshairPosition={predictedCrosshairPosition} height='96vh' width='30vw'/>
+          <VirtualBox crosshairPosition={predictedCrosshairPosition} height='96vh' width='30vw' left='725px'/>
+        </div>
+        
     </div>
   );
 }
