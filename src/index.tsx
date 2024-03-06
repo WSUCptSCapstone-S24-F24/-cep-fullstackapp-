@@ -38,8 +38,6 @@ function App() {
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
 
-  
-
 
     // Package of points that take up one slot in our calibrationPoints array
     interface CalibrationPoint{
@@ -81,6 +79,7 @@ function App() {
       if (crosshairCanvasRef.current) {
         drawCrosshair(crosshairCanvasRef.current, predictedScreenX, predictedScreenY);
       }
+
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
 
     // This function will get the line of best fit between all of our points
@@ -267,10 +266,6 @@ function App() {
         canvasCtx.restore();
       }
 
-
-      // Once we have applied the calibration, we will draw the crosshair on the screen
-      //calibrateAndPredict(calibrationPoints);
-
       // This function will crop our webcam and create a zoomed in video at inputted point
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
         if (!canvas || !video || !pointX || !pointY) return;
@@ -402,35 +397,9 @@ function App() {
             height:480
       }}
       />
-
-      <h2 style={{ position: "absolute", top: "420px", left: "150px"}}>Left Eye</h2>
-      <canvas 
-      ref={leftEyeRef} 
-        style={{ 
-          position: "absolute", 
-          top: "480px", 
-          left: "50px", 
-          zIndex: 5, 
-          width: 320, 
-          height: 240 
-          }} 
-      />
-
-        <h2 style={{ position: "absolute", top: "420px", right: "160px"}}>Right Eye</h2>
-        <canvas
-         ref={rightEyeRef} 
-          style={{ 
-            position: "absolute", 
-            top: "480px", 
-            right: "50px", 
-            zIndex: 5, 
-            width: 320, 
-            height: 240 
-            }}
-        />
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', height: '100vh' }} >
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} height='96vh' width='30vw'/>
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} height='96vh' width='30vw' left='725px'/>
+          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='left box' height='96vh' width='30vw'/>
+          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='right box' height='96vh' width='30vw' left='725px'/>
         </div>
         
     </div>
