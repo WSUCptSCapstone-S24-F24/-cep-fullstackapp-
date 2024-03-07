@@ -6,7 +6,8 @@ import {useRef, useEffect, useState} from 'react'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import VirtualBox from './virtual_box'
-import { OneEuroFilter } from './OneEuroFilter'
+import {OneEuroFilter} from '1eurofilter'
+// import { OneEuroFilter } from './OneEuroFilter'
 
 
 declare global {
@@ -123,7 +124,7 @@ function App() {
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
 
       // Get current timestamp
-      const timestamp = Date.now();
+      const timestamp = performance.now() / 1000;
 
       // Create OneEuroFilter instances for left and right iris coordinates (Assume the framerate is 30Hz)
       const leftIrisFilterX = new OneEuroFilter(30, 1.0, 0.0, 1.0);
@@ -139,11 +140,18 @@ function App() {
 
 
       setLeftIrisCoordinate({
+
+        // x: leftIrisCoord.x,
+        // y: leftIrisCoord.y
+
         x: filteredLeftX,
         y: filteredLeftY
       });
 
       setRightIrisCoordinate({
+        // x: rightIrisCoord.x,
+        // y: rightIrisCoord.y
+        
         x: filteredRightX,
         y: filteredRightY
       });
