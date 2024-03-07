@@ -6,6 +6,8 @@ import {useRef, useEffect, useState} from 'react'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import VirtualBox from './virtual_box'
+import { OneEuroFilter } from './OneEuroFilter'
+
 
 declare global {
   interface Window {
@@ -119,14 +121,31 @@ function App() {
 
     // Will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
+
+      // Get current timestamp
+      const timestamp = Date.now();
+
+      // Create OneEuroFilter instances for left and right iris coordinates (Assume the framerate is 30Hz)
+      const leftIrisFilterX = new OneEuroFilter(30, 1.0, 0.0, 1.0);
+      const leftIrisFilterY = new OneEuroFilter(30, 1.0, 0.0, 1.0);
+      const rightIrisFilterX = new OneEuroFilter(30, 1.0, 0.0, 1.0);
+      const rightIrisFilterY = new OneEuroFilter(30, 1.0, 0.0, 1.0);
+
+      // Apply OneEuroFilter to filter left and right iris coordinates
+      const filteredLeftX = leftIrisFilterX.filter(leftIrisCoord.x, timestamp);
+      const filteredLeftY = leftIrisFilterY.filter(leftIrisCoord.y, timestamp);
+      const filteredRightX = rightIrisFilterX.filter(rightIrisCoord.x, timestamp);
+      const filteredRightY = rightIrisFilterY.filter(rightIrisCoord.y, timestamp);
+
+
       setLeftIrisCoordinate({
-        x: leftIrisCoord.x,
-        y: leftIrisCoord.y
+        x: filteredLeftX,
+        y: filteredLeftY
       });
 
       setRightIrisCoordinate({
-        x: rightIrisCoord.x,
-        y: rightIrisCoord.y
+        x: filteredRightX,
+        y: filteredRightY
       });
     }
 
