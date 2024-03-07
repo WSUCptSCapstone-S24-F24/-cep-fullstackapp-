@@ -425,8 +425,8 @@ function Calibration() {
       }}
       />
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', height: '100vh' }} >
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='left box' height='96vh' width='30vw'/>
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='right box' height='96vh' width='30vw' left='725px'/>
+          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='left box' height='90vh' width='30vw'/>
+          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='right box' height='90vh' width='30vw' left='725px'/>
         </div>
         
     </div>
