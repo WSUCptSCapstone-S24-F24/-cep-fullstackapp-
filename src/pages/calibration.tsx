@@ -4,11 +4,8 @@ import * as cam from '@mediapipe/camera_utils'
 import Webcam from 'react-webcam'
 import {useRef, useEffect, useState} from 'react'
 import React from 'react'
-import ReactDOM from 'react-dom'
-import VirtualBox from '../virtual_box'
 import BoxContainer from '../box_container'
 import {OneEuroFilter} from '1eurofilter'
-// import { OneEuroFilter } from './OneEuroFilter'
 
 
 declare global {

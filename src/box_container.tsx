@@ -24,7 +24,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
 
     // Initialize our box queue here
     useEffect(() => {
-        const boxes: Box[] = generateBoxes(5, {width: 100, height: 100});
+        const boxes: Box[] = generateBoxes(5, {width: 500, height: 500});
         setBoxQueue(boxes);
         setCurrentBox(boxes[0]);
       }, [])
