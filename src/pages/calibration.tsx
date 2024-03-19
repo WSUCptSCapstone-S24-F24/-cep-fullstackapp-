@@ -434,10 +434,9 @@ function Calibration() {
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
       </div>
-        <div>
-          {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
-        </div>
-        
+      <div>
+        {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
+      </div>      
     </div>
   );
 }

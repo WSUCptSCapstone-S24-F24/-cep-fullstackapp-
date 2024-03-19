@@ -21,26 +21,34 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
     // --Target practice boxes
     const [currentBox, setCurrentBox] = useState<Box | null>(null);
     const [boxQueue, setBoxQueue] = useState<Box[]>([]);
+    const [hasCompletedCycle, setHasCompletedCycle] = useState<boolean>(false);
 
     // Initialize our box queue here
     useEffect(() => {
-        const boxes: Box[] = generateBoxes(5, {width: 500, height: 500});
+        const boxes: Box[] = generateBoxes(5, {width: 200, height: 200});
         setBoxQueue(boxes);
         setCurrentBox(boxes[0]);
       }, [])
       
       // Cycle through each box in our queue
       useEffect(() => {
-        if (!currentBox || boxQueue.length == 0) return;
+        if (!currentBox || boxQueue.length == 0 || hasCompletedCycle) return;
+
+        const currentIndex = boxQueue.indexOf(currentBox);
+        const nextIndex = currentIndex + 1;
+
+        if (nextIndex >= boxQueue.length){
+            setHasCompletedCycle(true);
+            return;
+        }
 
         const timer = setTimeout(() => {
             // Next box
-            const nextIndex = (boxQueue.indexOf(currentBox) + 1) % boxQueue.length;
             setCurrentBox(boxQueue[nextIndex]);
         }, 5000); // Change box every 5 seconds
 
         return () => clearTimeout(timer);
-      }, [currentBox, boxQueue]);
+      }, [currentBox, boxQueue, hasCompletedCycle]);
 
   
       // Generate target box array
