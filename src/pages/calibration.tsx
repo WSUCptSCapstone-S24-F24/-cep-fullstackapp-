@@ -39,6 +39,8 @@ function Calibration() {
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+    // --Global target practice mode
+    const [showBoxContainer, setShowBoxContainer] = useState(false);
 
 
 
@@ -427,8 +429,13 @@ function Calibration() {
             height:480
       }}
       />
+      <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
+        <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
+          {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
+        </button>
+      </div>
         <div>
-          <BoxContainer crosshairPosition={predictedCrosshairPosition}/>
+          {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
         </div>
         
     </div>
