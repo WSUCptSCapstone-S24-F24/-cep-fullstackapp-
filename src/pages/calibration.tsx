@@ -40,6 +40,11 @@ function Calibration() {
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+    // --Target practice boxes
+    const BoxContainer = () => {
+      const [currentBox, setCurrentBox] = useState(null);
+      const [boxQueue, setBoxQueue] = useState([]);
+    }
 
 
     // Package of points that take up one slot in our calibrationPoints array
@@ -84,6 +89,23 @@ function Calibration() {
       }
 
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
+
+
+    // Initialize our box queue here
+
+    // Cycle through each box in our queue
+
+    // Generate target box array
+    const generateBoxes = (numberOfBoxes, size) => {
+      return Array.from({ length: numberOfBoxes }, (_, i) => ({
+        id: i,
+        name: `Target ${i}`,
+        height: `${size.height}px`,
+        width: `${size.width}px`,
+        top: `${Math.random() * (window.innerHeight - size.height)}px`,
+        left: `${Math.random() * (window.innerWidth - size.width)}px`
+      }));
+    }
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
