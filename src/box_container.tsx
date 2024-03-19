@@ -10,7 +10,14 @@ interface Box {
     left: string;
 }
 
-const BoxContainer: React.FC = () => {
+interface BoxContainerInformation{
+    crosshairPosition: {
+        x: number,
+        y: number
+    };
+}
+
+const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
     // --Target practice boxes
     const [currentBox, setCurrentBox] = useState<Box | null>(null);
     const [boxQueue, setBoxQueue] = useState<Box[]>([]);
@@ -53,7 +60,7 @@ const BoxContainer: React.FC = () => {
             {currentBox && (
                 <VirtualBox
                     key={currentBox.id}
-                    crosshairPosition={{x: 0, y: 0}} /* Will need to update with actual position */
+                    crosshairPosition={crosshairPosition} /* Will need to update with actual position */
                     name={currentBox.name}
                     height={currentBox.height}
                     width={currentBox.width}

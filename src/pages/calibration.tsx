@@ -6,6 +6,7 @@ import {useRef, useEffect, useState} from 'react'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import VirtualBox from '../virtual_box'
+import BoxContainer from '../box_container'
 import {OneEuroFilter} from '1eurofilter'
 // import { OneEuroFilter } from './OneEuroFilter'
 
@@ -40,11 +41,7 @@ function Calibration() {
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
-    // --Target practice boxes
-    const BoxContainer = () => {
-      const [currentBox, setCurrentBox] = useState(null);
-      const [boxQueue, setBoxQueue] = useState([]);
-    }
+
 
 
     // Package of points that take up one slot in our calibrationPoints array
@@ -91,21 +88,7 @@ function Calibration() {
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
 
 
-    // Initialize our box queue here
-
-    // Cycle through each box in our queue
-
-    // Generate target box array
-    const generateBoxes = (numberOfBoxes, size) => {
-      return Array.from({ length: numberOfBoxes }, (_, i) => ({
-        id: i,
-        name: `Target ${i}`,
-        height: `${size.height}px`,
-        width: `${size.width}px`,
-        top: `${Math.random() * (window.innerHeight - size.height)}px`,
-        left: `${Math.random() * (window.innerWidth - size.width)}px`
-      }));
-    }
+    
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
@@ -446,9 +429,8 @@ function Calibration() {
             height:480
       }}
       />
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', height: '100vh' }} >
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='left box' height='90vh' width='30vw'/>
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='right box' height='90vh' width='30vw' left='725px'/>
+        <div>
+          <BoxContainer crosshairPosition={predictedCrosshairPosition}/>
         </div>
         
     </div>

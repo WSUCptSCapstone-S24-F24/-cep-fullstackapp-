@@ -42,7 +42,7 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition, name, height,
             top: top,
             left: left,
             right: right,
-            zIndex: 4
+            zIndex: 12
           }}
         >
         </div>
