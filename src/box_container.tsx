@@ -25,7 +25,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
 
     // Initialize our box queue here
     useEffect(() => {
-        const boxes: Box[] = generateBoxes(5, {width: 200, height: 200});
+        const boxes: Box[] = generateBoxes(5, {width: 200, height: 200});    // This is where we set how much boxes and how big the boxes
         setBoxQueue(boxes);
         setCurrentBox(boxes[0]);
       }, [])
@@ -37,15 +37,16 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
         const currentIndex = boxQueue.indexOf(currentBox);
         const nextIndex = currentIndex + 1;
 
-        if (nextIndex >= boxQueue.length){
+        if (nextIndex > boxQueue.length){
             setHasCompletedCycle(true);
+            setCurrentBox(null);
             return;
         }
 
         const timer = setTimeout(() => {
             // Next box
             setCurrentBox(boxQueue[nextIndex]);
-        }, 5000); // Change box every 5 seconds
+        }, 3000); // This is where we change how long each box lasts (ex: 5000 = 5 seconds)
 
         return () => clearTimeout(timer);
       }, [currentBox, boxQueue, hasCompletedCycle]);
@@ -68,7 +69,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
             {currentBox && (
                 <VirtualBox
                     key={currentBox.id}
-                    crosshairPosition={crosshairPosition} /* Will need to update with actual position */
+                    crosshairPosition={crosshairPosition}
                     name={currentBox.name}
                     height={currentBox.height}
                     width={currentBox.width}
