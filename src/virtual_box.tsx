@@ -3,6 +3,7 @@ import {useRef, useEffect, useState} from 'react'
 
 // Information on Virtual Box
 interface VirtualBoxInfo {
+    id: number;
     crosshairPosition: {x: number, y: number};
     name: string;
     height: string;
@@ -10,11 +11,11 @@ interface VirtualBoxInfo {
     top?: string;
     left?: string;
     right?: string;
+    onHit: (id: number) => void;
 }
 
-const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition, name, height, width, top = '0', left = '0', right='0'}) => {
+const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, height, width, top = '0', left = '0', right='0', onHit}) => {
     const boxRef = useRef<HTMLDivElement>(null);
-
     const [isInside, setIsInside] = useState(false);
 
     useEffect(() =>{
@@ -28,8 +29,13 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ crosshairPosition, name, height,
         crosshairPosition.y >= box.top &&
         crosshairPosition.y <= box.bottom;
 
+        if (isInside)
+        {
+          onHit(id);
+        }
+
         setIsInside(isInside);
-    }, [crosshairPosition])
+    }, [crosshairPosition, isInside, onHit, id])
 
     return (
         <div
