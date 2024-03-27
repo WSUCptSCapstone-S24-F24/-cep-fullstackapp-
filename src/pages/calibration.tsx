@@ -25,7 +25,7 @@ function Calibration() {
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
     const headRef = useRef<any>(null);
-    const vectorCalibRef = useRef<any>(null);
+    const vectorCalibRef = useRef<SVGSVGElement>(null);
 
 
     const connect = window.drawConnectors;
@@ -53,6 +53,16 @@ function Calibration() {
       screenX: number,
       screenY: number;
     }
+
+    interface DotData {
+      x: number;
+      y: number;
+      dx: number;
+      dy: number;
+      direction: 'U' | 'D' | 'L' | 'R';
+    }
+
+    const [data, setData] = useState<DotData[]>([]);
 
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
@@ -90,89 +100,110 @@ function Calibration() {
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
 
 
+    const [currentDotIndex, setCurrentDotIndex] = useState<number>(0);
+    const [userInputs, setUserInputs] = useState<{
+      dotIndex: number,
+      direction: string,
+      dotPosition:{x: number, y: number},
+      crosshairPosition: {x: number, y:number},
+      userDirection: string}[]>([]);
+
     useEffect(() => {
       // set SVG
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const padding = 50;
-      const svg = d3.select(vectorCalibRef.current)
-                    .attr("width", width)
-                    .attr("height", height)
-                    .style("position", "absolute")
-                    .style("z-index", "15");
-      
-      const randomDirection = () => {
-        const directions = ['U', 'D', 'L', 'R'];
-        return directions[Math.floor(Math.random() * directions.length)];
-      };    
-      
-      // Calculate intervals for 4x4 grid
-      const cols = 4;
-      const rows = 4;
-      const intervalX = (width - 2 * padding) / (cols - 1);
-      const intervalY = (height - 2 * padding) / (rows - 1);
+      const generateData = (): DotData[] => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const padding = 50;
 
-      // Generate random vectors
-      const data = [];
-      for (let i = 0; i < cols; i++){
+        // Calculate intervals for 4x4 grid
+        const cols = 4;
+        const rows = 4;
+        const intervalX = (width - 2 * padding) / (cols - 1);
+        const intervalY = (height - 2 * padding) / (rows - 1);
+
+        const newData: DotData[] = [];
+
+        // Generate random vectors
+        for (let i = 0; i < cols; i++){
           for (let j = 0; j < rows; j++){
-              data.push({
+            const directions: Array<'U' | 'D' | 'L' | 'R'> = ['U', 'D', 'L', 'R'];
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+              newData.push({
                   x: i * intervalX + padding,
                   y: j * intervalY + padding,
                   dx: Math.random() * 20 - 10,
                   dy: Math.random() * 20 - 10,
-                  direction: randomDirection(),
+                  direction,
               });
           }
+        }
+        return newData;
+      };
+
+      setData(generateData());
+    }, []); 
+
+    useEffect(() => {
+      if (vectorCalibRef.current && data.length > 0){
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const svg = d3.select(vectorCalibRef.current)
+                      .attr("width", width)
+                      .attr("height", height);
+        svg.selectAll("*").remove();
+          
+
+        svg.selectAll(".dot")
+          .data(data)
+          .enter()
+          .append("circle")
+          .attr("class", "dot")
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y)
+          .attr("r", 10)
+          .style("fill", (d, i) => i === currentDotIndex ? "red" : "blue");
+
+        svg.selectAll(".text")
+          .data(data)
+          .enter()
+          .append("text")
+          .attr("x", d => d.x)
+          .attr("y", d => d.y + 5)
+          .attr("text-anchor", "middle")
+          .text(d => d.direction)
+          .style("fill", "white")
+          .attr("font-size", "12px");
       }
+    }, [data, currentDotIndex]);
 
-      // Draw vector field
-      svg.selectAll(".vector")
-         .data(data)
-         .enter()
-         .append("line") // Draw line
-         .attr("x1", d => d.x)
-         .attr("y1", d => d.y)
-         .attr("x2", d => d.x + d.dx)
-         .attr("y2", d => d.y + d.dy)
-         .attr("stroke", "red")
-         .attr("marker-end", "url(#arrow)"); // Add arrow
-      
-      svg.selectAll(".dot")
-        .data(data)
-        .enter()
-        .append("circle")
-        .attr("cx", d => d.x)
-        .attr("cy", d => d.y)
-        .attr("r", 10) // Radius of the dot
-        .style("fill", "blue");
+    useEffect(() => {
+      const handleKeyPress = (event: KeyboardEvent) => {
+        const directionKeys = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
+        const userDirection = directionKeys[event.key as keyof typeof directionKeys];
+        if (userDirection && currentDotIndex !== null) {
+          const currentDot = data[currentDotIndex];
+          
+          setUserInputs(userInputs => [...userInputs, {
+            dotIndex: currentDotIndex,
+            direction: currentDot.direction,
+            dotPosition: {x: currentDot.x, y: currentDot.y},
+            crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
+            userDirection: userDirection,
+          }]);
 
-      // Add text inside dots
-      svg.selectAll(".text")
-        .data(data)
-        .enter()
-        .append("text")
-        .attr("x", d => d.x)
-        .attr("y", d => d.y + 5) // Adjust text position relative to dot
-        .attr("text-anchor", "middle") // Center text
-        .text(d => d.direction)
-        .style("fill", "white")
-        .attr("font-size", "10px");
-      
-        svg.append("defs")
-          .append("marker")
-          .attr("id", "arrow")
-          .attr("viewBox", "0 -5 10 10")
-          .attr("refX", 5)
-          .attr("refY", 0)
-          .attr("markerWidth", 6)
-          .attr("markerHeight", 6)
-          .attr("orient", "auto")
-          .append("path")
-          .attr("d", "M0,-5L10,0L0,5")
-          .attr("fill", "red");
-  }, []);
-    
+          const nextDotIndex = currentDotIndex + 1 < data.length ? currentDotIndex + 1: 0;
+          setCurrentDotIndex(nextDotIndex);
+
+          if (nextDotIndex === null){
+            console.log("Completed");
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyPress);
+      return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [currentDotIndex, data]);
+
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
@@ -484,7 +515,12 @@ function Calibration() {
           cursor: 'crosshair',
         }}
       />
-      <svg ref={vectorCalibRef}></svg>
+      <svg ref={vectorCalibRef} style={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        zIndex: 16
+      }}></svg>
       <Webcam 
         ref={webcamRef}
           style={{
