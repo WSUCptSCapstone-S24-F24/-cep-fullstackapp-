@@ -62,6 +62,16 @@ function Calibration() {
       direction: 'U' | 'D' | 'L' | 'R';
     }
 
+    interface VectorData {
+      dotIndex: number;
+      direction: string;
+      dotPosition: {x: number, y: number};
+      crosshairPosition: {x: number, y: number};
+      userDirection: string;
+      dx: number;
+      dy: number;
+    }
+
     const [data, setData] = useState<DotData[]>([]);
 
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
@@ -100,7 +110,7 @@ function Calibration() {
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
 
 
-    const [currentDotIndex, setCurrentDotIndex] = useState<number>(0);
+    const [currentDotIndex, setCurrentDotIndex] = useState<number | null>(0);
     const [userInputs, setUserInputs] = useState<{
       dotIndex: number,
       direction: string,
@@ -194,11 +204,21 @@ function Calibration() {
               userDirection: userDirection,
             }]);
   
-            const nextDotIndex = currentDotIndex + 1 < data.length ? currentDotIndex + 1: 0;
-            setCurrentDotIndex(nextDotIndex);
+            
   
-            if (nextDotIndex === null){
-              console.log("Completed");
+            if (currentDotIndex + 1 < data.length){
+              setCurrentDotIndex(currentDotIndex + 1);
+            }
+            else{
+              const vectors : VectorData[] = userInputs.map(input => {
+                const dx = input.crosshairPosition.x - input.dotPosition.x;
+                const dy = input.crosshairPosition.y - input.dotPosition.y;
+
+                return { ...input, dx, dy};
+              });
+
+              
+              drawVectorField(vectors);
             }
           }
         } 
@@ -206,8 +226,39 @@ function Calibration() {
 
       window.addEventListener('keydown', handleKeyPress);
       return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentDotIndex, data]);
+    }, [currentDotIndex, data, userInputs]);
 
+    const drawVectorField = (vectors : VectorData[]) => {
+      const svg = d3.select(vectorCalibRef.current); // Assuming vectorCalibRef is your SVG ref
+      svg.selectAll("*").remove(); // Clear previous SVG contents
+    
+      // Define arrow markers for the vector field
+      svg.append("defs").selectAll("marker")
+        .data(["arrow"])
+        .enter().append("marker")
+        .attr("id", d => d)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15) // Controls the distance between the arrowhead and the dot
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("fill", "red")
+        .attr("d", "M0,-5L10,0L0,5");
+    
+      // Draw vectors as lines
+      svg.selectAll(".vector")
+        .data(vectors)
+        .enter().append("line")
+        .attr("class", "vector")
+        .attr("x1", d => d.dotPosition.x)
+        .attr("y1", d => d.dotPosition.y)
+        .attr("x2", d => d.dotPosition.x + d.dx)
+        .attr("y2", d => d.dotPosition.y + d.dy)
+        .attr("stroke", "black")
+        .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
+    };
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
@@ -523,7 +574,7 @@ function Calibration() {
         position: "absolute",
         width: "100%",
         height: "100%",
-        zIndex: 16
+        zIndex: 15
       }}></svg>
       <Webcam 
         ref={webcamRef}
