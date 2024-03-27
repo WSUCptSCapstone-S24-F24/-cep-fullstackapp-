@@ -180,11 +180,12 @@ function Calibration() {
       const handleKeyPress = (event: KeyboardEvent) => {
         const directionKeys = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
         const userDirection = directionKeys[event.key as keyof typeof directionKeys];
-        if (userDirection){
-          event.preventDefault();
-          if (currentDotIndex !== null) {
-            const currentDot = data[currentDotIndex];
-            
+        if (userDirection && currentDotIndex !== null){
+          event.preventDefault(); // Prevents arrow keys from moving the screen (scroll)
+
+          const currentDot = data[currentDotIndex];
+          
+          if (userDirection === currentDot.direction){
             setUserInputs(userInputs => [...userInputs, {
               dotIndex: currentDotIndex,
               direction: currentDot.direction,
