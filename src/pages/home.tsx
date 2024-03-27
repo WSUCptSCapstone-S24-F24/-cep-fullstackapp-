@@ -6,19 +6,31 @@ function Home() {
 
     useEffect(() => {
         // set SVG
-        const width = 500;
-        const height = 500;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
         const svg = d3.select(ref.current)
                       .attr("width", width)
                       .attr("height", height);
+        
+        
+        // Calculate intervals for 4x4 grid
+        const cols = 4;
+        const rows = 4;
+        const intervalX = width / (cols - 1);
+        const intervalY = height / (rows - 1);
 
         // Generate random vectors
-        const data = Array.from({ length: 30 }, (_, i) => ({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            dx: Math.random() * 20 - 10, // X vector component
-            dy: Math.random() * 20 - 10, // Y vector component
-        }));
+        const data = [];
+        for (let i = 0; i < cols; i++){
+            for (let j = 0; j < rows; j++){
+                data.push({
+                    x: i * intervalX,
+                    y: j * intervalY,
+                    dx: Math.random() * 20 - 10,
+                    dy: Math.random() * 20 - 10,
+                });
+            }
+        }
 
         // Draw vector field
         svg.selectAll(".vector")
