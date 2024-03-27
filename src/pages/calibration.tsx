@@ -180,24 +180,27 @@ function Calibration() {
       const handleKeyPress = (event: KeyboardEvent) => {
         const directionKeys = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
         const userDirection = directionKeys[event.key as keyof typeof directionKeys];
-        if (userDirection && currentDotIndex !== null) {
-          const currentDot = data[currentDotIndex];
-          
-          setUserInputs(userInputs => [...userInputs, {
-            dotIndex: currentDotIndex,
-            direction: currentDot.direction,
-            dotPosition: {x: currentDot.x, y: currentDot.y},
-            crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
-            userDirection: userDirection,
-          }]);
-
-          const nextDotIndex = currentDotIndex + 1 < data.length ? currentDotIndex + 1: 0;
-          setCurrentDotIndex(nextDotIndex);
-
-          if (nextDotIndex === null){
-            console.log("Completed");
+        if (userDirection){
+          event.preventDefault();
+          if (currentDotIndex !== null) {
+            const currentDot = data[currentDotIndex];
+            
+            setUserInputs(userInputs => [...userInputs, {
+              dotIndex: currentDotIndex,
+              direction: currentDot.direction,
+              dotPosition: {x: currentDot.x, y: currentDot.y},
+              crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
+              userDirection: userDirection,
+            }]);
+  
+            const nextDotIndex = currentDotIndex + 1 < data.length ? currentDotIndex + 1: 0;
+            setCurrentDotIndex(nextDotIndex);
+  
+            if (nextDotIndex === null){
+              console.log("Completed");
+            }
           }
-        }
+        } 
       };
 
       window.addEventListener('keydown', handleKeyPress);
