@@ -89,30 +89,39 @@ function Calibration() {
 
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
 
+
     useEffect(() => {
       // set SVG
       const width = window.innerWidth;
       const height = window.innerHeight;
+      const padding = 50;
       const svg = d3.select(vectorCalibRef.current)
                     .attr("width", width)
-                    .attr("height", height);
+                    .attr("height", height)
+                    .style("position", "absolute")
+                    .style("z-index", "15");
       
+      const randomDirection = () => {
+        const directions = ['U', 'D', 'L', 'R'];
+        return directions[Math.floor(Math.random() * directions.length)];
+      };    
       
       // Calculate intervals for 4x4 grid
       const cols = 4;
       const rows = 4;
-      const intervalX = width / (cols - 1);
-      const intervalY = height / (rows - 1);
+      const intervalX = (width - 2 * padding) / (cols - 1);
+      const intervalY = (height - 2 * padding) / (rows - 1);
 
       // Generate random vectors
       const data = [];
       for (let i = 0; i < cols; i++){
           for (let j = 0; j < rows; j++){
               data.push({
-                  x: i * intervalX,
-                  y: j * intervalY,
+                  x: i * intervalX + padding,
+                  y: j * intervalY + padding,
                   dx: Math.random() * 20 - 10,
                   dy: Math.random() * 20 - 10,
+                  direction: randomDirection(),
               });
           }
       }
@@ -128,19 +137,40 @@ function Calibration() {
          .attr("y2", d => d.y + d.dy)
          .attr("stroke", "red")
          .attr("marker-end", "url(#arrow)"); // Add arrow
-      // Def of arrow
-      svg.append("defs")
-         .append("marker")
-         .attr("id", "arrow")
-         .attr("viewBox", "0 -5 10 10")
-         .attr("refX", 5)
-         .attr("refY", 0)
-         .attr("markerWidth", 6)
-         .attr("markerHeight", 6)
-         .attr("orient", "auto")
-         .append("path")
-         .attr("d", "M0,-5L10,0L0,5")
-         .attr("fill", "red");
+      
+      svg.selectAll(".dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("r", 10) // Radius of the dot
+        .style("fill", "blue");
+
+      // Add text inside dots
+      svg.selectAll(".text")
+        .data(data)
+        .enter()
+        .append("text")
+        .attr("x", d => d.x)
+        .attr("y", d => d.y + 5) // Adjust text position relative to dot
+        .attr("text-anchor", "middle") // Center text
+        .text(d => d.direction)
+        .style("fill", "white")
+        .attr("font-size", "10px");
+      
+        svg.append("defs")
+          .append("marker")
+          .attr("id", "arrow")
+          .attr("viewBox", "0 -5 10 10")
+          .attr("refX", 5)
+          .attr("refY", 0)
+          .attr("markerWidth", 6)
+          .attr("markerHeight", 6)
+          .attr("orient", "auto")
+          .append("path")
+          .attr("d", "M0,-5L10,0L0,5")
+          .attr("fill", "red");
   }, []);
     
 
@@ -262,10 +292,10 @@ function Calibration() {
         if (ctx){
           //ctx.clearRect(0,0, canvas.width, canvas.height);
 
-          ctx.beginPath();
+          /*ctx.beginPath();
           ctx.arc(x,y,5,0,2 * Math.PI);
           ctx.fillStyle = 'red';
-          ctx.fill();
+          ctx.fill(); Currently hiding the red dots on click*/
         }
       }
     };
@@ -450,7 +480,7 @@ function Calibration() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 13, 
+          zIndex: 16, 
           cursor: 'crosshair',
         }}
       />
