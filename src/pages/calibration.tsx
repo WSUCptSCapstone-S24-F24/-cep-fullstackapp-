@@ -120,7 +120,7 @@ function Calibration() {
       userDirection: string}[]>([]);
 
     useEffect(() => {
-      // set SVG
+      // Create initial data set
       const generateData = (): DotData[] => {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -134,7 +134,7 @@ function Calibration() {
 
         const newData: DotData[] = [];
 
-        // Generate random vectors
+        // Generate dots evenly spaced in the screen with a random direction
         for (let i = 0; i < cols; i++){
           for (let j = 0; j < rows; j++){
             const directions: Array<'U' | 'D' | 'L' | 'R'> = ['U', 'D', 'L', 'R'];
@@ -151,10 +151,12 @@ function Calibration() {
         return newData;
       };
 
+      // Set our global data to initial data we generate
       setData(generateData());
     }, []); 
 
     useEffect(() => {
+      // Draw all of our dots and the letter inside each dot
       if (vectorCalibRef.current && data.length > 0){
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -171,7 +173,7 @@ function Calibration() {
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
           .attr("r", 10)
-          .style("fill", (d, i) => i === currentDotIndex ? "red" : "blue");
+          .style("fill", (d, i) => i === currentDotIndex ? "red" : "blue"); // Dot will change to red if we are selected on this dot. (currentIndex)
 
         svg.selectAll(".text")
           .data(data)
@@ -187,15 +189,16 @@ function Calibration() {
     }, [data, currentDotIndex]);
 
     useEffect(() => {
+      // Handles key press
       const handleKeyPress = (event: KeyboardEvent) => {
         const directionKeys = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
         const userDirection = directionKeys[event.key as keyof typeof directionKeys];
         if (userDirection && currentDotIndex !== null){
-          event.preventDefault(); // Prevents arrow keys from moving the screen (scroll)
+          event.preventDefault(); // Prevents arrow keys from moving the screen when pressed (scroll)
 
           const currentDot = data[currentDotIndex];
           
-          if (userDirection === currentDot.direction){
+          if (userDirection === currentDot.direction){  // Only move onto the next dot if we select the correct input
             setUserInputs(userInputs => [...userInputs, {
               dotIndex: currentDotIndex,
               direction: currentDot.direction,
@@ -204,18 +207,18 @@ function Calibration() {
               userDirection: userDirection,
             }]);
   
-            if (currentDotIndex + 1 < data.length){
+            if (currentDotIndex + 1 < data.length){ // Move to next dot, unless we are at the end of the dot list
               setCurrentDotIndex(currentDotIndex + 1);
             }
             else{
-              const vectors : VectorData[] = userInputs.map(input => {
-                const dx = input.crosshairPosition.x - input.dotPosition.x;
+              const vectors : VectorData[] = userInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
+                const dx = input.crosshairPosition.x - input.dotPosition.x;  // Saves it to a vector array
                 const dy = input.crosshairPosition.y - input.dotPosition.y;
 
                 return { ...input, dx, dy};
               });
        
-              drawVectorField(vectors);
+              drawVectorField(vectors); 
             }
           }
         } 
@@ -226,23 +229,23 @@ function Calibration() {
     }, [currentDotIndex, data, userInputs]);
 
     const drawVectorField = (vectors : VectorData[]) => {
-      const svg = d3.select(vectorCalibRef.current); // Assuming vectorCalibRef is your SVG ref
+      const svg = d3.select(vectorCalibRef.current); 
       svg.selectAll("*").remove(); // Clear previous SVG contents
       
       const maxVectorLength = 50;
 
-      const magnitudes = vectors.map(vector => {
+      const magnitudes = vectors.map(vector => {       // Gets the magnitude of each vector
         return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
       });
       const maxMagnitude = Math.max(...magnitudes);
 
-      // Define arrow markers for the vector field
+      // Draws the vector field
       svg.append("defs").selectAll("marker")
         .data(["arrow"])
         .enter().append("marker")
         .attr("id", d => d)
         .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 6) // Controls the distance between the arrowhead and the dot
+        .attr("refX", 6)
         .attr("refY", 0)
         .attr("markerWidth", 6)
         .attr("markerHeight", 6)
