@@ -70,6 +70,7 @@ function Calibration() {
       userDirection: string;
       dx: number;
       dy: number;
+      magnitude?: number;
     }
 
     const [data, setData] = useState<DotData[]>([]);
@@ -162,7 +163,6 @@ function Calibration() {
                       .attr("height", height);
         svg.selectAll("*").remove();
           
-
         svg.selectAll(".dot")
           .data(data)
           .enter()
@@ -204,8 +204,6 @@ function Calibration() {
               userDirection: userDirection,
             }]);
   
-            
-  
             if (currentDotIndex + 1 < data.length){
               setCurrentDotIndex(currentDotIndex + 1);
             }
@@ -216,8 +214,7 @@ function Calibration() {
 
                 return { ...input, dx, dy};
               });
-
-              
+       
               drawVectorField(vectors);
             }
           }
@@ -231,14 +228,21 @@ function Calibration() {
     const drawVectorField = (vectors : VectorData[]) => {
       const svg = d3.select(vectorCalibRef.current); // Assuming vectorCalibRef is your SVG ref
       svg.selectAll("*").remove(); // Clear previous SVG contents
-    
+      
+      const maxVectorLength = 50;
+
+      const magnitudes = vectors.map(vector => {
+        return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
+      });
+      const maxMagnitude = Math.max(...magnitudes);
+
       // Define arrow markers for the vector field
       svg.append("defs").selectAll("marker")
         .data(["arrow"])
         .enter().append("marker")
         .attr("id", d => d)
         .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15) // Controls the distance between the arrowhead and the dot
+        .attr("refX", 6) // Controls the distance between the arrowhead and the dot
         .attr("refY", 0)
         .attr("markerWidth", 6)
         .attr("markerHeight", 6)
@@ -254,9 +258,10 @@ function Calibration() {
         .attr("class", "vector")
         .attr("x1", d => d.dotPosition.x)
         .attr("y1", d => d.dotPosition.y)
-        .attr("x2", d => d.dotPosition.x + d.dx)
-        .attr("y2", d => d.dotPosition.y + d.dy)
-        .attr("stroke", "black")
+        .attr("x2", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
+        .attr("y2", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+        .attr("stroke", "red")
+        .attr("stroke-width", 1.5)
         .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
     };
 
