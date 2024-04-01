@@ -324,19 +324,19 @@ function Calibration() {
 
       setLeftIrisCoordinate({
 
-        // x: leftIrisCoord.x,
-        // y: leftIrisCoord.y
+        x: leftIrisCoord.x,
+        y: leftIrisCoord.y
 
-        x: filteredLeftX,
-        y: filteredLeftY
+        // x: filteredLeftX,
+        // y: filteredLeftY
       });
 
       setRightIrisCoordinate({
-        // x: rightIrisCoord.x,
-        // y: rightIrisCoord.y
+        x: rightIrisCoord.x,
+        y: rightIrisCoord.y
         
-        x: filteredRightX,
-        y: filteredRightY
+        // x: filteredRightX,
+        // y: filteredRightY
       });
     }
 
