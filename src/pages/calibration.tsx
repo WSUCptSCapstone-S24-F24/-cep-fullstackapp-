@@ -201,19 +201,24 @@ function Calibration() {
           const currentDot = data[currentDotIndex];
           
           if (userDirection === currentDot.direction){  // Only move onto the next dot if we select the correct input
-            setUserInputs(userInputs => [...userInputs, {
+            const newUserInput = {
               dotIndex: currentDotIndex,
               direction: currentDot.direction,
               dotPosition: {x: currentDot.x, y: currentDot.y},
               crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
               userDirection: userDirection,
-            }]);
+            };
   
             if (currentDotIndex + 1 < data.length){ // Move to next dot, unless we are at the end of the dot list
+              setUserInputs(userInputs => [...userInputs, newUserInput]);
               setCurrentDotIndex(currentDotIndex + 1);
             }
             else{
-              const vectors : VectorData[] = userInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
+              setUserInputs(userInputs => [...userInputs, newUserInput]);
+
+              const allUserInputs = [...userInputs, newUserInput];           // Ensures we get all of the data. Earlier solutions were leaving out last data point
+
+              const vectors : VectorData[] = allUserInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
                 const dx = input.crosshairPosition.x - input.dotPosition.x;  // Saves it to a vector array
                 const dy = input.crosshairPosition.y - input.dotPosition.y;
 
@@ -269,6 +274,7 @@ function Calibration() {
         .attr("stroke-width", 1.5)
         .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
       
+        // Draws the magnitudes. Would be better to print a better error calculation rather than magnitudes
         svg.selectAll(".vector-text")
           .data(vectors)
           .enter().append("text")
