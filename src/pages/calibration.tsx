@@ -268,6 +268,18 @@ function Calibration() {
         .attr("stroke", "red")
         .attr("stroke-width", 1.5)
         .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
+      
+        svg.selectAll(".vector-text")
+          .data(vectors)
+          .enter().append("text")
+          .attr("class", "vector-text")
+          .attr("x", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
+          .attr("y", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+          .attr("dx", 5)
+          .attr("dy", 5)
+          .text((d, i) => magnitudes[i].toFixed(2))
+          .attr("font-size", "10px")
+          .attr("fill", "black")
     };
 
     // This function will get the line of best fit between all of our points
