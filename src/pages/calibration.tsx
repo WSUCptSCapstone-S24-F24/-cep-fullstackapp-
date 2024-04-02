@@ -2,12 +2,11 @@ import { FaceMesh } from '@mediapipe/face_mesh'
 import * as Facemesh from '@mediapipe/face_mesh'
 import * as cam from '@mediapipe/camera_utils'
 import Webcam from 'react-webcam'
-import {useRef, useEffect, useState} from 'react'
+import {useRef, useEffect, useState, useContext} from 'react'
 import React from 'react'
-import ReactDOM from 'react-dom'
-import VirtualBox from '../virtual_box'
+import BoxContainer from '../box_container'
 import {OneEuroFilter} from '1eurofilter'
-// import { OneEuroFilter } from './OneEuroFilter'
+import * as d3 from "d3";
 
 
 declare global {
@@ -26,6 +25,8 @@ function Calibration() {
     const leftEyeRef = useRef<any>(null);
     const rightEyeRef = useRef<any>(null);
     const headRef = useRef<any>(null);
+    const vectorCalibRef = useRef<SVGSVGElement>(null);
+
 
     const connect = window.drawConnectors;
     var camera = null;
@@ -40,6 +41,9 @@ function Calibration() {
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
+    // --Global target practice mode
+    const [showBoxContainer, setShowBoxContainer] = useState(false);
+
 
 
     // Package of points that take up one slot in our calibrationPoints array
@@ -49,6 +53,27 @@ function Calibration() {
       screenX: number,
       screenY: number;
     }
+
+    interface DotData {
+      x: number;
+      y: number;
+      dx: number;
+      dy: number;
+      direction: 'U' | 'D' | 'L' | 'R';
+    }
+
+    interface VectorData {
+      dotIndex: number;
+      direction: string;
+      dotPosition: {x: number, y: number};
+      crosshairPosition: {x: number, y: number};
+      userDirection: string;
+      dx: number;
+      dy: number;
+      magnitude?: number;
+    }
+
+    const [data, setData] = useState<DotData[]>([]);
 
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
@@ -84,6 +109,164 @@ function Calibration() {
       }
 
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
+
+
+    const [currentDotIndex, setCurrentDotIndex] = useState<number | null>(0);
+    const [userInputs, setUserInputs] = useState<{
+      dotIndex: number,
+      direction: string,
+      dotPosition:{x: number, y: number},
+      crosshairPosition: {x: number, y:number},
+      userDirection: string}[]>([]);
+
+    useEffect(() => {
+      // Create initial data set
+      const generateData = (): DotData[] => {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const padding = 50;
+
+        // Calculate intervals for 4x4 grid
+        const cols = 4;
+        const rows = 4;
+        const intervalX = (width - 2 * padding) / (cols - 1);
+        const intervalY = (height - 2 * padding) / (rows - 1);
+
+        const newData: DotData[] = [];
+
+        // Generate dots evenly spaced in the screen with a random direction
+        for (let i = 0; i < cols; i++){
+          for (let j = 0; j < rows; j++){
+            const directions: Array<'U' | 'D' | 'L' | 'R'> = ['U', 'D', 'L', 'R'];
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+              newData.push({
+                  x: i * intervalX + padding,
+                  y: j * intervalY + padding,
+                  dx: Math.random() * 20 - 10,
+                  dy: Math.random() * 20 - 10,
+                  direction,
+              });
+          }
+        }
+        return newData;
+      };
+
+      // Set our global data to initial data we generate
+      setData(generateData());
+    }, []); 
+
+    useEffect(() => {
+      // Draw all of our dots and the letter inside each dot
+      if (vectorCalibRef.current && data.length > 0){
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const svg = d3.select(vectorCalibRef.current)
+                      .attr("width", width)
+                      .attr("height", height);
+        svg.selectAll("*").remove();
+          
+        svg.selectAll(".dot")
+          .data(data)
+          .enter()
+          .append("circle")
+          .attr("class", "dot")
+          .attr("cx", d => d.x)
+          .attr("cy", d => d.y)
+          .attr("r", 10)
+          .style("fill", (d, i) => i === currentDotIndex ? "red" : "blue"); // Dot will change to red if we are selected on this dot. (currentIndex)
+
+        svg.selectAll(".text")
+          .data(data)
+          .enter()
+          .append("text")
+          .attr("x", d => d.x)
+          .attr("y", d => d.y + 5)
+          .attr("text-anchor", "middle")
+          .text(d => d.direction)
+          .style("fill", "white")
+          .attr("font-size", "12px");
+      }
+    }, [data, currentDotIndex]);
+
+    useEffect(() => {
+      // Handles key press
+      const handleKeyPress = (event: KeyboardEvent) => {
+        const directionKeys = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
+        const userDirection = directionKeys[event.key as keyof typeof directionKeys];
+        if (userDirection && currentDotIndex !== null){
+          event.preventDefault(); // Prevents arrow keys from moving the screen when pressed (scroll)
+
+          const currentDot = data[currentDotIndex];
+          
+          if (userDirection === currentDot.direction){  // Only move onto the next dot if we select the correct input
+            setUserInputs(userInputs => [...userInputs, {
+              dotIndex: currentDotIndex,
+              direction: currentDot.direction,
+              dotPosition: {x: currentDot.x, y: currentDot.y},
+              crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
+              userDirection: userDirection,
+            }]);
+  
+            if (currentDotIndex + 1 < data.length){ // Move to next dot, unless we are at the end of the dot list
+              setCurrentDotIndex(currentDotIndex + 1);
+            }
+            else{
+              const vectors : VectorData[] = userInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
+                const dx = input.crosshairPosition.x - input.dotPosition.x;  // Saves it to a vector array
+                const dy = input.crosshairPosition.y - input.dotPosition.y;
+
+                return { ...input, dx, dy};
+              });
+       
+              drawVectorField(vectors); 
+            }
+          }
+        } 
+      };
+
+      window.addEventListener('keydown', handleKeyPress);
+      return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [currentDotIndex, data, userInputs]);
+
+    const drawVectorField = (vectors : VectorData[]) => {
+      const svg = d3.select(vectorCalibRef.current); 
+      svg.selectAll("*").remove(); // Clear previous SVG contents
+      
+      const maxVectorLength = 50;
+
+      const magnitudes = vectors.map(vector => {       // Gets the magnitude of each vector
+        return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
+      });
+      const maxMagnitude = Math.max(...magnitudes);
+
+      // Draws the vector field
+      svg.append("defs").selectAll("marker")
+        .data(["arrow"])
+        .enter().append("marker")
+        .attr("id", d => d)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 6)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("fill", "red")
+        .attr("d", "M0,-5L10,0L0,5");
+    
+      // Draw vectors as lines
+      svg.selectAll(".vector")
+        .data(vectors)
+        .enter().append("line")
+        .attr("class", "vector")
+        .attr("x1", d => d.dotPosition.x)
+        .attr("y1", d => d.dotPosition.y)
+        .attr("x2", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
+        .attr("y2", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+        .attr("stroke", "red")
+        .attr("stroke-width", 1.5)
+        .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
+    };
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
@@ -141,19 +324,19 @@ function Calibration() {
 
       setLeftIrisCoordinate({
 
-        // x: leftIrisCoord.x,
-        // y: leftIrisCoord.y
+        x: leftIrisCoord.x,
+        y: leftIrisCoord.y
 
-        x: filteredLeftX,
-        y: filteredLeftY
+        // x: filteredLeftX,
+        // y: filteredLeftY
       });
 
       setRightIrisCoordinate({
-        // x: rightIrisCoord.x,
-        // y: rightIrisCoord.y
+        x: rightIrisCoord.x,
+        y: rightIrisCoord.y
         
-        x: filteredRightX,
-        y: filteredRightY
+        // x: filteredRightX,
+        // y: filteredRightY
       });
     }
 
@@ -203,10 +386,10 @@ function Calibration() {
         if (ctx){
           //ctx.clearRect(0,0, canvas.width, canvas.height);
 
-          ctx.beginPath();
+          /*ctx.beginPath();
           ctx.arc(x,y,5,0,2 * Math.PI);
           ctx.fillStyle = 'red';
-          ctx.fill();
+          ctx.fill(); Currently hiding the red dots on click*/
         }
       }
     };
@@ -363,6 +546,7 @@ function Calibration() {
       
   return (
     <div>
+      
       <canvas
         ref={crosshairCanvasRef}
         width="1920"
@@ -390,11 +574,16 @@ function Calibration() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 13, 
+          zIndex: 16, 
           cursor: 'crosshair',
         }}
       />
-
+      <svg ref={vectorCalibRef} style={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        zIndex: 15
+      }}></svg>
       <Webcam 
         ref={webcamRef}
           style={{
@@ -424,11 +613,14 @@ function Calibration() {
             height:480
       }}
       />
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', height: '100vh' }} >
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='left box' height='90vh' width='30vw'/>
-          <VirtualBox crosshairPosition={predictedCrosshairPosition} name='right box' height='90vh' width='30vw' left='725px'/>
-        </div>
-        
+      <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
+        <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
+          {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
+        </button>
+      </div>
+      <div>
+        {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
+      </div>      
     </div>
   );
 }
