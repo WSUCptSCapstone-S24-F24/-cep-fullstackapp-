@@ -173,7 +173,8 @@ function Calibration() {
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
           .attr("r", 10)
-          .style("fill", (d, i) => i === currentDotIndex ? "red" : "blue"); // Dot will change to red if we are selected on this dot. (currentIndex)
+          .style("fill", (d, i) => i === currentDotIndex ? "blue" : "none") // Dot will change to red if we are selected on this dot. (currentIndex)
+          .style("opacity", (d, i) => i === currentDotIndex ? 1 : 0);
 
         svg.selectAll(".text")
           .data(data)
@@ -184,7 +185,8 @@ function Calibration() {
           .attr("text-anchor", "middle")
           .text(d => d.direction)
           .style("fill", "white")
-          .attr("font-size", "12px");
+          .attr("font-size", "12px")
+          .style("opacity", (d, i) => i === currentDotIndex ? 1 : 0);
       }
     }, [data, currentDotIndex]);
 
