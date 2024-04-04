@@ -240,42 +240,55 @@ function Calibration() {
       svg.selectAll("*").remove(); // Clear previous SVG contents
       
       const maxVectorLength = 50;
-
+  
       const magnitudes = vectors.map(vector => {       // Gets the magnitude of each vector
-        return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
+          return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
       });
       const maxMagnitude = Math.max(...magnitudes);
+      const minMagnitude = Math.min(...magnitudes);
+      const sumOfMagnitudes = magnitudes.reduce((acc, val) => acc + val, 0); // Calculate sum of magnitudes
+      const averageMagnitude = sumOfMagnitudes / magnitudes.length; // Calculate average magnitude
+      
+      // Calculate mean absolute error
+      const absoluteErrors = magnitudes.map(magnitude => Math.abs(magnitude - averageMagnitude));
+      const meanAbsoluteError = absoluteErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
 
+      // Calculate root mean square error
+      const squaredErrors = magnitudes.map(magnitude => (magnitude - averageMagnitude) ** 2);
+      const meanSquaredError = squaredErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
+      const rootMeanSquaredError = Math.sqrt(meanSquaredError);
+
+  
       // Draws the vector field
       svg.append("defs").selectAll("marker")
-        .data(["arrow"])
-        .enter().append("marker")
-        .attr("id", d => d)
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 6)
-        .attr("refY", 0)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-        .append("path")
-        .attr("fill", "red")
-        .attr("d", "M0,-5L10,0L0,5");
-    
+          .data(["arrow"])
+          .enter().append("marker")
+          .attr("id", d => d)
+          .attr("viewBox", "0 -5 10 10")
+          .attr("refX", 6)
+          .attr("refY", 0)
+          .attr("markerWidth", 6)
+          .attr("markerHeight", 6)
+          .attr("orient", "auto")
+          .append("path")
+          .attr("fill", "red")
+          .attr("d", "M0,-5L10,0L0,5");
+  
       // Draw vectors as lines
       svg.selectAll(".vector")
-        .data(vectors)
-        .enter().append("line")
-        .attr("class", "vector")
-        .attr("x1", d => d.dotPosition.x)
-        .attr("y1", d => d.dotPosition.y)
-        .attr("x2", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
-        .attr("y2", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
-        .attr("stroke", "red")
-        .attr("stroke-width", 1.5)
-        .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
-      
-        // Draws the magnitudes. Would be better to print a better error calculation rather than magnitudes
-        svg.selectAll(".vector-text")
+          .data(vectors)
+          .enter().append("line")
+          .attr("class", "vector")
+          .attr("x1", d => d.dotPosition.x)
+          .attr("y1", d => d.dotPosition.y)
+          .attr("x2", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
+          .attr("y2", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+          .attr("stroke", "red")
+          .attr("stroke-width", 1.5)
+          .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
+  
+      // Draws the magnitudes
+      svg.selectAll(".vector-text")
           .data(vectors)
           .enter().append("text")
           .attr("class", "vector-text")
@@ -285,8 +298,57 @@ function Calibration() {
           .attr("dy", 5)
           .text((d, i) => magnitudes[i].toFixed(2))
           .attr("font-size", "10px")
-          .attr("fill", "black")
-    };
+          .attr("fill", "black");
+  
+      // Display sum of magnitudes
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 20)
+          .text("Sum of Magnitudes: " + sumOfMagnitudes.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+  
+      // Display max magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 40)
+          .text("Max Magnitude: " + maxMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+
+      // Display min magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 60)
+          .text("Min Magnitude: " + minMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+  
+      // Display average magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 80)
+          .text("Average Magnitude: " + averageMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+
+      // Display mean absolute error
+      svg.append("text")
+      .attr("x", 10)
+      .attr("y", 100)
+      .text("Mean Absolute Error: " + meanAbsoluteError.toFixed(2))
+      .attr("font-size", "12px")
+      .attr("fill", "black");
+
+       // Display root mean square error
+      svg.append("text")
+      .attr("x", 10)
+      .attr("y", 120)
+      .text("Root Mean Square Error: " + rootMeanSquaredError.toFixed(2))
+      .attr("font-size", "12px")
+      .attr("fill", "black");
+  };
+  
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
