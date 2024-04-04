@@ -205,7 +205,7 @@ function Calibration() {
               dotIndex: currentDotIndex,
               direction: currentDot.direction,
               dotPosition: {x: currentDot.x, y: currentDot.y},
-              crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
+              crosshairPosition: predictedCrosshairPosition,
               userDirection: userDirection,
             };
   
@@ -233,7 +233,7 @@ function Calibration() {
 
       window.addEventListener('keydown', handleKeyPress);
       return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentDotIndex, data, userInputs]);
+    }, [currentDotIndex, data, userInputs, predictedCrosshairPosition]);
 
     const drawVectorField = (vectors : VectorData[]) => {
       const svg = d3.select(vectorCalibRef.current); 
@@ -281,8 +281,8 @@ function Calibration() {
           .attr("class", "vector")
           .attr("x1", d => d.dotPosition.x)
           .attr("y1", d => d.dotPosition.y)
-          .attr("x2", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
-          .attr("y2", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+          .attr("x2", d => d.dotPosition.x + d.dx)
+          .attr("y2", d => d.dotPosition.y + d.dy)
           .attr("stroke", "red")
           .attr("stroke-width", 1.5)
           .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
