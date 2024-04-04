@@ -173,7 +173,8 @@ function Calibration() {
           .attr("cx", d => d.x)
           .attr("cy", d => d.y)
           .attr("r", 10)
-          .style("fill", (d, i) => i === currentDotIndex ? "red" : "blue"); // Dot will change to red if we are selected on this dot. (currentIndex)
+          .style("fill", (d, i) => i === currentDotIndex ? "blue" : "none") // Dot will change to red if we are selected on this dot. (currentIndex)
+          .style("opacity", (d, i) => i === currentDotIndex ? 1 : 0);
 
         svg.selectAll(".text")
           .data(data)
@@ -184,7 +185,8 @@ function Calibration() {
           .attr("text-anchor", "middle")
           .text(d => d.direction)
           .style("fill", "white")
-          .attr("font-size", "12px");
+          .attr("font-size", "12px")
+          .style("opacity", (d, i) => i === currentDotIndex ? 1 : 0);
       }
     }, [data, currentDotIndex]);
 
@@ -199,19 +201,24 @@ function Calibration() {
           const currentDot = data[currentDotIndex];
           
           if (userDirection === currentDot.direction){  // Only move onto the next dot if we select the correct input
-            setUserInputs(userInputs => [...userInputs, {
+            const newUserInput = {
               dotIndex: currentDotIndex,
               direction: currentDot.direction,
               dotPosition: {x: currentDot.x, y: currentDot.y},
-              crosshairPosition: {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y},
+              crosshairPosition: predictedCrosshairPosition,
               userDirection: userDirection,
-            }]);
+            };
   
             if (currentDotIndex + 1 < data.length){ // Move to next dot, unless we are at the end of the dot list
+              setUserInputs(userInputs => [...userInputs, newUserInput]);
               setCurrentDotIndex(currentDotIndex + 1);
             }
             else{
-              const vectors : VectorData[] = userInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
+              setUserInputs(userInputs => [...userInputs, newUserInput]);
+
+              const allUserInputs = [...userInputs, newUserInput];           // Ensures we get all of the data. Earlier solutions were leaving out last data point
+
+              const vectors : VectorData[] = allUserInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
                 const dx = input.crosshairPosition.x - input.dotPosition.x;  // Saves it to a vector array
                 const dy = input.crosshairPosition.y - input.dotPosition.y;
 
@@ -226,47 +233,122 @@ function Calibration() {
 
       window.addEventListener('keydown', handleKeyPress);
       return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentDotIndex, data, userInputs]);
+    }, [currentDotIndex, data, userInputs, predictedCrosshairPosition]);
 
     const drawVectorField = (vectors : VectorData[]) => {
       const svg = d3.select(vectorCalibRef.current); 
       svg.selectAll("*").remove(); // Clear previous SVG contents
       
       const maxVectorLength = 50;
-
+  
       const magnitudes = vectors.map(vector => {       // Gets the magnitude of each vector
-        return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
+          return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
       });
       const maxMagnitude = Math.max(...magnitudes);
+      const minMagnitude = Math.min(...magnitudes);
+      const sumOfMagnitudes = magnitudes.reduce((acc, val) => acc + val, 0); // Calculate sum of magnitudes
+      const averageMagnitude = sumOfMagnitudes / magnitudes.length; // Calculate average magnitude
+      
+      // Calculate mean absolute error
+      const absoluteErrors = magnitudes.map(magnitude => Math.abs(magnitude - averageMagnitude));
+      const meanAbsoluteError = absoluteErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
 
+      // Calculate root mean square error
+      const squaredErrors = magnitudes.map(magnitude => (magnitude - averageMagnitude) ** 2);
+      const meanSquaredError = squaredErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
+      const rootMeanSquaredError = Math.sqrt(meanSquaredError);
+
+  
       // Draws the vector field
       svg.append("defs").selectAll("marker")
-        .data(["arrow"])
-        .enter().append("marker")
-        .attr("id", d => d)
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 6)
-        .attr("refY", 0)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-        .append("path")
-        .attr("fill", "red")
-        .attr("d", "M0,-5L10,0L0,5");
-    
+          .data(["arrow"])
+          .enter().append("marker")
+          .attr("id", d => d)
+          .attr("viewBox", "0 -5 10 10")
+          .attr("refX", 6)
+          .attr("refY", 0)
+          .attr("markerWidth", 6)
+          .attr("markerHeight", 6)
+          .attr("orient", "auto")
+          .append("path")
+          .attr("fill", "red")
+          .attr("d", "M0,-5L10,0L0,5");
+  
       // Draw vectors as lines
       svg.selectAll(".vector")
-        .data(vectors)
-        .enter().append("line")
-        .attr("class", "vector")
-        .attr("x1", d => d.dotPosition.x)
-        .attr("y1", d => d.dotPosition.y)
-        .attr("x2", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
-        .attr("y2", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
-        .attr("stroke", "red")
-        .attr("stroke-width", 1.5)
-        .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
-    };
+          .data(vectors)
+          .enter().append("line")
+          .attr("class", "vector")
+          .attr("x1", d => d.dotPosition.x)
+          .attr("y1", d => d.dotPosition.y)
+          .attr("x2", d => d.dotPosition.x + d.dx)
+          .attr("y2", d => d.dotPosition.y + d.dy)
+          .attr("stroke", "red")
+          .attr("stroke-width", 1.5)
+          .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
+  
+      // Draws the magnitudes
+      svg.selectAll(".vector-text")
+          .data(vectors)
+          .enter().append("text")
+          .attr("class", "vector-text")
+          .attr("x", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
+          .attr("y", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+          .attr("dx", 5)
+          .attr("dy", 5)
+          .text((d, i) => magnitudes[i].toFixed(2))
+          .attr("font-size", "10px")
+          .attr("fill", "black");
+  
+      // Display sum of magnitudes
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 20)
+          .text("Sum of Magnitudes: " + sumOfMagnitudes.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+  
+      // Display max magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 40)
+          .text("Max Magnitude: " + maxMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+
+      // Display min magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 60)
+          .text("Min Magnitude: " + minMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+  
+      // Display average magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 80)
+          .text("Average Magnitude: " + averageMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+
+      // Display mean absolute error
+      svg.append("text")
+      .attr("x", 10)
+      .attr("y", 100)
+      .text("Mean Absolute Error: " + meanAbsoluteError.toFixed(2))
+      .attr("font-size", "12px")
+      .attr("fill", "black");
+
+       // Display root mean square error
+      svg.append("text")
+      .attr("x", 10)
+      .attr("y", 120)
+      .text("Root Mean Square Error: " + rootMeanSquaredError.toFixed(2))
+      .attr("font-size", "12px")
+      .attr("fill", "black");
+  };
+  
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
