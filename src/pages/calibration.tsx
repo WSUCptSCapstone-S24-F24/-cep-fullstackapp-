@@ -45,6 +45,8 @@ function Calibration() {
     const [showBoxContainer, setShowBoxContainer] = useState(false);
     // --Global stability test mode
     const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
+    const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number; y: number}[]>([]);
+    const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
 
 
 
@@ -394,10 +396,32 @@ function Calibration() {
     }, [showStabilityCenterDot]); // Re-run effect when showStabilityCenterDot changes
 
     useEffect(() => {
+      let frameRequestId: number | null = null;
+      const startTime = performance.now();
+      let isCapturing = false;  // capture crosshair positions for data
+
+      const capturePositions = (timestamp: number) => {
+        if (!isCapturing) return;
+
+        const elapsedTime = timestamp - startTime;
+        if (elapsedTime <= 3000){   // How long we will capture data for. 3000 = 3 seconds
+            const predictedPosition = {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y};
+            setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);
+
+            frameRequestId = requestAnimationFrame(capturePositions);
+        } else{
+          isCapturing = false;
+          console.log("Stability complete...");
+          console.log(stabilityCrosshairPositions.length);
+        }
+      };
+
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.code === "KeyR" && showStabilityCenterDot) {
           console.log("Starting stability sequence...");
-          // Placeholder for starting the stability sequence
+          setStabilityCrosshairPositions([]);
+          isCapturing = true;
+          frameRequestId = requestAnimationFrame(capturePositions);
         }
       };
     
@@ -407,8 +431,11 @@ function Calibration() {
       // Clean up event listener when the component unmounts
       return () => {
         window.removeEventListener("keydown", handleKeyDown);
+        if (frameRequestId !== null){
+          cancelAnimationFrame(frameRequestId);
+        }
       };
-    }, [showStabilityCenterDot]); // This effect depends on center dot, so it updates if center dot changes
+    }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
 
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
