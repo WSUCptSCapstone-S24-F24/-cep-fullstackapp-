@@ -26,6 +26,7 @@ function Calibration() {
     const rightEyeRef = useRef<any>(null);
     const headRef = useRef<any>(null);
     const vectorCalibRef = useRef<SVGSVGElement>(null);
+    const stabilityVectorRef = useRef<SVGSVGElement>(null);
 
 
     const connect = window.drawConnectors;
@@ -47,8 +48,6 @@ function Calibration() {
     const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
     const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number; y: number}[]>([]);
     const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
-
-
 
     // Package of points that take up one slot in our calibrationPoints array
     interface CalibrationPoint{
@@ -355,6 +354,138 @@ function Calibration() {
   };
   
 
+    // STABILITY TEST
+    useEffect(() => {
+      if (showStabilityCenterDot) {
+        const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const radius = 10; // Radius of the circle
+    
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'orange'; 
+            ctx.fill();
+
+            ctx.font = '16px Ariel';
+            ctx.fillStyle = 'orange';
+
+            const text = "Focus on center orange dot and press R to being stability sequence.";
+            const textWidth = ctx.measureText(text).width;
+            const textX = centerX - textWidth / 2;
+            const textY = centerY + radius + 20;
+
+            ctx.fillText(text, textX, textY);
+          }
+        }
+      } else {
+        // Optionally clear the canvas if you want the dot to disappear when toggling the button off
+        const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }, [showStabilityCenterDot]); // Re-run effect when showStabilityCenterDot changes
+
+    const predictedCrosshairPositionRef = useRef(predictedCrosshairPosition);
+
+    useEffect(() => {
+      predictedCrosshairPositionRef.current = predictedCrosshairPosition;
+    }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
+
+    useEffect(() => {
+      let frameRequestId: number | null = null;
+      const startTime = performance.now();
+
+      let isCapturing = false;  // capture crosshair positions for data
+      const capturePositions = (timestamp: number) => {
+        if (!isCapturing) return;
+
+        const elapsedTime = timestamp - startTime;
+        
+        if (elapsedTime <= 3000){   // How long we will capture data for. 3000 = 3 seconds
+            const predictedPosition = {x: predictedCrosshairPositionRef.current.x, y: predictedCrosshairPositionRef.current.y};
+            
+            setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);
+
+            frameRequestId = requestAnimationFrame(capturePositions);
+        } else{
+          isCapturing = false;
+          setStabilityComplete(true);
+        }
+      };
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.code === "KeyR" && showStabilityCenterDot) {
+          console.log("Starting stability sequence...");
+          setStabilityCrosshairPositions([]);
+          setStabilityComplete(false);
+          isCapturing = true;
+          frameRequestId = requestAnimationFrame(capturePositions);
+        }
+      };
+    
+      window.addEventListener("keydown", handleKeyDown);
+    
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        if (frameRequestId !== null){
+          cancelAnimationFrame(frameRequestId);
+        }
+      };
+    }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
+
+    useEffect(() => {
+      if (stabilityComplete){
+
+        const centerDotX = window.innerWidth / 2;
+        const centerDotY = window.innerHeight / 2;
+
+        const vectors = stabilityCrosshairPositions.map(pos=> ({
+          dx: pos.x - centerDotX,
+          dy: pos.y - centerDotY
+        }));
+
+        console.log("Stability is complete. Vectors calculated: ", vectors);
+        setStabilityComplete(false);  // Reset
+
+        const svg = d3.select(stabilityVectorRef.current);
+        svg.selectAll("*").remove(); // Clear existing SVG content
+    
+        // Defines the arrow marker
+        svg.append("defs").selectAll("marker")
+          .data(["arrow"])
+          .enter().append("marker")
+          .attr("id", d => d)
+          .attr("viewBox", "0 -5 10 10")
+          .attr("refX", 6)
+          .attr("refY", 0)
+          .attr("markerWidth", 6)
+          .attr("markerHeight", 6)
+          .attr("orient", "auto")
+          .append("path")
+          .attr("fill", "red")
+          .attr("d", "M0,-5L10,0L0,5");
+
+          // Draw vectors as lines with arrowheads
+        svg.selectAll(".vector")
+        .data(vectors)
+        .enter().append("line")
+        .attr("class", "vector")
+        .attr("x1", d => centerDotX)
+        .attr("y1", d => centerDotY)
+        .attr("x2", d => centerDotX + d.dx)
+        .attr("y2", d => centerDotY + d.dy)
+        .attr("stroke", "red")
+        .attr("stroke-width", 1)
+        .attr("marker-end", "url(#arrow)");
+        
+      }
+    }, [stabilityComplete, stabilityCrosshairPositions]);
+
+
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
     const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
@@ -369,74 +500,6 @@ function Calibration() {
 
       return {slope, intercept};
     }
-
-    // STABILITY TEST
-    useEffect(() => {
-      if (showStabilityCenterDot) {
-        const canvas = document.getElementById('centerDotCanvas') as HTMLCanvasElement;
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const radius = 10; // Radius of the circle
-    
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'orange'; 
-            ctx.fill();
-          }
-        }
-      } else {
-        // Optionally clear the canvas if you want the dot to disappear when toggling the button off
-        const canvas = document.getElementById('centerDotCanvas') as HTMLCanvasElement;
-        const ctx = canvas.getContext('2d');
-        ctx?.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }, [showStabilityCenterDot]); // Re-run effect when showStabilityCenterDot changes
-
-    useEffect(() => {
-      let frameRequestId: number | null = null;
-      const startTime = performance.now();
-      let isCapturing = false;  // capture crosshair positions for data
-
-      const capturePositions = (timestamp: number) => {
-        if (!isCapturing) return;
-
-        const elapsedTime = timestamp - startTime;
-        if (elapsedTime <= 3000){   // How long we will capture data for. 3000 = 3 seconds
-            const predictedPosition = {x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y};
-            setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);
-
-            frameRequestId = requestAnimationFrame(capturePositions);
-        } else{
-          isCapturing = false;
-          console.log("Stability complete...");
-          console.log(stabilityCrosshairPositions.length);
-        }
-      };
-
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.code === "KeyR" && showStabilityCenterDot) {
-          console.log("Starting stability sequence...");
-          setStabilityCrosshairPositions([]);
-          isCapturing = true;
-          frameRequestId = requestAnimationFrame(capturePositions);
-        }
-      };
-    
-      // Add event listener when the component mounts
-      window.addEventListener("keydown", handleKeyDown);
-    
-      // Clean up event listener when the component unmounts
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        if (frameRequestId !== null){
-          cancelAnimationFrame(frameRequestId);
-        }
-      };
-    }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
-
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -738,6 +801,12 @@ function Calibration() {
         height: "100%",
         zIndex: 15
       }}></svg>
+      <svg ref={stabilityVectorRef} width="100%" height="100%" style={{ 
+        position: "absolute",
+        top: 0,
+        left: 0,
+        zIndex: 15 }}>
+      </svg>
       <Webcam 
         ref={webcamRef}
           style={{
@@ -772,13 +841,13 @@ function Calibration() {
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
         <button onClick={() => setShowStabilityCenterDot(!showStabilityCenterDot)}>
-          {showStabilityCenterDot ? "Hide Center Dot" : "Show Center Dot"}
+          {showStabilityCenterDot ? "Hide Stability Test" : "Show Stability Test"}
         </button>
       </div>
       <div>
         {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
       </div>      
-      <canvas id="centerDotCanvas" width="1920" height="1080" style={{
+      <canvas id="stabilityCanvas" width="1920" height="1080" style={{
         position: "absolute",
         left: 0,
         top: 0,
