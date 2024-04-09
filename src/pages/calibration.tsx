@@ -43,6 +43,8 @@ function Calibration() {
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
     // --Global target practice mode
     const [showBoxContainer, setShowBoxContainer] = useState(false);
+    // --Global stability test mode
+    const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
 
 
 
@@ -119,6 +121,7 @@ function Calibration() {
       crosshairPosition: {x: number, y:number},
       userDirection: string}[]>([]);
 
+    // Generate Error Sequence Dots and Data
     useEffect(() => {
       // Create initial data set
       const generateData = (): DotData[] => {
@@ -155,8 +158,8 @@ function Calibration() {
       setData(generateData());
     }, []); 
 
+    // Draw all of our dots and the letter inside each dot
     useEffect(() => {
-      // Draw all of our dots and the letter inside each dot
       if (vectorCalibRef.current && data.length > 0){
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -364,6 +367,48 @@ function Calibration() {
 
       return {slope, intercept};
     }
+
+    // STABILITY TEST
+    useEffect(() => {
+      if (showStabilityCenterDot) {
+        const canvas = document.getElementById('centerDotCanvas') as HTMLCanvasElement;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 10; // Radius of the circle
+    
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'orange'; 
+            ctx.fill();
+          }
+        }
+      } else {
+        // Optionally clear the canvas if you want the dot to disappear when toggling the button off
+        const canvas = document.getElementById('centerDotCanvas') as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }, [showStabilityCenterDot]); // Re-run effect when showStabilityCenterDot changes
+
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.code === "KeyR" && showStabilityCenterDot) {
+          console.log("Starting stability sequence...");
+          // Placeholder for starting the stability sequence
+        }
+      };
+    
+      // Add event listener when the component mounts
+      window.addEventListener("keydown", handleKeyDown);
+    
+      // Clean up event listener when the component unmounts
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [showStabilityCenterDot]); // This effect depends on center dot, so it updates if center dot changes
 
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
@@ -699,11 +744,22 @@ function Calibration() {
         <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
+        <button onClick={() => setShowStabilityCenterDot(!showStabilityCenterDot)}>
+          {showStabilityCenterDot ? "Hide Center Dot" : "Show Center Dot"}
+        </button>
       </div>
       <div>
         {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
       </div>      
+      <canvas id="centerDotCanvas" width="1920" height="1080" style={{
+        position: "absolute",
+        left: 0,
+        top: 0,
+        zIndex: 10,
+      }}>
+      </canvas>
     </div>
+    
   );
 }
 
