@@ -437,6 +437,7 @@ function Calibration() {
       };
     }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
 
+
     useEffect(() => {
       if (stabilityComplete){
 
@@ -447,6 +448,16 @@ function Calibration() {
           dx: pos.x - centerDotX,
           dy: pos.y - centerDotY
         }));
+
+        // Calculate the bounds using the vectors
+        const bounds = calculateErrorBounds(vectors);
+        console.log("Error Bounds: ", bounds);
+
+        const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          //drawErrorBounds(ctx, bounds, centerDotX, centerDotY);
+        }
 
         console.log("Stability is complete. Vectors calculated: ", vectors);
         setStabilityComplete(false);  // Reset
@@ -485,6 +496,24 @@ function Calibration() {
       }
     }, [stabilityComplete, stabilityCrosshairPositions]);
 
+    const calculateErrorBounds = (vectors : {dx :number, dy: number}[]) => {
+      // Initialize bounds. Assuming right and down are positive directions.
+      let bounds = {
+        left: Number.MAX_VALUE, // Maximum negative dx
+        right: Number.MIN_VALUE, // Maximum positive dx
+        up: Number.MAX_VALUE, // Maximum negative dy
+        down: Number.MIN_VALUE, // Maximum positive dy
+      };
+
+      vectors.forEach(vector => {
+        if (vector.dx < bounds.left) bounds.left = vector.dx;
+        if (vector.dx > bounds.right) bounds.right = vector.dx;
+        if (vector.dy < bounds.up) bounds.up = vector.dy;
+        if (vector.dy > bounds.down) bounds.down = vector.dy; 
+      });
+
+      return bounds;
+    }
 
     // This function will get the line of best fit between all of our points
     // Returns the slope and intercept of the line of best fit
