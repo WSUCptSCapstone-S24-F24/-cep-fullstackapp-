@@ -360,16 +360,17 @@ function Calibration() {
         const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
         if (canvas) {
           const ctx = canvas.getContext('2d');
-          if (ctx) {
+          if (ctx) {   // Create center dot for stability test
             const centerX = window.innerWidth / 2;
             const centerY = window.innerHeight / 2;
-            const radius = 10; // Radius of the circle
+            const radius = 10; 
     
             ctx.beginPath();
             ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
             ctx.fillStyle = 'orange'; 
             ctx.fill();
 
+            // Instruction text underneath dot
             ctx.font = '16px Ariel';
             ctx.fillStyle = 'orange';
 
@@ -382,19 +383,22 @@ function Calibration() {
           }
         }
       } else {
-        // Optionally clear the canvas if you want the dot to disappear when toggling the button off
+        // Clear dot when clicking button again.
         const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
         const ctx = canvas.getContext('2d');
         ctx?.clearRect(0, 0, canvas.width, canvas.height);
       }
-    }, [showStabilityCenterDot]); // Re-run effect when showStabilityCenterDot changes
+    }, [showStabilityCenterDot]);
 
+    // This reference is solely to make sure our predicted crosshair location is being updated in realtime
+    // Usually that is the case, but it does not update normally during our stability sequence. The capturePositions function
     const predictedCrosshairPositionRef = useRef(predictedCrosshairPosition);
 
     useEffect(() => {
       predictedCrosshairPositionRef.current = predictedCrosshairPosition;
     }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
 
+    // Captures crosshair positions during stability sequence
     useEffect(() => {
       let frameRequestId: number | null = null;
       const startTime = performance.now();
@@ -408,7 +412,7 @@ function Calibration() {
         if (elapsedTime <= 3000){   // How long we will capture data for. 3000 = 3 seconds
             const predictedPosition = {x: predictedCrosshairPositionRef.current.x, y: predictedCrosshairPositionRef.current.y};
             
-            setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);
+            setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);  // Add crosshair position to the data array
 
             frameRequestId = requestAnimationFrame(capturePositions);
         } else{
@@ -417,6 +421,7 @@ function Calibration() {
         }
       };
 
+      // When R is pressed on the keyboard, we will begin stabililty sequence above
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.code === "KeyR" && showStabilityCenterDot) {
           console.log("Starting stability sequence...");
@@ -437,35 +442,58 @@ function Calibration() {
       };
     }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
 
-
+    // When stabililty is complete, we will create vector field and map our error bounds 
     useEffect(() => {
       if (stabilityComplete){
 
         const centerDotX = window.innerWidth / 2;
         const centerDotY = window.innerHeight / 2;
 
-        const vectors = stabilityCrosshairPositions.map(pos=> ({
+        const vectors = stabilityCrosshairPositions.map(pos=> ({  // map all of our vectors
           dx: pos.x - centerDotX,
           dy: pos.y - centerDotY
         }));
 
         // Calculate the bounds using the vectors
         const bounds = calculateErrorBounds(vectors);
-        console.log("Error Bounds: ", bounds);
 
         const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          //drawErrorBounds(ctx, bounds, centerDotX, centerDotY);
+          ctx.beginPath();
+            // Draw our bounds rectangle over our vector field
+            const left = centerDotX + bounds.left;
+            const right = centerDotX + bounds.right;
+            const up = centerDotY + bounds.up;
+            const down = centerDotY + bounds.down;
+
+            const width = right - left;
+            const height = down - up;
+
+            ctx.rect(left, up, width, height);
+            ctx.strokeStyle = 'blue';
+            ctx.stroke();
+
+            //Text which display our error bounds
+            ctx.fillStyle = 'orange';
+            ctx.font = '16px Arial';
+
+            let textX = right + 10;
+            let textY = up;
+
+            ctx.fillText(`Left: ${bounds.left.toFixed(2)}px`, textX, textY += 20);
+            ctx.fillText(`Right: ${bounds.right.toFixed(2)}px`, textX, textY += 20);
+            ctx.fillText(`Up: ${bounds.up.toFixed(2)}px`, textX, textY += 20);
+            ctx.fillText(`Down: ${bounds.down.toFixed(2)}px`, textX, textY += 20);
         }
 
         console.log("Stability is complete. Vectors calculated: ", vectors);
         setStabilityComplete(false);  // Reset
 
+        // Draws the vector field here
         const svg = d3.select(stabilityVectorRef.current);
-        svg.selectAll("*").remove(); // Clear existing SVG content
+        svg.selectAll("*").remove();
     
-        // Defines the arrow marker
         svg.append("defs").selectAll("marker")
           .data(["arrow"])
           .enter().append("marker")
@@ -480,7 +508,6 @@ function Calibration() {
           .attr("fill", "red")
           .attr("d", "M0,-5L10,0L0,5");
 
-          // Draw vectors as lines with arrowheads
         svg.selectAll(".vector")
         .data(vectors)
         .enter().append("line")
@@ -496,8 +523,8 @@ function Calibration() {
       }
     }, [stabilityComplete, stabilityCrosshairPositions]);
 
+    // Takes array of vectors and return the max vector length in all four directions
     const calculateErrorBounds = (vectors : {dx :number, dy: number}[]) => {
-      // Initialize bounds. Assuming right and down are positive directions.
       let bounds = {
         left: Number.MAX_VALUE, // Maximum negative dx
         right: Number.MIN_VALUE, // Maximum positive dx
