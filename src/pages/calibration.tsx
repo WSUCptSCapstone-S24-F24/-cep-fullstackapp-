@@ -442,6 +442,15 @@ function Calibration() {
       };
     }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
 
+    function calculateDPI() {
+      const div = document.createElement("div");
+      div.style.width = "1in";
+      document.body.appendChild(div);
+      const dpi = div.offsetWidth;
+      document.body.removeChild(div);
+      return dpi;
+  }
+
     // When stabililty is complete, we will create vector field and map our error bounds 
     useEffect(() => {
       if (stabilityComplete){
@@ -481,6 +490,8 @@ function Calibration() {
             let textX = right + 10;
             let textY = up;
 
+            const screenDPI = calculateDPI();
+            
             ctx.fillText(`Left: ${bounds.left.toFixed(2)}px`, textX, textY += 20);
             ctx.fillText(`Right: ${bounds.right.toFixed(2)}px`, textX, textY += 20);
             ctx.fillText(`Up: ${bounds.up.toFixed(2)}px`, textX, textY += 20);
