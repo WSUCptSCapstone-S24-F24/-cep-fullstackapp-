@@ -41,16 +41,25 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
         <div
           ref={boxRef}
           style={{
-            border: `2px solid ${isInside ? 'red' : 'green'}`, // Will change box color depending on if crosshair is inside the bounds of the box
+            border: `2px solid ${isInside ? 'none' : 'none'}`, // Will change box color depending on if crosshair is inside the bounds of the box
             height: height,
             width: width,
             position: 'relative',
             top: top,
             left: left,
             right: right,
-            zIndex: 12
+            zIndex: 12,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
+          <div style={{
+            height: '20px',
+            width: '20px',
+            backgroundColor: 'red',
+            borderRadius: '100%'
+          }}/>
         </div>
     );
 };

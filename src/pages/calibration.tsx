@@ -5,6 +5,7 @@ import Webcam from 'react-webcam'
 import {useRef, useEffect, useState, useContext} from 'react'
 import React from 'react'
 import BoxContainer from '../box_container'
+import ScreenDPI from '../screen_dpi'
 import {OneEuroFilter} from '1eurofilter'
 import * as d3 from "d3";
 
@@ -34,6 +35,11 @@ function Calibration() {
     
     // All variables using a useState should be placed inside a useEffect
 
+    const [dimensions, setDimensions] = useState({
+      width: window.innerWidth,
+      height: window.innerHeight
+    });
+
     const [clickCoords, setClickCoords] = useState<{x: number; y: number} | null>(null);
     // --Global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
@@ -48,6 +54,7 @@ function Calibration() {
     const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
     const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number; y: number}[]>([]);
     const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
+    const [dpi, setDpi] = useState<number>(96);
 
     // Package of points that take up one slot in our calibrationPoints array
     interface CalibrationPoint{
@@ -75,6 +82,21 @@ function Calibration() {
       dy: number;
       magnitude?: number;
     }
+
+    // Update dimensions on window resize
+    useEffect(() => {
+      function handleResize() {
+        setDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight
+        });
+      }
+
+      window.addEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }, []);
 
     const [data, setData] = useState<DotData[]>([]);
 
@@ -300,7 +322,7 @@ function Calibration() {
           .attr("y", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
           .attr("dx", 5)
           .attr("dy", 5)
-          .text((d, i) => magnitudes[i].toFixed(2))
+          .text((d, i) => `${pixelsToInches(magnitudes[i]).toFixed(2)}in`)
           .attr("font-size", "10px")
           .attr("fill", "black");
   
@@ -361,8 +383,8 @@ function Calibration() {
         if (canvas) {
           const ctx = canvas.getContext('2d');
           if (ctx) {   // Create center dot for stability test
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
+            const centerX = dimensions.width / 2;
+            const centerY = dimensions.height / 2;
             const radius = 10; 
     
             ctx.beginPath();
@@ -442,12 +464,17 @@ function Calibration() {
       };
     }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
 
+    // Converts number of pixels to inches
+    function pixelsToInches(pixels : number) {
+      return (pixels / dpi);
+    }
+
     // When stabililty is complete, we will create vector field and map our error bounds 
     useEffect(() => {
       if (stabilityComplete){
 
-        const centerDotX = window.innerWidth / 2;
-        const centerDotY = window.innerHeight / 2;
+        const centerDotX = dimensions.width / 2;
+        const centerDotY = dimensions.height / 2;
 
         const vectors = stabilityCrosshairPositions.map(pos=> ({  // map all of our vectors
           dx: pos.x - centerDotX,
@@ -481,10 +508,10 @@ function Calibration() {
             let textX = right + 10;
             let textY = up;
 
-            ctx.fillText(`Left: ${bounds.left.toFixed(2)}px`, textX, textY += 20);
-            ctx.fillText(`Right: ${bounds.right.toFixed(2)}px`, textX, textY += 20);
-            ctx.fillText(`Up: ${bounds.up.toFixed(2)}px`, textX, textY += 20);
-            ctx.fillText(`Down: ${bounds.down.toFixed(2)}px`, textX, textY += 20);
+            ctx.fillText(`Left: ${pixelsToInches(Math.abs(bounds.left)).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Right: ${pixelsToInches(Math.abs(bounds.right)).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Up: ${pixelsToInches(Math.abs(bounds.up)).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Down: ${pixelsToInches(Math.abs(bounds.down)).toFixed(2)}in`, textX, textY += 20);
         }
 
         console.log("Stability is complete. Vectors calculated: ", vectors);
@@ -822,8 +849,8 @@ function Calibration() {
       
       <canvas
         ref={crosshairCanvasRef}
-        width="1920"
-        height="1080"
+        width={dimensions.width}
+        height={dimensions.height}
         style={{
           position: "absolute",
           marginRight: 'auto',
@@ -837,8 +864,8 @@ function Calibration() {
       />
       <canvas
         ref={clickCanvasRef}
-        width="1920"
-        height="1080"
+        width={dimensions.width}
+        height={dimensions.height}
         onClick={handleCanvasClick}
         style={{
           position: "absolute",
@@ -893,6 +920,7 @@ function Calibration() {
       }}
       />
       <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
+        <ScreenDPI setDPI={setDpi}/>
         <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
@@ -903,7 +931,7 @@ function Calibration() {
       <div>
         {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
       </div>      
-      <canvas id="stabilityCanvas" width="1920" height="1080" style={{
+      <canvas id="stabilityCanvas" width={dimensions.width} height={dimensions.height} style={{
         position: "absolute",
         left: 0,
         top: 0,
