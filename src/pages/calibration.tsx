@@ -322,7 +322,7 @@ function Calibration() {
           .attr("y", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
           .attr("dx", 5)
           .attr("dy", 5)
-          .text((d, i) => magnitudes[i].toFixed(2))
+          .text((d, i) => `${pixelsToInches(magnitudes[i]).toFixed(2)}in`)
           .attr("font-size", "10px")
           .attr("fill", "black");
   
