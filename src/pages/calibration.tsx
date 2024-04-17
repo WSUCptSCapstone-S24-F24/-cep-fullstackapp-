@@ -468,6 +468,13 @@ function Calibration() {
     function pixelsToInches(pixels : number) {
       return (pixels / dpi);
     }
+    
+    // Gets the angle of error
+    function getAngleOfError(targetSize: number /*in inches*/, distance: number /*in cm*/)
+    {
+      targetSize *= 2.54; //converting to cm
+      return (180 / Math.PI) * (2 * Math.atan(0.5 * (targetSize / distance)));
+    }
 
     // When stabililty is complete, we will create vector field and map our error bounds 
     useEffect(() => {
@@ -512,6 +519,7 @@ function Calibration() {
             ctx.fillText(`Right: ${pixelsToInches(Math.abs(bounds.right)).toFixed(2)}in`, textX, textY += 20);
             ctx.fillText(`Up: ${pixelsToInches(Math.abs(bounds.up)).toFixed(2)}in`, textX, textY += 20);
             ctx.fillText(`Down: ${pixelsToInches(Math.abs(bounds.down)).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Angle of Error: ${getAngleOfError(pixelsToInches(Math.abs(width)), 65).toFixed(2)}°`, textX, textY += 20); //only doing horizontal at the moment
         }
 
         console.log("Stability is complete. Vectors calculated: ", vectors);
