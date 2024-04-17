@@ -55,10 +55,10 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
           }}
         >
           <div style={{
-            height: '25px',
-            width: '25px',
+            height: '20px',
+            width: '20px',
             backgroundColor: 'red',
-            borderRadius: '50%'
+            borderRadius: '100%'
           }}/>
         </div>
     );

@@ -26,7 +26,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
 
     // Initialize our box queue here
     useEffect(() => {
-        const boxes: Box[] = generateBoxes(5, {width: 150, height: 150});    // This is where we set how much boxes and how big the boxes
+        const boxes: Box[] = generateBoxes(16, {width: 150, height: 150});    // This is where we set how much boxes and how big the boxes
         setBoxQueue(boxes);
         setCurrentBox(boxes[0]);
       }, [])
@@ -56,14 +56,35 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
   
       // Generate target box array
       const generateBoxes = (numberOfBoxes: number, size: {width: number, height: number; }): Box[] => {
-        return Array.from({ length: numberOfBoxes }, (_, i) => ({
-          id: i,
-          name: `Target ${i + 1}`, // Changed i+1 to start the number from 1
-          height: `${size.height}px`,
-          width: `${size.width}px`,
-          top: `${Math.random() * (window.innerHeight - size.height)}px`,
-          left: `${Math.random() * (window.innerWidth - size.width)}px`,
-          hit: false,
+        const rows = 4;
+        const cols = 4;
+        const zoneWidth = window.innerWidth / rows;
+        const zoneHeight = window.innerHeight / cols;
+
+        let zonePoints = [];
+        for (let row = 0; row < rows; row++){
+            for (let col = 0; col < cols; col++){
+                // Center each box in a cell
+                const point = {
+                    top: zoneHeight * col + (zoneHeight - size.height) / 2,
+                    left: zoneWidth * row + (zoneWidth - size.width) / 2,
+                };
+                zonePoints.push(point);
+            }
+        }
+
+        // Randomize box positions
+        zonePoints = zonePoints.sort(() => Math.random() - 0.5);
+
+        // Create boxes in order of zonePoints
+        return zonePoints.slice(0, numberOfBoxes).map((point, index) => ({
+            id: index,
+            name: `Target ${index + 1}`,
+            height: `${size.height}px`,
+            width: `${size.width}px`,
+            top: `${point.top}px`,
+            left: `${point.left}px`,
+            hit: false
         }));
       }
 
