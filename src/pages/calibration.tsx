@@ -55,6 +55,7 @@ function Calibration() {
     const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number; y: number}[]>([]);
     const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
     const [dpi, setDpi] = useState<number>(96);
+    const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     // Package of points that take up one slot in our calibrationPoints array
     interface CalibrationPoint{
@@ -820,6 +821,57 @@ function Calibration() {
         );
       }
 
+      function StaticCalibration(startX: number, startY: number, intervalX: number, intervalY: number, canvasRef: React.RefObject<HTMLCanvasElement>) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+        const rows = 3;
+        const cols = 5;
+        const totalPoints = rows * cols;
+        if (currentPointIndex >= totalPoints) return;
+      
+        const row = Math.floor(currentPointIndex / cols);
+        const col = currentPointIndex % cols;
+      
+        const x = startX + col * intervalX;
+        const y = startY + row * intervalY;
+      
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+      
+        setCalibrationPoints(currentPoints => [
+          ...currentPoints,
+          {
+            irisX: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2 : 0,
+            irisY: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2 : 0,
+            screenX: x,
+            screenY: y
+          }
+        ]);
+      
+        setCurrentPointIndex(currentPointIndex + 1);
+      }
+
+      useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+          if (event.key === 'c' || event.key === 'C') {
+            StaticCalibration(56, 90, 400, 350, clickCanvasRef);
+          }
+        };
+    
+        window.addEventListener('keydown', handleKeyPress);
+        return () => {
+          window.removeEventListener('keydown', handleKeyPress);
+        };
+      }, [StaticCalibration]);
+
       // Instantiate FaceMesh
       useEffect(() => {
         const faceMesh = new FaceMesh({
@@ -935,6 +987,7 @@ function Calibration() {
         <button onClick={() => setShowStabilityCenterDot(!showStabilityCenterDot)}>
           {showStabilityCenterDot ? "Hide Stability Test" : "Show Stability Test"}
         </button>
+        <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
         {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
