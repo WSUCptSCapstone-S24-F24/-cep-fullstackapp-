@@ -16,9 +16,10 @@ export const linearRegression = (irisCoords: number[], screenCoords: number[]) =
 };
 
 // Converts number of pixels to inches
-export function pixelsToInches(pixels : number, dpi: number) {
+export function pixelsToInches(pixels : number, dpi : number) {
+    console.log(`DPI inside pixelsToInch: ${dpi}`);
     return (pixels / dpi);
-}
+};
   
 // Gets the angle of error
 export function getAngleOfError(targetSize: number /*in inches*/, distance: number /*in cm*/)

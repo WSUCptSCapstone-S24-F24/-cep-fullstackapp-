@@ -1,19 +1,14 @@
-import React, { useState, useEffect } from 'react';
-
-interface DPI {
-    setDPI: (dpi: number) => void;
-}
+// screen_dpi.tsx
+import React, { useState } from 'react';
 
 // Calculates screen DPI based off user input
-function ScreenDPI({ setDPI }: DPI){
+const ScreenDPI: React.FC<{dpi: number, setDPI: (dpi: number) => void}> = ({ dpi, setDPI }) => {
     const [diagonalSize, setDiagonalSize] = useState<number>(25);
 
     // Calculates the DPI of the monitor based on inputted diagonal monitor size in inches
     function calculateDPI(diagonalSizeInches: number): number {
         const diagonalSizePixels = Math.sqrt(screen.width ** 2 + screen.height ** 2);
-        const dpi = diagonalSizePixels / diagonalSizeInches;
-        console.log(`DPI: ${dpi}`);
-        return dpi;
+        return diagonalSizePixels / diagonalSizeInches;
     }
 
     // Sets new dpi when diagonal size changes
@@ -37,6 +32,7 @@ function ScreenDPI({ setDPI }: DPI){
                 value={diagonalSize}
                 onChange={handleInputChange}
             />
+            <div> Current DPI: {dpi}</div>
         </div>
     )
  }
