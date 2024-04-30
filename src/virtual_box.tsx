@@ -1,18 +1,6 @@
 import React from 'react';
 import {useRef, useEffect, useState} from 'react'
-
-// Information on Virtual Box
-interface VirtualBoxInfo {
-    id: number;
-    crosshairPosition: {x: number, y: number};
-    name: string;
-    height: string;
-    width: string;
-    top?: string;
-    left?: string;
-    right?: string;
-    onHit: (id: number) => void;
-}
+import { VirtualBoxInfo } from './types/interfaces';
 
 const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, height, width, top = '0', left = '0', right='0', onHit}) => {
     const boxRef = useRef<HTMLDivElement>(null);

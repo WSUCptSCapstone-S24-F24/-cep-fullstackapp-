@@ -7,6 +7,7 @@ import React from 'react'
 import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
+import { CalibrationPoint, VectorData, DotData } from '../types/interfaces'
 import {OneEuroFilter} from '1eurofilter'
 import * as d3 from "d3";
 
@@ -57,33 +58,6 @@ function Calibration() {
     const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
     const [dpi, setDpi] = useState<number>(96);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
-
-    // Package of points that take up one slot in our calibrationPoints array
-    interface CalibrationPoint{
-      irisX: number,
-      irisY: number,
-      screenX: number,
-      screenY: number;
-    }
-
-    interface DotData {
-      x: number;
-      y: number;
-      dx: number;
-      dy: number;
-      direction: 'U' | 'D' | 'L' | 'R';
-    }
-
-    interface VectorData {
-      dotIndex: number;
-      direction: string;
-      dotPosition: {x: number, y: number};
-      crosshairPosition: {x: number, y: number};
-      userDirection: string;
-      dx: number;
-      dy: number;
-      magnitude?: number;
-    }
 
     // Update dimensions on window resize
     useEffect(() => {

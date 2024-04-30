@@ -1,0 +1,60 @@
+//types.tsx
+
+export interface CalibrationPoint{
+    irisX: number,
+    irisY: number,
+    screenX: number,
+    screenY: number;
+  }
+
+export interface DotData {
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+    direction: 'U' | 'D' | 'L' | 'R';
+  }
+
+export interface VectorData {
+    dotIndex: number;
+    direction: string;
+    dotPosition: {x: number, y: number};
+    crosshairPosition: {x: number, y: number};
+    userDirection: string;
+    dx: number;
+    dy: number;
+    magnitude?: number;
+  }
+
+export interface DPI {
+    setDPI: (dpi: number) => void;
+}
+
+export interface Box {
+  id: number;
+  name: string;
+  height: string;
+  width: string;
+  top: string;
+  left: string;
+  hit: boolean;
+}
+
+export interface BoxContainerInformation{
+  crosshairPosition: {
+      x: number,
+      y: number
+  };
+}
+
+export interface VirtualBoxInfo {
+  id: number;
+  crosshairPosition: {x: number, y: number};
+  name: string;
+  height: string;
+  width: string;
+  top?: string;
+  left?: string;
+  right?: string;
+  onHit: (id: number) => void;
+}

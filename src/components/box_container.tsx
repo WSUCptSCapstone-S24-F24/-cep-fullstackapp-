@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import VirtualBox from '../virtual_box';
-
-interface Box {
-    id: number;
-    name: string;
-    height: string;
-    width: string;
-    top: string;
-    left: string;
-    hit: boolean;
-}
-
-interface BoxContainerInformation{
-    crosshairPosition: {
-        x: number,
-        y: number
-    };
-}
+import { BoxContainerInformation, Box } from '../types/interfaces';
 
 const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
     // --Target practice boxes
