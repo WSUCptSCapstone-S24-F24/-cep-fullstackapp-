@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import VirtualBox from './virtual_box';
+import VirtualBox from '../virtual_box';
 
 interface Box {
     id: number;

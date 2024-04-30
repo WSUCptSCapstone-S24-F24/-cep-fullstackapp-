@@ -4,8 +4,9 @@ import * as cam from '@mediapipe/camera_utils'
 import Webcam from 'react-webcam'
 import {useRef, useEffect, useState, useContext} from 'react'
 import React from 'react'
-import BoxContainer from '../box_container'
-import ScreenDPI from '../screen_dpi'
+import BoxContainer from '../components/box_container'
+import ScreenDPI from '../components/screen_dpi'
+import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
 import {OneEuroFilter} from '1eurofilter'
 import * as d3 from "d3";
 
@@ -323,7 +324,7 @@ function Calibration() {
           .attr("y", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
           .attr("dx", 5)
           .attr("dy", 5)
-          .text((d, i) => `${pixelsToInches(magnitudes[i]).toFixed(2)}in`)
+          .text((d, i) => `${pixelsToInches(magnitudes[i], dpi).toFixed(2)}in`)
           .attr("font-size", "10px")
           .attr("fill", "black");
   
@@ -465,18 +466,6 @@ function Calibration() {
       };
     }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
 
-    // Converts number of pixels to inches
-    function pixelsToInches(pixels : number) {
-      return (pixels / dpi);
-    }
-    
-    // Gets the angle of error
-    function getAngleOfError(targetSize: number /*in inches*/, distance: number /*in cm*/)
-    {
-      targetSize *= 2.54; //converting to cm
-      return (180 / Math.PI) * (2 * Math.atan(0.5 * (targetSize / distance)));
-    }
-
     // When stabililty is complete, we will create vector field and map our error bounds 
     useEffect(() => {
       if (stabilityComplete){
@@ -516,11 +505,11 @@ function Calibration() {
             let textX = right + 10;
             let textY = up;
 
-            ctx.fillText(`Left: ${pixelsToInches(Math.abs(bounds.left)).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Right: ${pixelsToInches(Math.abs(bounds.right)).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Up: ${pixelsToInches(Math.abs(bounds.up)).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Down: ${pixelsToInches(Math.abs(bounds.down)).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Angle of Error: ${getAngleOfError(pixelsToInches(Math.abs(width)), 65).toFixed(2)}°`, textX, textY += 20); //only doing horizontal at the moment
+            ctx.fillText(`Left: ${pixelsToInches(Math.abs(bounds.left), dpi).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Right: ${pixelsToInches(Math.abs(bounds.right), dpi).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Up: ${pixelsToInches(Math.abs(bounds.up), dpi).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Down: ${pixelsToInches(Math.abs(bounds.down), dpi).toFixed(2)}in`, textX, textY += 20);
+            ctx.fillText(`Angle of Error: ${getAngleOfError(pixelsToInches(Math.abs(width), dpi), 65).toFixed(2)}°`, textX, textY += 20); //only doing horizontal at the moment
         }
 
         console.log("Stability is complete. Vectors calculated: ", vectors);
@@ -558,40 +547,6 @@ function Calibration() {
         
       }
     }, [stabilityComplete, stabilityCrosshairPositions]);
-
-    // Takes array of vectors and return the max vector length in all four directions
-    const calculateErrorBounds = (vectors : {dx :number, dy: number}[]) => {
-      let bounds = {
-        left: Number.MAX_VALUE, // Maximum negative dx
-        right: Number.MIN_VALUE, // Maximum positive dx
-        up: Number.MAX_VALUE, // Maximum negative dy
-        down: Number.MIN_VALUE, // Maximum positive dy
-      };
-
-      vectors.forEach(vector => {
-        if (vector.dx < bounds.left) bounds.left = vector.dx;
-        if (vector.dx > bounds.right) bounds.right = vector.dx;
-        if (vector.dy < bounds.up) bounds.up = vector.dy;
-        if (vector.dy > bounds.down) bounds.down = vector.dy; 
-      });
-
-      return bounds;
-    }
-
-    // This function will get the line of best fit between all of our points
-    // Returns the slope and intercept of the line of best fit
-    const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
-      const n = irisCoords.length;
-      const sumX = irisCoords.reduce((a,b) => a + b, 0);
-      const sumY = screenCoords.reduce((a,b) => a + b, 0);
-      const sumXx = irisCoords.reduce((a,b) => a + b * b, 0);
-      const sumXy = irisCoords.reduce((a,b,i) => a + b * screenCoords[i], 0);
-
-      const slope = (n * sumXy - sumX * sumY) / (n * sumXx - sumX * sumX);
-      const intercept = (sumY - slope * sumX) / n;
-
-      return {slope, intercept};
-    }
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
