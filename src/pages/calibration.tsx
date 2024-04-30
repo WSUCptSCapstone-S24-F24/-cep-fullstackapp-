@@ -2,15 +2,13 @@ import { FaceMesh } from '@mediapipe/face_mesh'
 import * as Facemesh from '@mediapipe/face_mesh'
 import * as cam from '@mediapipe/camera_utils'
 import Webcam from 'react-webcam'
-import {useRef, useEffect, useState} from 'react'
+import {useRef, useEffect, useState, useContext} from 'react'
 import React from 'react'
 import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
-import { drawCrosshair, drawOnClick, drawVectorField, VectorData } from '../utils/DrawUtils'
 import {OneEuroFilter} from '1eurofilter'
 import * as d3 from "d3";
-
 
 
 declare global {
@@ -20,11 +18,15 @@ declare global {
 }
 
 function Calibration() {
+  
   // All of our references
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
     const clickCanvasRef = useRef<any>(null);
     const crosshairCanvasRef = useRef<any>(null);
+    const leftEyeRef = useRef<any>(null);
+    const rightEyeRef = useRef<any>(null);
+    const headRef = useRef<any>(null);
     const vectorCalibRef = useRef<SVGSVGElement>(null);
     const stabilityVectorRef = useRef<SVGSVGElement>(null);
 
@@ -53,10 +55,8 @@ function Calibration() {
     const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
     const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number; y: number}[]>([]);
     const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
+    const [dpi, setDpi] = useState<number>(96);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
-
-    const [dpi, setDPI] = useState<number>(96);
-    console.log(`DPI retrieved: ${dpi}`);
 
     // Package of points that take up one slot in our calibrationPoints array
     interface CalibrationPoint{
@@ -72,6 +72,17 @@ function Calibration() {
       dx: number;
       dy: number;
       direction: 'U' | 'D' | 'L' | 'R';
+    }
+
+    interface VectorData {
+      dotIndex: number;
+      direction: string;
+      dotPosition: {x: number, y: number};
+      crosshairPosition: {x: number, y: number};
+      userDirection: string;
+      dx: number;
+      dy: number;
+      magnitude?: number;
     }
 
     // Update dimensions on window resize
@@ -242,7 +253,7 @@ function Calibration() {
                 return { ...input, dx, dy};
               });
        
-              drawVectorField(vectors, vectorCalibRef, dpi); 
+              drawVectorField(vectors); 
             }
           }
         } 
@@ -250,7 +261,122 @@ function Calibration() {
 
       window.addEventListener('keydown', handleKeyPress);
       return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentDotIndex, data, userInputs, predictedCrosshairPosition]);  
+    }, [currentDotIndex, data, userInputs, predictedCrosshairPosition]);
+
+    const drawVectorField = (vectors : VectorData[]) => {
+      const svg = d3.select(vectorCalibRef.current); 
+      svg.selectAll("*").remove(); // Clear previous SVG contents
+      
+      const maxVectorLength = 50;
+  
+      const magnitudes = vectors.map(vector => {       // Gets the magnitude of each vector
+          return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
+      });
+      const maxMagnitude = Math.max(...magnitudes);
+      const minMagnitude = Math.min(...magnitudes);
+      const sumOfMagnitudes = magnitudes.reduce((acc, val) => acc + val, 0); // Calculate sum of magnitudes
+      const averageMagnitude = sumOfMagnitudes / magnitudes.length; // Calculate average magnitude
+      
+      // Calculate mean absolute error
+      const absoluteErrors = magnitudes.map(magnitude => Math.abs(magnitude - averageMagnitude));
+      const meanAbsoluteError = absoluteErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
+
+      // Calculate root mean square error
+      const squaredErrors = magnitudes.map(magnitude => (magnitude - averageMagnitude) ** 2);
+      const meanSquaredError = squaredErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
+      const rootMeanSquaredError = Math.sqrt(meanSquaredError);
+
+  
+      // Draws the vector field
+      svg.append("defs").selectAll("marker")
+          .data(["arrow"])
+          .enter().append("marker")
+          .attr("id", d => d)
+          .attr("viewBox", "0 -5 10 10")
+          .attr("refX", 6)
+          .attr("refY", 0)
+          .attr("markerWidth", 6)
+          .attr("markerHeight", 6)
+          .attr("orient", "auto")
+          .append("path")
+          .attr("fill", "red")
+          .attr("d", "M0,-5L10,0L0,5");
+  
+      // Draw vectors as lines
+      svg.selectAll(".vector")
+          .data(vectors)
+          .enter().append("line")
+          .attr("class", "vector")
+          .attr("x2", d => d.dotPosition.x)
+          .attr("y2", d => d.dotPosition.y)
+          .attr("x1", d => d.dotPosition.x + d.dx)
+          .attr("y1", d => d.dotPosition.y + d.dy)
+          .attr("stroke", "red")
+          .attr("stroke-width", 1.5)
+          .attr("marker-end", "url(#arrow)"); // Use the arrow marker defined above
+  
+      // Draws the magnitudes
+      svg.selectAll(".vector-text")
+          .data(vectors)
+          .enter().append("text")
+          .attr("class", "vector-text")
+          .attr("x", d => d.dotPosition.x + (d.dx / maxMagnitude) * maxVectorLength)
+          .attr("y", d => d.dotPosition.y + (d.dy / maxMagnitude) * maxVectorLength)
+          .attr("dx", 5)
+          .attr("dy", 5)
+          .text((d, i) => `${pixelsToInches(magnitudes[i], dpi).toFixed(2)}in`)
+          .attr("font-size", "10px")
+          .attr("fill", "black");
+  
+      // Display sum of magnitudes
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 20)
+          .text("Sum of Magnitudes: " + sumOfMagnitudes.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+  
+      // Display max magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 40)
+          .text("Max Magnitude: " + maxMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+
+      // Display min magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 60)
+          .text("Min Magnitude: " + minMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+  
+      // Display average magnitude
+      svg.append("text")
+          .attr("x", 10)
+          .attr("y", 80)
+          .text("Average Magnitude: " + averageMagnitude.toFixed(2))
+          .attr("font-size", "12px")
+          .attr("fill", "black");
+
+      // Display mean absolute error
+      svg.append("text")
+      .attr("x", 10)
+      .attr("y", 100)
+      .text("Mean Absolute Error: " + meanAbsoluteError.toFixed(2))
+      .attr("font-size", "12px")
+      .attr("fill", "black");
+
+       // Display root mean square error
+      svg.append("text")
+      .attr("x", 10)
+      .attr("y", 120)
+      .text("Root Mean Square Error: " + rootMeanSquaredError.toFixed(2))
+      .attr("font-size", "12px")
+      .attr("fill", "black");
+  };
+  
 
     // STABILITY TEST
     useEffect(() => {
@@ -343,6 +469,7 @@ function Calibration() {
     // When stabililty is complete, we will create vector field and map our error bounds 
     useEffect(() => {
       if (stabilityComplete){
+
         const centerDotX = dimensions.width / 2;
         const centerDotY = dimensions.height / 2;
 
@@ -421,6 +548,25 @@ function Calibration() {
       }
     }, [stabilityComplete, stabilityCrosshairPositions]);
 
+    // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
+    function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
+      if (!canvas || !x || !y) return;
+    
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y);
+      ctx.lineTo(x + 10, y);
+      ctx.moveTo(x, y - 10);
+      ctx.lineTo(x, y + 10);
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
     // Will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
 
@@ -472,7 +618,7 @@ function Calibration() {
       const x = event.clientX - (rect?.left ?? 0);
       const y = event.clientY - (rect?.top ?? 0);
       setClickCoords({x,y});
-      drawOnClick(x,y, clickCanvasRef);
+      drawOnClick(x,y);
       console.log(`Clicked at: ${x}, ${y}`);
 
       printIrisCoordinates();
@@ -495,6 +641,23 @@ function Calibration() {
       console.log(`CalibrationPointsArray: ${JSON.stringify(calibrationPoints, null, 2)}`);
       console.log(`Calibration Array Length: ${calibrationPoints.length}`)
     }
+
+    // Creates a little red dot at cursor click location
+    const drawOnClick = (x: number, y:number) => {
+      const canvas = clickCanvasRef.current;
+      if(canvas){
+        const ctx = canvas.getContext('2d');
+        if (ctx){
+          //ctx.clearRect(0,0, canvas.width, canvas.height);
+
+          /*ctx.beginPath();
+          ctx.arc(x,y,5,0,2 * Math.PI);
+          ctx.fillStyle = 'red';
+          ctx.fill(); Currently hiding the red dots on click*/
+        }
+      }
+    };
+
 
     function onResults(results:any) {
         // const video = webcamRef.current.video;
@@ -568,8 +731,49 @@ function Calibration() {
 
           // Saves iris coordinates to a global variable
           applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
+
+          // Draw canvases for each iris
+          drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
+          drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
+          drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
         }
         canvasCtx.restore();
+      }
+
+      // This function will crop our webcam and create a zoomed in video at inputted point
+      function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
+        if (!canvas || !video || !pointX || !pointY) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        
+        // Enlarges are image to video size
+        pointX = pointX * video.videoWidth;
+        pointY = pointY * video.videoHeight;
+
+        //console.log(`pointX : ${pointX}, pointY : ${pointY}`);
+
+        // Zooms in our camera to focus on the specific point
+        const newWidth = canvas.width / zoom;
+        const newHeight = canvas.height / zoom;
+
+        const newX = pointX - newWidth / 2;
+        const newY = pointY - newHeight / 2;
+
+        // Reset our canvas (so images are cleared after each frame)
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        // Draw video
+        ctx.drawImage(
+          video,
+          newX, newY,
+          newWidth, newHeight,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
       }
 
       function StaticCalibration(startX: number, startY: number, intervalX: number, intervalY: number, canvasRef: React.RefObject<HTMLCanvasElement>) {
@@ -731,7 +935,7 @@ function Calibration() {
       }}
       />
       <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
-        <ScreenDPI dpi={dpi} setDPI={setDPI}/>
+        <ScreenDPI setDPI={setDpi}/>
         <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
