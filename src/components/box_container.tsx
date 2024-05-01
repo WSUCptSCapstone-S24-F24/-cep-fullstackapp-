@@ -80,8 +80,6 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
         ); 
       }
 
-      
-
     return (
         <div style={{ position: 'relative', height: '100vh' }}>
             {currentBox && (

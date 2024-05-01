@@ -8,10 +8,8 @@ import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
-import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
-import { CalibrationPoint, DotData } from '../types/interfaces'
-import {OneEuroFilter} from '1eurofilter'
-
+import { linearRegression } from '../utils/MathUtils'
+import { CalibrationPoint } from '../types/interfaces'
 
 declare global {
   interface Window {
@@ -76,8 +74,6 @@ function Calibration() {
       };
     }, []);
 
-    const [data, setData] = useState<DotData[]>([]);
-
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
       if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
@@ -134,38 +130,14 @@ function Calibration() {
 
     // Will apply new coordinates to global iris coordinates (shortened to tenthousandth place)
     function applyIrisCoordinates(leftIrisCoord: {x: number, y:number}, rightIrisCoord: {x:number, y:number}){
-
-      // Get current timestamp
-      const timestamp = performance.now() / 1000;
-
-      // Create OneEuroFilter instances for left and right iris coordinates (Assume the framerate is 30Hz)
-      const leftIrisFilterX = new OneEuroFilter(30, 1.0, 0.0, 1.0);
-      const leftIrisFilterY = new OneEuroFilter(30, 1.0, 0.0, 1.0);
-      const rightIrisFilterX = new OneEuroFilter(30, 1.0, 0.0, 1.0);
-      const rightIrisFilterY = new OneEuroFilter(30, 1.0, 0.0, 1.0);
-
-      // Apply OneEuroFilter to filter left and right iris coordinates
-      const filteredLeftX = leftIrisFilterX.filter(leftIrisCoord.x, timestamp);
-      const filteredLeftY = leftIrisFilterY.filter(leftIrisCoord.y, timestamp);
-      const filteredRightX = rightIrisFilterX.filter(rightIrisCoord.x, timestamp);
-      const filteredRightY = rightIrisFilterY.filter(rightIrisCoord.y, timestamp);
-
-
       setLeftIrisCoordinate({
-
         x: leftIrisCoord.x,
         y: leftIrisCoord.y
-
-        // x: filteredLeftX,
-        // y: filteredLeftY
       });
 
       setRightIrisCoordinate({
         x: rightIrisCoord.x,
         y: rightIrisCoord.y
-        
-        // x: filteredRightX,
-        // y: filteredRightY
       });
     }
 
@@ -183,7 +155,6 @@ function Calibration() {
       const x = event.clientX - (rect?.left ?? 0);
       const y = event.clientY - (rect?.top ?? 0);
       setClickCoords({x,y});
-      drawOnClick(x,y);
       console.log(`Clicked at: ${x}, ${y}`);
 
       printIrisCoordinates();
@@ -206,22 +177,6 @@ function Calibration() {
       console.log(`CalibrationPointsArray: ${JSON.stringify(calibrationPoints, null, 2)}`);
       console.log(`Calibration Array Length: ${calibrationPoints.length}`)
     }
-
-    // Creates a little red dot at cursor click location
-    const drawOnClick = (x: number, y:number) => {
-      const canvas = clickCanvasRef.current;
-      if(canvas){
-        const ctx = canvas.getContext('2d');
-        if (ctx){
-          //ctx.clearRect(0,0, canvas.width, canvas.height);
-
-          /*ctx.beginPath();
-          ctx.arc(x,y,5,0,2 * Math.PI);
-          ctx.fillStyle = 'red';
-          ctx.fill(); Currently hiding the red dots on click*/
-        }
-      }
-    };
 
     // this reference is solely to make sure our predicted crosshair location is being updated in realtime
     // Usually that is the case, but it does not update normally during our stability sequence.
@@ -257,15 +212,9 @@ function Calibration() {
               color: "#eae8fd",
               lineWidth: 1,
             });
-            /*connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYE, {
-              color: "#F50B0B",
-            });*/
             connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
               color: "#F50B0B",
             });
-            /*connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYE, {
-              color: "#18FF00",
-            });*/
             connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
               color: "#18FF00",
             });
@@ -293,14 +242,6 @@ function Calibration() {
           const leftIrisLandmark = landmarks[leftIrisIndex];
           const rightIrisLandmark = landmarks[rightIrisIndex];
           const noseLandmark = landmarks[noseIndex];
-
-          // If you wish to view each iris coordinates (uncomment the bottom logs)
-          if (leftIrisLandmark){
-            //console.log(`LEFT IRIS: x=${leftIrisLandmark.x}, y=${leftIrisLandmark.y}`);
-          }
-          if (rightIrisIndex){
-            //console.log(`RIGHT IRIS: x=${rightIrisLandmark.x}, y=${rightIrisLandmark.y}`);
-          }
 
           // Saves iris coordinates to a global variable
           applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);

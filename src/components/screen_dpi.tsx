@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DPI } from '../types/interfaces' 
 
 // Calculates screen DPI based off user input
