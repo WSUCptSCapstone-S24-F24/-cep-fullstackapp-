@@ -1,20 +1,16 @@
 // stability_test.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { calculateErrorBounds, pixelsToInches, getAngleOfError } from '../utils/MathUtils';  // Adjust import paths as needed
+import { calculateErrorBounds, pixelsToInches, getAngleOfError } from '../utils/MathUtils';
+import { StabilityTestProps } from '../types/interfaces';
 
-interface StabilityTestProps {
-    dimensions: { width: number, height: number };
-    dpi: number;
-    predictedCrosshairPosition: {x: number, y: number};
-    showStabilityTest: boolean;
-}
-
-const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predictedCrosshairPosition, showStabilityTest }) => {
+const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predictedCrosshairPositionRef, showStabilityTest }) => {
     const stabilityCanvasRef = useRef<HTMLCanvasElement>(null);
+    const vectorSvgRef = useRef<SVGSVGElement>(null); // Ref for the SVG
     const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number, y: number}[]>([]);
     const [stabilityComplete, setStabilityComplete] = useState(false);
 
+    // Center dot
     useEffect(() => {
         const canvas = stabilityCanvasRef.current;
         if (!canvas) return;
@@ -40,7 +36,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
         }
     }, [showStabilityTest, dimensions]);
 
-
+    // Record crosshair positions
     useEffect(() => {
         let frameRequestId: number | null = null;
 
@@ -54,9 +50,10 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                     const elapsedTime = timestamp - startTime;
                     
                     if (elapsedTime <= 3000) {
-                        const centerX = dimensions.width / 2;
-                        const centerY = dimensions.height / 2;
-                        setStabilityCrosshairPositions(prevPositions => [...prevPositions, { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y }]);
+                        if (!predictedCrosshairPositionRef.current) return;
+                        const predictedPosition = {x: predictedCrosshairPositionRef.current.x, y: predictedCrosshairPositionRef.current.y}
+
+                        setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);
                         frameRequestId = requestAnimationFrame(capturePositions);
                     } else {
                         setStabilityComplete(true);
@@ -74,12 +71,13 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
             window.removeEventListener('keydown', handleKeyDown);
             if (frameRequestId) cancelAnimationFrame(frameRequestId);
         };
-    }, [showStabilityTest, dimensions, predictedCrosshairPosition]);
+    }, [showStabilityTest, dimensions, predictedCrosshairPositionRef]);
 
+    // Vector field
     useEffect(() => {
         if (stabilityComplete) {
-            const svg = d3.select(stabilityCanvasRef.current);
-            svg.selectAll('*').remove();  // Clear previous SVG contents
+            const svg = d3.select(vectorSvgRef.current)
+            svg.selectAll('*').remove();
 
             const centerX = dimensions.width / 2;
             const centerY = dimensions.height / 2;
@@ -88,6 +86,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                 dx: pos.x - centerX,
                 dy: pos.y - centerY
             }));
+            console.log(vectors.length)
 
             // Draws the vector field
             svg.append("defs").selectAll("marker")
@@ -114,15 +113,64 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                 .attr("x2", d => centerX + d.dx)
                 .attr("y2", d => centerY + d.dy)
                 .attr("stroke", "red")
-                .attr("stroke-width", 1.5)
+                .attr("stroke-width", 1)
                 .attr("marker-end", "url(#arrow)");
 
             setStabilityComplete(false);  // Reset for potential next test
         }
     }, [stabilityComplete, stabilityCrosshairPositions, dimensions]);
 
+    // Bounding box
+    useEffect(() => {
+        if (stabilityComplete){
+
+            const centerDotX = dimensions.width / 2;
+            const centerDotY = dimensions.height / 2;
+
+            const vectors = stabilityCrosshairPositions.map(pos => ({
+                dx: pos.x - centerDotX,
+                dy: pos.y - centerDotY
+            }));
+
+            const bounds = calculateErrorBounds(vectors);
+
+            const canvas = stabilityCanvasRef.current;
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (ctx){
+                const left = centerDotX + bounds.left;
+                const right = centerDotX + bounds.right;
+                const up = centerDotY + bounds.up;
+                const down = centerDotY + bounds.down;
+
+                const width = right - left;
+                const height = down - up;
+
+                ctx.rect(left, up, width, height);
+                ctx.strokeStyle = 'blue';
+                ctx.stroke();
+
+                ctx.fillStyle ='orange';
+                ctx.font = '16px Arial'
+
+                let textX = right + 10;
+                let textY = up;
+
+                ctx.fillText(`Left: ${pixelsToInches(Math.abs(bounds.left), dpi).toFixed(2)}in`, textX, textY += 20);
+                ctx.fillText(`Right: ${pixelsToInches(Math.abs(bounds.right), dpi).toFixed(2)}in`, textX, textY += 20);
+                ctx.fillText(`Up: ${pixelsToInches(Math.abs(bounds.up), dpi).toFixed(2)}in`, textX, textY += 20);
+                ctx.fillText(`Down: ${pixelsToInches(Math.abs(bounds.down), dpi).toFixed(2)}in`, textX, textY += 20);
+                ctx.fillText(`Angle of Error: ${getAngleOfError(pixelsToInches(Math.abs(width), dpi), 65).toFixed(2)}°`, textX, textY += 20);
+            }
+        }
+    }, [stabilityComplete, stabilityCrosshairPositions, dimensions.width, dimensions.height]);
+
     return (
-        <canvas ref={stabilityCanvasRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 20 }}></canvas>
+        <>
+            <canvas ref={stabilityCanvasRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 10 }}/>
+            <svg ref={vectorSvgRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 10 }} />
+        </>
     );
 };
 

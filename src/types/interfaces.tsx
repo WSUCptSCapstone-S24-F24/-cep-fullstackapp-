@@ -64,3 +64,10 @@ export interface ErrorSequenceProps {
   dpi: number;
   predictedCrosshairPosition: {x: number, y: number}
 }
+
+export interface StabilityTestProps {
+  dimensions: { width: number, height: number };
+  dpi: number;
+  predictedCrosshairPositionRef: React.RefObject<{x: number, y: number}>;
+  showStabilityTest: boolean;
+}

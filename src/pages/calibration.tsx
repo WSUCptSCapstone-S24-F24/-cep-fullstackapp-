@@ -11,7 +11,6 @@ import StabilityTest from '../components/stability_test';
 import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
 import { CalibrationPoint, DotData } from '../types/interfaces'
 import {OneEuroFilter} from '1eurofilter'
-import * as d3 from "d3";
 
 
 declare global {
@@ -57,7 +56,6 @@ function Calibration() {
     // --Global stability test mode
     const [showStabilityTest, setShowStabilityTest] = useState<boolean>(false);
 
-    const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
     const [dpi, setDpi] = useState<number>(96);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
@@ -224,6 +222,14 @@ function Calibration() {
         }
       }
     };
+
+    // this reference is solely to make sure our predicted crosshair location is being updated in realtime
+    // Usually that is the case, but it does not update normally during our stability sequence.
+    const predictedCrosshairPositionRef = useRef(predictedCrosshairPosition);
+
+    useEffect(() => {
+      predictedCrosshairPositionRef.current = predictedCrosshairPosition;
+    }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
 
 
     function onResults(results:any) {
@@ -507,7 +513,7 @@ function Calibration() {
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
         <button onClick={() => setShowStabilityTest(!showStabilityTest)}>
-          {showStabilityCenterDot ? "Hide Stability Test" : "Show Stability Test"}
+          {showStabilityTest ? "Hide Stability Test" : "Show Stability Test"}
         </button>
         <button onClick={() => setShowErrorTest(!showErrorTest)}>
           {showErrorTest ? "Hide Error Test" : "Show Error Test"}
@@ -521,7 +527,7 @@ function Calibration() {
         {showErrorTest && <ErrorSequenceTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={predictedCrosshairPosition}/>}  
       </div>    
       <div>
-        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={predictedCrosshairPosition} showStabilityTest={showStabilityTest}/>}
+        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={predictedCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
       </div>
     </div>
     
