@@ -7,6 +7,7 @@ import React from 'react'
 import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import ErrorSequenceTest from '../components/error_sequence_test';
+import StabilityTest from '../components/stability_test';
 import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
 import { CalibrationPoint, DotData } from '../types/interfaces'
 import {OneEuroFilter} from '1eurofilter'
@@ -54,9 +55,9 @@ function Calibration() {
     // --Global target practice mode
     const [showBoxContainer, setShowBoxContainer] = useState(false);
     // --Global stability test mode
+    const [showStabilityTest, setShowStabilityTest] = useState<boolean>(false);
+
     const [showStabilityCenterDot, setShowStabilityCenterDot] = useState<boolean>(false);
-    const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number; y: number}[]>([]);
-    const [stabilityComplete, setStabilityComplete] = useState<boolean>(false);
     const [dpi, setDpi] = useState<number>(96);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
@@ -113,176 +114,6 @@ function Calibration() {
       }
 
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
-
-    // STABILITY TEST
-    useEffect(() => {
-      if (showStabilityCenterDot) {
-        const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
-        if (canvas) {
-          const ctx = canvas.getContext('2d');
-          if (ctx) {   // Create center dot for stability test
-            const centerX = dimensions.width / 2;
-            const centerY = dimensions.height / 2;
-            const radius = 10; 
-    
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-            ctx.fillStyle = 'orange'; 
-            ctx.fill();
-
-            // Instruction text underneath dot
-            ctx.font = '16px Ariel';
-            ctx.fillStyle = 'orange';
-
-            const text = "Focus on center orange dot and press R to being stability sequence.";
-            const textWidth = ctx.measureText(text).width;
-            const textX = centerX - textWidth / 2;
-            const textY = centerY + radius + 20;
-
-            ctx.fillText(text, textX, textY);
-          }
-        }
-      } else {
-        // Clear dot when clicking button again.
-        const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
-        const ctx = canvas.getContext('2d');
-        ctx?.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }, [showStabilityCenterDot]);
-
-    // This reference is solely to make sure our predicted crosshair location is being updated in realtime
-    // Usually that is the case, but it does not update normally during our stability sequence. The capturePositions function
-    const predictedCrosshairPositionRef = useRef(predictedCrosshairPosition);
-
-    useEffect(() => {
-      predictedCrosshairPositionRef.current = predictedCrosshairPosition;
-    }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
-
-    // Captures crosshair positions during stability sequence
-    useEffect(() => {
-      let frameRequestId: number | null = null;
-      const startTime = performance.now();
-
-      let isCapturing = false;  // capture crosshair positions for data
-      const capturePositions = (timestamp: number) => {
-        if (!isCapturing) return;
-
-        const elapsedTime = timestamp - startTime;
-        
-        if (elapsedTime <= 3000){   // How long we will capture data for. 3000 = 3 seconds
-            const predictedPosition = {x: predictedCrosshairPositionRef.current.x, y: predictedCrosshairPositionRef.current.y};
-            
-            setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);  // Add crosshair position to the data array
-
-            frameRequestId = requestAnimationFrame(capturePositions);
-        } else{
-          isCapturing = false;
-          setStabilityComplete(true);
-        }
-      };
-
-      // When R is pressed on the keyboard, we will begin stabililty sequence above
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.code === "KeyR" && showStabilityCenterDot) {
-          console.log("Starting stability sequence...");
-          setStabilityCrosshairPositions([]);
-          setStabilityComplete(false);
-          isCapturing = true;
-          frameRequestId = requestAnimationFrame(capturePositions);
-        }
-      };
-    
-      window.addEventListener("keydown", handleKeyDown);
-    
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        if (frameRequestId !== null){
-          cancelAnimationFrame(frameRequestId);
-        }
-      };
-    }, [showStabilityCenterDot, predictedCrosshairPosition]); // This effect depends on center dot, so it updates if center dot changes
-
-    // When stabililty is complete, we will create vector field and map our error bounds 
-    useEffect(() => {
-      if (stabilityComplete){
-
-        const centerDotX = dimensions.width / 2;
-        const centerDotY = dimensions.height / 2;
-
-        const vectors = stabilityCrosshairPositions.map(pos=> ({  // map all of our vectors
-          dx: pos.x - centerDotX,
-          dy: pos.y - centerDotY
-        }));
-
-        // Calculate the bounds using the vectors
-        const bounds = calculateErrorBounds(vectors);
-
-        const canvas = document.getElementById('stabilityCanvas') as HTMLCanvasElement;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.beginPath();
-            // Draw our bounds rectangle over our vector field
-            const left = centerDotX + bounds.left;
-            const right = centerDotX + bounds.right;
-            const up = centerDotY + bounds.up;
-            const down = centerDotY + bounds.down;
-
-            const width = right - left;
-            const height = down - up;
-
-            ctx.rect(left, up, width, height);
-            ctx.strokeStyle = 'blue';
-            ctx.stroke();
-
-            //Text which display our error bounds
-            ctx.fillStyle = 'orange';
-            ctx.font = '16px Arial';
-
-            let textX = right + 10;
-            let textY = up;
-
-            ctx.fillText(`Left: ${pixelsToInches(Math.abs(bounds.left), dpi).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Right: ${pixelsToInches(Math.abs(bounds.right), dpi).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Up: ${pixelsToInches(Math.abs(bounds.up), dpi).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Down: ${pixelsToInches(Math.abs(bounds.down), dpi).toFixed(2)}in`, textX, textY += 20);
-            ctx.fillText(`Angle of Error: ${getAngleOfError(pixelsToInches(Math.abs(width), dpi), 65).toFixed(2)}°`, textX, textY += 20); //only doing horizontal at the moment
-        }
-
-        console.log("Stability is complete. Vectors calculated: ", vectors);
-        setStabilityComplete(false);  // Reset
-
-        // Draws the vector field here
-        const svg = d3.select(stabilityVectorRef.current);
-        svg.selectAll("*").remove();
-    
-        svg.append("defs").selectAll("marker")
-          .data(["arrow"])
-          .enter().append("marker")
-          .attr("id", d => d)
-          .attr("viewBox", "0 -5 10 10")
-          .attr("refX", 6)
-          .attr("refY", 0)
-          .attr("markerWidth", 6)
-          .attr("markerHeight", 6)
-          .attr("orient", "auto")
-          .append("path")
-          .attr("fill", "red")
-          .attr("d", "M0,-5L10,0L0,5");
-
-        svg.selectAll(".vector")
-        .data(vectors)
-        .enter().append("line")
-        .attr("class", "vector")
-        .attr("x1", d => centerDotX)
-        .attr("y1", d => centerDotY)
-        .attr("x2", d => centerDotX + d.dx)
-        .attr("y2", d => centerDotY + d.dy)
-        .attr("stroke", "red")
-        .attr("stroke-width", 1)
-        .attr("marker-end", "url(#arrow)");
-        
-      }
-    }, [stabilityComplete, stabilityCrosshairPositions]);
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -675,7 +506,7 @@ function Calibration() {
         <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
-        <button onClick={() => setShowStabilityCenterDot(!showStabilityCenterDot)}>
+        <button onClick={() => setShowStabilityTest(!showStabilityTest)}>
           {showStabilityCenterDot ? "Hide Stability Test" : "Show Stability Test"}
         </button>
         <button onClick={() => setShowErrorTest(!showErrorTest)}>
@@ -689,13 +520,9 @@ function Calibration() {
       <div>
         {showErrorTest && <ErrorSequenceTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={predictedCrosshairPosition}/>}  
       </div>    
-      <canvas id="stabilityCanvas" width={dimensions.width} height={dimensions.height} style={{
-        position: "absolute",
-        left: 0,
-        top: 0,
-        zIndex: 10,
-      }}>
-      </canvas>
+      <div>
+        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={predictedCrosshairPosition} showStabilityTest={showStabilityTest}/>}
+      </div>
     </div>
     
   );
