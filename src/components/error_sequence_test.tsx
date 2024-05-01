@@ -129,7 +129,7 @@ const ErrorSequenceTest: React.FC<Props> = ({ dimensions, dpi, predictedCrosshai
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentDotIndex, data, dimensions.width, dimensions.height, userInputs]);
+    }, [currentDotIndex, data, dimensions.width, dimensions.height, userInputs, predictedCrosshairPosition]);
 
     const drawVectorField = (vectors : VectorData[]) => {
         const svg = d3.select(svgRef.current); 
