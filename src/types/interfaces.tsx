@@ -58,3 +58,9 @@ export interface VirtualBoxInfo {
   right?: string;
   onHit: (id: number) => void;
 }
+
+export interface ErrorSequenceProps {
+  dimensions: { width: number, height: number };
+  dpi: number;
+  predictedCrosshairPosition: {x: number, y: number}
+}

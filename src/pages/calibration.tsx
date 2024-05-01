@@ -8,7 +8,7 @@ import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import ErrorSequenceTest from '../components/error_sequence_test';
 import { linearRegression, pixelsToInches, getAngleOfError, calculateErrorBounds } from '../utils/MathUtils'
-import { CalibrationPoint, VectorData, DotData } from '../types/interfaces'
+import { CalibrationPoint, DotData } from '../types/interfaces'
 import {OneEuroFilter} from '1eurofilter'
 import * as d3 from "d3";
 

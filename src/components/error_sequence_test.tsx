@@ -2,16 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { pixelsToInches } from '../utils/MathUtils';
-import { DotData, VectorData } from '../types/interfaces';
+import { DotData, VectorData, ErrorSequenceProps } from '../types/interfaces';
 
-
-interface Props {
-    dimensions: { width: number, height: number };
-    dpi: number;
-    predictedCrosshairPosition: {x: number, y: number}
-}
-
-const ErrorSequenceTest: React.FC<Props> = ({ dimensions, dpi, predictedCrosshairPosition }) => {
+const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, predictedCrosshairPosition }) => {
     const svgRef = useRef(null);
     const [data, setData] = useState<DotData[]>([]);
     const [currentDotIndex, setCurrentDotIndex] = useState<number | null>(0);
