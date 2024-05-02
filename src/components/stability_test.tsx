@@ -30,7 +30,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
 
             const text = "Focus on center orange dot and press R to begin stability sequence.";
             ctx.font = '16px Arial';
-            ctx.fillText(text, centerX - ctx.measureText(text).width / 2, centerY + radius + 20);
+            ctx.fillText(text, centerX - ctx.measureText(text).width / 2, centerY + radius + 100);
         } else {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
