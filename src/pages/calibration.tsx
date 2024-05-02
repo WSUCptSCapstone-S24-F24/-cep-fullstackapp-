@@ -18,7 +18,8 @@ declare global {
 }
 
 function Calibration() {
-  
+    const [showOverlay, setShowOverlay] = useState(false);//toggles the camera display
+
   // All of our references
     const webcamRef = useRef<any>(null);
     const canvasRef = useRef<any>(null);
@@ -428,10 +429,25 @@ function Calibration() {
             left:0,
             right:0,
             textAlign:'center',
-            zIndex:5,
+            zIndex:10,
             width:640,
             height:480
       }}/>
+      {showOverlay && (
+        <div style={{
+            position: "absolute",
+            marginRight:'auto',
+            marginLeft:'auto',
+            left:0,
+            right:0,
+            textAlign:'center',
+            width:640,
+            height:480,
+            backgroundColor: "white",
+            zIndex: 11
+        }}></div>
+)}
+
       
       <canvas
         ref={canvasRef}
@@ -458,6 +474,9 @@ function Calibration() {
         </button>
         <button onClick={() => setShowErrorTest(!showErrorTest)}>
           {showErrorTest ? "Hide Error Test" : "Show Error Test"}
+        </button>
+        <button onClick={() => setShowOverlay(!showOverlay)}>
+          {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
         <p>Start Static Calibration with "C" key</p>
       </div>
