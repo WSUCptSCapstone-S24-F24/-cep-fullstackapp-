@@ -388,7 +388,7 @@ function Calibration() {
           left: 0,
           right: 0,
           textAlign: 'center',
-          zIndex: 11, 
+          zIndex: 12, 
           cursor: 'crosshair',
         }}
       />
