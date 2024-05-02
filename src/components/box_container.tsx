@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import VirtualBox from '../virtual_box';
+import VirtualBox from './virtual_box';
 import { BoxContainerInformation, Box } from '../types/interfaces';
 
 const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
