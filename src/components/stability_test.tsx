@@ -168,8 +168,8 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
 
     return (
         <>
-            <canvas ref={stabilityCanvasRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 10 }}/>
-            <svg ref={vectorSvgRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 10 }} />
+            <canvas ref={stabilityCanvasRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 12 }}/>
+            <svg ref={vectorSvgRef} width={dimensions.width} height={dimensions.height} style={{ position: 'absolute', left: 0, top: 0, zIndex: 12 }} />
         </>
     );
 };
