@@ -1,11 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom'
+import Calibration from "./pages/calibration";
 
-import Paths from './routes';
+//for pages
+//import Paths from './routes';
 
 function App(){
   return (
-      <Paths />
+      <Calibration />
   );
 }
 
