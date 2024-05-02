@@ -22,7 +22,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
         const cols = 4;
         const rows = 4;
         const intervalX = (width - 2 * padding) / (cols - 1);
-        const intervalY = (height - 2 * padding) / (rows - 1);
+        const intervalY = (height - 3 * padding) / (rows - 1);
 
         const newData: DotData[] = [];
 
