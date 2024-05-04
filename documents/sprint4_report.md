@@ -48,7 +48,7 @@ Here are links to the issues that we completed in this sprint:
 ## Code Files for Review
 Please review the following code files, which were actively developed during this sprint, for quality:
  * [calibration.tsx](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/src/pages/calibration.tsx)
-
+ * [src/components](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/tree/Yuuki_Sprint4_Report/src/components)
 
 ## Demo
 Here is the link to the demo: 
