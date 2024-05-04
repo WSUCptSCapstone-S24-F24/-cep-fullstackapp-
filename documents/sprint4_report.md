@@ -16,46 +16,42 @@
 
 ## Work Summary (Developer Facing)
 
-Basically, we focused on fixing issues and improving the functions implemented before. For the fixing part, we fixed issues that the vector shows different directions in the error sequence, showing the randomized boxes out of the display, and the error sequences were showed out of display. For the improvement parts, the application shows the actual distance (inch) when the user uses the error sequence tests and the stability test.
+Basically, we focused on fixing issues and improving the functions implemented before. For the fixing part, we fixed issues that the vector shows different directions in the error sequence, showing the randomized boxes out of the display, and the error sequences were showed out of display. For the improvement parts, the application shows the actual distance (inch) when the user uses the error sequence tests and the stability test. Also, the error sequence and stability test only show up when the user select the buttons. In addition, we did refactoring the code so the code readability is increased.
 
 ## Unfinished Work
-Almost all of the work we did finish that we planned. Some things were removed and decided that it would not be a priority. These included things like fixing our 1 Euro filter which did not work very well, but instead we decided to remove it from our project as it was not as important yet. When switching pages, we sometimes get errors when moving from a page with our camera to without one. This is not a high priority as our project is mainly research and minor errors were irrelevant.
+Almost all of the work we did finish that we planned. However, some improving tasks such as adding gaming effect for boxes, changing target boxes to be more stimulating, and measuring the distance from the display.
 
 ## Completed Issues/User Stories
 Here are links to the issues that we completed in this sprint:
 
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/16
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/17
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/21
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/26
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/33
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/34
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/40
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/42
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/44
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/46
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/47
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/50
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/38
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/48
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/49
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/51
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/55
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/57
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/58
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/62
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/63
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/64
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/66
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/72
  
  ## Incomplete Issues/User Stories
  Here are links to issues we worked on but did not complete in this sprint:
  
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/31 <This was a minor error that is very low on the priority>
- * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/30 <When implementing the 1 Euro Filter, it made our eye tracking stability worse, so it would be better to remove it until we actually have good results data.>
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/56
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/41
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/39
+ * https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/issues/37
 
 ## Code Files for Review
 Please review the following code files, which were actively developed during this sprint, for quality:
- * [virtual_box.tsx](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/src/virtual_box.tsx)
- * [box_container.tsx] (https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/src/box_container.tsx
- * [calibration.tsx] (https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/src/pages/calibration.tsx)
- 
-## Document Files for Review
-Please review ther following documentation files:
- * [Convolution_Research_Report.md] https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/Convolution_Reserch_report.md
+ * [calibration.tsx](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/src/pages/calibration.tsx)
+
 
 ## Demo
-Here is the link to the demo: https://youtu.be/WPEKK6dK-uY
-
+Here is the link to the demo: 
 ## Retrospective Summary
 Here's what went well:
   * Our progress feels much better than last sprint. We were able to get more issues completed.
