@@ -51,7 +51,8 @@ Please review the following code files, which were actively developed during thi
  * [src/components](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/tree/Yuuki_Sprint4_Report/src/components)
 
 ## Demo
-Here is the link to the demo: 
+Sprint 4 Demo: https://youtu.be/8kMOJ_iV2Vs
+ 
 ## Retrospective Summary
 Here's what went well:
   * Our progress feels much better than last sprint. We were able to get more issues completed.
