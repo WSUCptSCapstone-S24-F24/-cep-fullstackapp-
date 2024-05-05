@@ -1,0 +1,18 @@
+Gabe's Results:
+Webcam: EMEET C955 1080p, 30 fps
+Hardware: GeForce RTX 3080, AMD Ryzen 7 7800X3D 8-Core Processor, 24.5in 1080p 360Hz Monitor 
+Software: Windows 10, Mozilla Firefox
+
+
+Stabililty Test:
+Up and down were relatively tame compared to the left and right which saw much more variation.
+
+Error Sequence Test:
+Due to the sparaticness of the stability of our crosshair, it is often that the crosshair can bounce around between the left and right of the dot position. However, what is noticable when doing this test, is the left and right border, the crosshair tends to over extend outside of the screen bounds. The crosshair tends to flower out more from the center of the screen. It is also worth mentioning, that while it does not exactly show in the graphs, the upper portions of the screen tend to be harder for the crosshair to get as high while the left and right of the screen it tends to over extend.
+
+Target Practice:
+The results do vary and while it is not the best test for graphing, in the future we will need to mark the dots in the locations that we did not successfully hit. While taking the test, however, The corners pieces tend to be more inconsistent in hitting, while there is minimal issues on the side and the middle.
+
+
+Overrall:
+The the stability is still too speratic which conflicts with getting consistent data. The horizontal axis of the eye tracking tends to over extend its reach, while the vertical axis under extends its reach.
