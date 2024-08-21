@@ -1,0 +1,16 @@
+Yuuki's Results:
+Webcam: Unknown, default web camera from ASUS ROG Zephyrus M16
+Hardware: NVIDIA GeForce RTX 3070 Ti Laptop GPU, Intel Core i9 12900H, 2560*1600 165Hz display
+Software: Windows 11, Google Chrome
+
+Stabililty Test:
+Having different randomness for each attempt. Test 1 had unstableness for the vertical direction, but tests 2 and 3 have it for horizontal.
+
+Error Sequence Test:
+Because the crosshair is very shaky, almost all places have big error sequences. Error values increase, especially as the crosshair gets closer to the center of the screen.
+
+Target Practice:
+The result shows that eye-tracking can hit the target greatly, but sometimes it is unstable. I also realized that it was hard to hit the targets when they appeared edge of the screen.
+
+Overrall:
+Eye tracking was still unstable and I felt eye tracking needed to be improved to prevent shaking and to improve eye tracking at the edges of the screen.
