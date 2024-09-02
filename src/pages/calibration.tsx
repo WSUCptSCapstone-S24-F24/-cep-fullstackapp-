@@ -291,7 +291,7 @@ function Calibration() {
         );
       }
 
-      function StaticCalibration(startX: number, startY: number, intervalX: number, intervalY: number, canvasRef: React.RefObject<HTMLCanvasElement>) {
+      function StaticCalibration(startXPercent: number, startYPercent: number, intervalXPercent: number, intervalYPercent: number, canvasRef: React.RefObject<HTMLCanvasElement>) { // Enter percentage of screen width and height
         const canvas = canvasRef.current;
         if (!canvas) return;
         
@@ -299,6 +299,14 @@ function Calibration() {
         if (!ctx) return;
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        const startX = (startXPercent / 100) * canvasWidth;
+        const startY = (startYPercent / 100) * canvasHeight;
+        const intervalX = (intervalXPercent / 100) * canvasWidth;
+        const intervalY = (intervalYPercent / 100) * canvasHeight;
       
         const rows = 3;
         const cols = 5;
@@ -332,7 +340,7 @@ function Calibration() {
       useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
           if (event.key === 'c' || event.key === 'C') {
-            StaticCalibration(56, 90, 400, 350, clickCanvasRef);
+            StaticCalibration(5, 10, 20, 30, clickCanvasRef); // Maybe edit this to fit the screen
           }
         };
     
