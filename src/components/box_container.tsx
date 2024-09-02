@@ -4,7 +4,7 @@ import { BoxContainerInformation, Box } from '../types/interfaces';
 
 const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
     // --Target practice boxes
-    const [currentBox, setCurrentBox] = useState<Box | null>(null);
+    const [currentBoxIndex, setCurrentBoxIndex] = useState<number>(0);
     const [boxQueue, setBoxQueue] = useState<Box[]>([]);
     const [hasCompletedCycle, setHasCompletedCycle] = useState<boolean>(false);
 
@@ -12,30 +12,24 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
     useEffect(() => {
         const boxes: Box[] = generateBoxes(16, {width: 150, height: 150});    // This is where we set how much boxes and how big the boxes
         setBoxQueue(boxes);
-        setCurrentBox(boxes[0]);
       }, [])
       
-      // Cycle through each box in our queue
-      useEffect(() => {
-        if (!currentBox || hasCompletedCycle) return;
+    // Cycle through each box in our queue
+    useEffect(() => {
+        if (boxQueue.length == 0 || hasCompletedCycle) return;
 
-        // Use a stable reference to the next box index to avoid dependency on mutable state
-        let nextIndex = boxQueue.indexOf(currentBox) + 1;
+        if (currentBoxIndex >= boxQueue.length){
+            setHasCompletedCycle(true);
+            return;
+        }
 
         const timer = setTimeout(() => {
-            if (nextIndex > boxQueue.length) 
-            {
-                setHasCompletedCycle(true);
-                setCurrentBox(null);
-            } 
-            else
-            {
-                setCurrentBox(boxQueue[nextIndex]);
-            }
-        }, 3000);
-
-        return () => clearTimeout(timer);
-      }, [currentBox, hasCompletedCycle]);
+            setCurrentBoxIndex((prevIndex) => prevIndex + 1);
+          }, 3000); // Display each box for 3 seconds
+      
+          return () => clearTimeout(timer);
+    }, [currentBoxIndex, boxQueue, hasCompletedCycle]);
+    
 
   
       // Generate target box array
@@ -73,8 +67,8 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
       }
 
       const handleBoxHit = (boxId: number) => {
-        setBoxQueue(currentBox => 
-            currentBox.map(box =>
+        setBoxQueue((currentBoxes) => 
+            currentBoxes.map((box) =>
                 box.id === boxId ? {...box, hit: true} : box
             )
         ); 
@@ -82,19 +76,36 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
 
     return (
         <div style={{ position: 'relative', height: '100vh' }}>
-            {currentBox && (
+            {!hasCompletedCycle && boxQueue[currentBoxIndex] && (
                 <VirtualBox
-                    id={currentBox.id}
-                    key={currentBox.id}
+                    key={boxQueue[currentBoxIndex].id}
+                    id={boxQueue[currentBoxIndex].id}
                     crosshairPosition={crosshairPosition}
-                    name={currentBox.name}
-                    height={currentBox.height}
-                    width={currentBox.width}
-                    top={currentBox.top}
-                    left={currentBox.left}
+                    name={boxQueue[currentBoxIndex].name}
+                    height={boxQueue[currentBoxIndex].height}
+                    width={boxQueue[currentBoxIndex].width}
+                    top={boxQueue[currentBoxIndex].top}
+                    left={boxQueue[currentBoxIndex].left}
                     onHit={handleBoxHit}
                 />
             )}
+            {hasCompletedCycle && boxQueue
+                .filter((box) => !box.hit)
+                .map((missedBox) => (
+                    <div
+                        key={`missed-${missedBox.id}`}
+                        style={{
+                            position:  'absolute',
+                            top: missedBox.top,
+                            left: missedBox.left,
+                            width: '10px',
+                            height: '10px',
+                            backgroundColor: 'blue',
+                            borderRadius: '50%',
+                            zIndex: 10,
+                        }}
+                    />
+                ))}
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 20 }}>
                 {/* Display the total number of hits */}
                 <p>Current Hits: {boxQueue.filter(box => box.hit).length}</p>
