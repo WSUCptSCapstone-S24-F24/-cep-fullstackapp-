@@ -308,14 +308,20 @@ function Calibration() {
         const intervalX = (intervalXPercent / 100) * canvasWidth;
         const intervalY = (intervalYPercent / 100) * canvasHeight;
       
-        const rows = 3;
-        const cols = 5;
-        const totalPoints = rows * cols;
-        if (currentPointIndex >= totalPoints) return;
+        
+        const points = [
+          { row: 0, col: 0 },
+          { row: 0, col: 2 },
+          { row: 1, col: 1 },
+          { row: 2, col: 0 },
+          { row: 2, col: 2 },
+          { row: 0, col: 1 },
+          { row: 2, col: 1 }  
+        ];
+
+        if (currentPointIndex >= points.length) return;
       
-        const row = Math.floor(currentPointIndex / cols);
-        const col = currentPointIndex % cols;
-      
+        const { row, col } = points[currentPointIndex];
         const x = startX + col * intervalX;
         const y = startY + row * intervalY;
       
@@ -335,12 +341,17 @@ function Calibration() {
         ]);
       
         setCurrentPointIndex(currentPointIndex + 1);
+
+        console.log(`Clicked at: ${x}, ${y}`);
+        console.log(`CalibrationPointsArray: ${JSON.stringify(calibrationPoints, null, 2)}`);
+      console.log(`Calibration Array Length: ${calibrationPoints.length}`)
+        printIrisCoordinates();
       }
 
       useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
           if (event.key === 'c' || event.key === 'C') {
-            StaticCalibration(5, 10, 20, 30, clickCanvasRef); // Maybe edit this to fit the screen
+            StaticCalibration(10, 10, 40, 40, clickCanvasRef); // Maybe edit this to fit the screen
           }
         };
     
