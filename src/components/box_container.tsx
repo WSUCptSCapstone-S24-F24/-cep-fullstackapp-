@@ -12,23 +12,27 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
     useEffect(() => {
         const boxes: Box[] = generateBoxes(16, {width: 150, height: 150});    // This is where we set how much boxes and how big the boxes
         setBoxQueue(boxes);
+        setCurrentBoxIndex(0);
       }, [])
       
     // Cycle through each box in our queue
     useEffect(() => {
-        if (boxQueue.length == 0 || hasCompletedCycle) return;
+        if (hasCompletedCycle) return;
 
-        if (currentBoxIndex >= boxQueue.length){
-            setHasCompletedCycle(true);
-            return;
-        }
+        let nextIndex = currentBoxIndex + 1;
 
         const timer = setTimeout(() => {
-            setCurrentBoxIndex((prevIndex) => prevIndex + 1);
+            if (nextIndex >= boxQueue.length && boxQueue.length > 0){ // box queue does not update till after first run timer sequence, so length initially starts at 0.
+                setHasCompletedCycle(true);
+                return;
+            }
+            setCurrentBoxIndex(nextIndex);
+            console.log(`current dot  ${currentBoxIndex}`);
+            console.log(`boxQueue length  ${boxQueue.length}`);
           }, 3000); // Display each box for 3 seconds
       
           return () => clearTimeout(timer);
-    }, [currentBoxIndex, boxQueue, hasCompletedCycle]);
+    }, [currentBoxIndex, hasCompletedCycle]);
     
 
   
@@ -67,8 +71,8 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
       }
 
       const handleBoxHit = (boxId: number) => {
-        setBoxQueue((currentBoxes) => 
-            currentBoxes.map((box) =>
+        setBoxQueue(currentBox => 
+            currentBox.map(box =>
                 box.id === boxId ? {...box, hit: true} : box
             )
         ); 
@@ -89,7 +93,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
                     onHit={handleBoxHit}
                 />
             )}
-            {hasCompletedCycle && boxQueue
+            {hasCompletedCycle && boxQueue // this will map a list of all our missed dots and display the center positions of each box after the cycle
                 .filter((box) => !box.hit)
                 .map((missedBox) => (
                     <div
