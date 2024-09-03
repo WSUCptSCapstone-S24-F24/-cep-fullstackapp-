@@ -29,7 +29,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
             setCurrentBoxIndex(nextIndex);
             console.log(`current dot  ${currentBoxIndex}`);
             console.log(`boxQueue length  ${boxQueue.length}`);
-          }, 1000); // Display each box for 3 seconds
+          }, 3000); // Display each box for 3 seconds
       
           return () => clearTimeout(timer);
     }, [currentBoxIndex, hasCompletedCycle]);
