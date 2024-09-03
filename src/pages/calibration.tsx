@@ -59,6 +59,8 @@ function Calibration() {
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     const [showErrorTest, setShowErrorTest] = useState(false);
+    
+    const [isPointDisplayed, setIsPointDisplayed] = useState(false);
 
     // Update dimensions on window resize
     useEffect(() => {
@@ -291,56 +293,82 @@ function Calibration() {
         );
       }
 
-      function StaticCalibration(startX: number, startY: number, intervalX: number, intervalY: number, canvasRef: React.RefObject<HTMLCanvasElement>) {
+    function StaticCalibration(startXPercent: number, startYPercent: number, intervalXPercent: number, intervalYPercent: number, canvasRef: React.RefObject<HTMLCanvasElement>) { 
         const canvas = canvasRef.current;
         if (!canvas) return;
-        
+    
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        
+    
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-        const rows = 3;
-        const cols = 5;
-        const totalPoints = rows * cols;
-        if (currentPointIndex >= totalPoints) return;
-      
-        const row = Math.floor(currentPointIndex / cols);
-        const col = currentPointIndex % cols;
-      
+
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+
+        const startX = (startXPercent / 100) * canvasWidth;
+        const startY = (startYPercent / 100) * canvasHeight;
+        const intervalX = (intervalXPercent / 100) * canvasWidth;
+        const intervalY = (intervalYPercent / 100) * canvasHeight;
+
+        const points = [
+          { row: 0, col: 0 },
+          { row: 0, col: 2 },
+          { row: 1, col: 1 },
+          { row: 2, col: 0 },
+          { row: 2, col: 2 },
+          { row: 0, col: 1 },
+          { row: 2, col: 1 }  
+        ]; // points for calibration
+
+        if (currentPointIndex >= points.length) return;
+
+        const { row, col } = points[currentPointIndex];
         const x = startX + col * intervalX;
         const y = startY + row * intervalY;
-      
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-      
-        setCalibrationPoints(currentPoints => [
-          ...currentPoints,
-          {
-            irisX: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2 : 0,
-            irisY: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2 : 0,
-            screenX: x,
-            screenY: y
-          }
-        ]);
-      
-        setCurrentPointIndex(currentPointIndex + 1);
-      }
 
-      useEffect(() => {
+        if (isPointDisplayed) {
+          // Save the calibration point
+            setCalibrationPoints(currentPoints => [
+              ...currentPoints,
+              {
+                  irisX: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2 : 0,
+                  irisY: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2 : 0,
+                  screenX: x,
+                  screenY: y
+              }
+          ]);
+        
+        setCurrentPointIndex(currentPointIndex + 1);
+        setIsPointDisplayed(false);
+
+        console.log(`Recorded at: ${x}, ${y}`);
+        console.log(`CalibrationPointsArray: ${JSON.stringify(calibrationPoints, null, 2)}`);
+        } else {
+            // Draw the calibration point
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+            setIsPointDisplayed(true);
+            console.log(`Displayed at: ${x}, ${y}`);
+        }
+
+        printIrisCoordinates();
+    } 
+
+    useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
-          if (event.key === 'c' || event.key === 'C') {
-            StaticCalibration(56, 90, 400, 350, clickCanvasRef);
-          }
+            if (event.key === 'c' || event.key === 'C') {
+                StaticCalibration(10, 10, 40, 40, clickCanvasRef); // 10% from the top and left, 40% interval (default)
+            }
         };
-    
+
         window.addEventListener('keydown', handleKeyPress);
         return () => {
-          window.removeEventListener('keydown', handleKeyPress);
+            window.removeEventListener('keydown', handleKeyPress);
         };
-      }, [StaticCalibration]);
+    } , [StaticCalibration, isPointDisplayed]);
+
 
       // Instantiate FaceMesh
       useEffect(() => {
