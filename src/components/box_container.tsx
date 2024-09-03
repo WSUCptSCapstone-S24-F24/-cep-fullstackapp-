@@ -29,7 +29,7 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
             setCurrentBoxIndex(nextIndex);
             console.log(`current dot  ${currentBoxIndex}`);
             console.log(`boxQueue length  ${boxQueue.length}`);
-          }, 3000); // Display each box for 3 seconds
+          }, 1000); // Display each box for 3 seconds
       
           return () => clearTimeout(timer);
     }, [currentBoxIndex, hasCompletedCycle]);
@@ -40,16 +40,16 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
       const generateBoxes = (numberOfBoxes: number, size: {width: number, height: number; }): Box[] => {
         const rows = 4;
         const cols = 4;
-        const zoneWidth = window.innerWidth / rows;
-        const zoneHeight = window.innerHeight / cols;
+        const zoneWidth = (window.innerWidth - size.width * 2) / 3;
+        const zoneHeight = (window.innerHeight - size.height * 2) / 3;
 
         let zonePoints = [];
         for (let row = 0; row < rows; row++){
             for (let col = 0; col < cols; col++){
                 // Center each box in a cell
                 const point = {
-                    top: zoneHeight * col + (zoneHeight - size.height) / 2,
-                    left: zoneWidth * row + (zoneWidth - size.width) / 2,
+                    top: size.height + zoneHeight * col - size.height / 2,
+                    left: size.width + zoneWidth * row - size.width / 2,
                 };
                 zonePoints.push(point);
             }
