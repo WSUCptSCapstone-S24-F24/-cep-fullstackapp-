@@ -359,7 +359,7 @@ function Calibration() {
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
             if (event.key === 'c' || event.key === 'C') {
-                StaticCalibration(10, 10, 40, 40, clickCanvasRef); // 10% from the top and left, 40% interval (default)
+                StaticCalibration(3, 10, 45, 40, clickCanvasRef); // 10% from the top and left, 40% interval (default)
             }
         };
 
