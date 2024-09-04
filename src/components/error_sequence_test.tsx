@@ -10,6 +10,102 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
     const [currentDotIndex, setCurrentDotIndex] = useState<number | null>(0);
     const [userInputs, setUserInputs] = useState<VectorData[]>([]);
 
+    //gabe zone
+    //this is so dumb
+    interface VectorDataB {
+        x: number;
+        y: number;
+        dotIndex?: number; // Mark optional
+        direction?: string; // Mark optional
+        dotPosition?: { x: number; y: number }; // Mark optional
+        crosshairPosition?: { x: number; y: number }; // Mark optional
+    }
+  
+    const [lastCrosshairPositions, setLastCrosshairPositions] = useState<VectorDataB[]>([]);
+    const [averageCrosshairPosition, setAverageCrosshairPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+    // Updated useEffect to ensure the new position matches VectorData
+    useEffect(() => {
+        if (predictedCrosshairPosition) {
+            setLastCrosshairPositions(prevPositions => {
+                const newPosition: VectorDataB = {
+                    x: predictedCrosshairPosition.x,
+                    y: predictedCrosshairPosition.y,
+                    dotIndex: 0,
+                    direction: '',
+                    dotPosition: { x: 0, y: 0 },
+                    crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
+                };
+                //keep the last 5 positions
+                const updatedPositions = [...prevPositions, newPosition].slice(-5);
+
+                //get the average of those 5
+                if (updatedPositions.length > 0) {
+                    const avgX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
+                    const avgY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
+    
+                    setAverageCrosshairPosition({ x: avgX, y: avgY });
+                }
+    
+                return updatedPositions;
+            });
+        }
+    }, [predictedCrosshairPosition]);
+     // Draw all of our dots, including the last crosshair positions
+     useEffect(() => {
+        const svg = d3.select(svgRef.current);
+        svg.attr('width', dimensions.width).attr('height', dimensions.height);
+
+        svg.selectAll('*').remove(); // Clear previous contents
+
+        // Draw sequence dots
+        svg.selectAll('.dot')
+            .data(data)
+            .enter()
+            .append('circle')
+            .attr('class', 'dot')
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y)
+            .attr('r', 10)
+            .style('fill', (d, i) => (i === currentDotIndex ? 'blue' : 'none'))
+            .style('opacity', 1);
+
+        svg.selectAll('.text')
+            .data(data)
+            .enter()
+            .append('text')
+            .attr('x', d => d.x)
+            .attr('y', d => d.y + 5)
+            .attr('text-anchor', 'middle')
+            .text(d => d.direction)
+            .style('fill', 'white')
+            .attr('font-size', '12px')
+            .style('opacity', (d, i) => (i === currentDotIndex ? 1 : 0));
+
+        //gabe debug: draw last 5 crosshair positions
+        svg.selectAll('.crosshair-point')
+            .data(lastCrosshairPositions)
+            .enter()
+            .append('circle')
+            .attr('class', 'crosshair-point')
+            .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
+            .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
+            .attr('r', 2)
+            .style('fill', 'red');
+        
+        //gabe debug: draw average crosshair position
+        if (averageCrosshairPosition) {
+            svg.append('circle')
+                .attr('class', 'average-crosshair-point')
+                .attr('cx', averageCrosshairPosition.x)
+                .attr('cy', averageCrosshairPosition.y)
+                .attr('r', 5)
+                .style('fill', 'blue');
+
+        }
+    }, [data, currentDotIndex, dimensions, lastCrosshairPositions]);
+    //gabe zone ends
+
     // Generate Error Sequence Dots and Data
     useEffect(() => {
         // Create initial data set
@@ -81,24 +177,30 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
 
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
-            if (currentDotIndex !== null && predictedCrosshairPosition){
+            if (currentDotIndex !== null && averageCrosshairPosition){
                 const keyMap: { [key: string]: string } = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
                 const direction = keyMap[event.key];
                 event.preventDefault(); // Prevents the screen scrolling when pressing arrow keys
     
                 if (direction && direction === data[currentDotIndex!].direction) {
+                    //more gabe
+                    setTimeout(() => {}, 50); //waits 50ms to get some crosshair positions after. should probably depend on the framerate of the webcam instead, but this number isnt horrible
+                    //end gabe
+                    
                     // Process the correct input
                     const newUserInput = {
                         dotIndex: currentDotIndex!,
                         direction: data[currentDotIndex!].direction,
                         dotPosition: {x: data[currentDotIndex!].x, y: data[currentDotIndex!].y},
-                        crosshairPosition: predictedCrosshairPosition,
+                        crosshairPosition: averageCrosshairPosition,
                         userDirection: direction,
-                        dx: predictedCrosshairPosition.x - data[currentDotIndex!].x,
-                        dy: predictedCrosshairPosition.y - data[currentDotIndex!].y,
+                        dx: averageCrosshairPosition.x - data[currentDotIndex!].x,
+                        dy: averageCrosshairPosition.y - data[currentDotIndex!].y,
                     };
                     
                     if (currentDotIndex! + 1 < data.length){ // Move to next dot, unless we are at the end of the dot list
+                        console.log('Current Dot Index:', currentDotIndex); //debug
+                        console.log('Data Length:', data.length); //debug
                         setUserInputs(userInputs => [...userInputs, newUserInput]);
                         setCurrentDotIndex(currentDotIndex! + 1);
                     }
@@ -122,7 +224,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentDotIndex, data, dimensions.width, dimensions.height, userInputs, predictedCrosshairPosition]);
+    }, [currentDotIndex, data, dimensions.width, dimensions.height, userInputs, averageCrosshairPosition]);
 
     const drawVectorField = (vectors : VectorData[]) => {
         const svg = d3.select(svgRef.current); 
