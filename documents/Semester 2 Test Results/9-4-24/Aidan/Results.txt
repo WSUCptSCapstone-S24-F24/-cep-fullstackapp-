@@ -1,0 +1,48 @@
+Test Changes:
+- My face was about 3 feet away from the camera
+- Head was pressed against back of my chair for head stability
+- Each image was done with a brand new calibration
+
+Stability Test:
+- Static:
+-- Much easier to setup in the center
+-- Amount at which crosshair jumps around is not as much
+
+- Dynamic:
+-- Less accurate, needed to move head to center the dot
+-- Much more shaky compared to static. (amount at which crosshair jumps is much farther).
+
+Target Practice Test:
+- Static:
+-- Quite reliable, accuracy felt pretty stable and was easier to hold crosshair around the center dot
+-- Corner boxes were probably the most difficult to hit
+-- Some issue depending on initial head position, where crosshair is more likely to hover slightly above, right or left of dots for a single calibration
+
+- Dynamic:
+-- A lot more inconsistent, crosshair was much more sporadic. Distance at which crosshair jumps would jump around box.
+-- Edges of the screen were a lot more difficult to hit
+-- Inconsistent
+
+Error Sequence Test:
+- Static:
+-- Depending on calibration, some issues leave where crosshair remains slightly on the left or right of each box for the entire sequence 
+   (could be due to accidental head movement)
+-- Not as sporadic as dynamic calibration
+-- Inconsistent
+
+- Dynamic
+-- Crosshair is much more sporadic
+-- Inconsistent
+-- Left and/or right edges are much worse than static.
+
+- Both:
+-- Top two dots always have a big error
+
+Overall Notes:
+- Dynamic crosshair causes a lot of unnecessary head movement when moving around the mouse with your arm compared to static
+- Clicking on different tests causes too much head movement which can cause just enough to slightly throw us off for each test
+- It would be better to test one calibration for all 3 tests instead of a new calibration per test (We are unable to do this successfully due to head moving too much)
+- Static calibration is much better and more consistent overall
+- We could probably reduce calibration to a 5 point rather than 7 point
+- We need crosshair to be more stable
+- Crosshair was much more accurate with my head pressed against the back of the chair to keep head from moving as much
