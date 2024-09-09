@@ -34,7 +34,7 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
     const handleHoverStart = (boxId: number) => {
       const timer = setTimeout(() => {
           onHit(boxId);
-      }, 1000); // duration crosshair must be in virtual box
+      }, 500); // duration crosshair must be in virtual box
 
       setHoverTimer(timer);
     }
@@ -52,7 +52,7 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
         <div
           ref={boxRef}
           style={{
-            border: `2px solid ${isInside ? 'green' : 'red'}`, // Will change box color depending on if crosshair is inside the bounds of the box
+            border: `2px solid ${isInside ? 'none' : 'none'}`, // Will change box color depending on if crosshair is inside the bounds of the box
             height: height,
             width: width,
             position: 'relative',
