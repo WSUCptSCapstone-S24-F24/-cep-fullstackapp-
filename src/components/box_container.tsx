@@ -7,7 +7,6 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
     const [currentBoxIndex, setCurrentBoxIndex] = useState<number>(0);
     const [boxQueue, setBoxQueue] = useState<Box[]>([]);
     const [hasCompletedCycle, setHasCompletedCycle] = useState<boolean>(false);
-    const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null); // Timer for target practice hover duration
 
     // Initialize our box queue here
     useEffect(() => {
@@ -69,23 +68,6 @@ const BoxContainer: React.FC<BoxContainerInformation> = ({ crosshairPosition }) 
             left: `${point.left}px`,
             hit: false
         }));
-      }
-
-      // Start hover timer
-      const handleHoverStart = (boxId: number) => {
-        const timer = setTimeout(() => {
-            handleBoxHit(boxId);
-        }, 500); // duration crosshair must be in virtual box
-
-        setHoverTimer(timer);
-      }
-
-      // Reset hover timer if crosshair leaves box
-      const handleHoverEnd = () => {
-        if (hoverTimer){
-            clearTimeout(hoverTimer);
-            setHoverTimer(null);
-        }
       }
 
       const handleBoxHit = (boxId: number) => {
