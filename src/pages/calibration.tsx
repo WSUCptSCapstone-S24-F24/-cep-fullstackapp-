@@ -221,7 +221,7 @@ function Calibration() {
                   const avgX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
                   const avgY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
   
-                  setAverageCrosshairPosition({ x: avgX+200, y: avgY+200 });
+                  setAverageCrosshairPosition({ x: avgX, y: avgY });
                   averageCrosshairPositionRef.current = averageCrosshairPosition;
               }
   
