@@ -81,6 +81,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
 
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
+            //debug: console.log('index: %d', currentDotIndex);
             if (currentDotIndex !== null && predictedCrosshairPosition){
                 const keyMap: { [key: string]: string } = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R' };
                 const direction = keyMap[event.key];
@@ -110,7 +111,6 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
                     const vectors : VectorData[] = allUserInputs.map(input => {       // Takes the difference of each dot position vs crosshair position
                         const dx = input.crosshairPosition.x - input.dotPosition.x;  // Saves it to a vector array
                         const dy = input.crosshairPosition.y - input.dotPosition.y;
-        
                         return { ...input, dx, dy};
                     });
                 

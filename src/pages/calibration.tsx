@@ -10,6 +10,7 @@ import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
+import * as d3 from 'd3';
 
 declare global {
   interface Window {
@@ -48,6 +49,19 @@ function Calibration() {
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     // --Global predicted position
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
+    //predicted position for averages
+    //this is not cool but could probably be fixed later kinda easily
+    interface VectorDataB {
+      x: number;
+      y: number;
+      dotIndex?: number;
+      direction?: string;
+      dotPosition?: { x: number; y: number };
+      crosshairPosition?: { x: number; y: number };
+    }
+    const [lastCrosshairPositions, setLastCrosshairPositions] = useState<VectorDataB[]>([]);
+    const [averageCrosshairPosition, setAverageCrosshairPosition] = useState({x:0, y: 0});
+    const averageCrosshairPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
     // --Global target practice mode
@@ -188,6 +202,65 @@ function Calibration() {
     useEffect(() => {
       predictedCrosshairPositionRef.current = predictedCrosshairPosition;
     }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
+
+    //avereage crosshair position logic
+    useEffect(() => {
+      if (predictedCrosshairPosition) {
+          setLastCrosshairPositions(prevPositions => {
+              const newPosition: VectorDataB = {
+                  x: predictedCrosshairPosition.x,
+                  y: predictedCrosshairPosition.y,
+                  dotIndex: 0,
+                  direction: '',
+                  dotPosition: { x: 0, y: 0 },
+                  crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
+              };
+              //keep the last 5 positions
+              const updatedPositions = [...prevPositions, newPosition].slice(-5);
+
+              //get the average of those 5
+              if (updatedPositions.length > 0) {
+                  const avgX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
+                  const avgY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
+  
+                  setAverageCrosshairPosition({ x: avgX, y: avgY });
+                  averageCrosshairPositionRef.current = averageCrosshairPosition;
+              }
+  
+              return updatedPositions;
+          });
+      }
+  }, [predictedCrosshairPosition]);
+
+  //debug: draw average crosshair and previous 5 points
+  useEffect(() => {
+    const svg = d3.select(vectorCalibRef.current);
+
+    //remove existing crosshair points to prevent duplicates
+    svg.selectAll('.crosshair-point').remove();
+    svg.selectAll('.average-crosshair-point').remove();
+    
+     //draw last 5 crosshair positions
+     svg.selectAll('.crosshair-point')
+     .data(lastCrosshairPositions)
+     .enter()
+     .append('circle')
+     .attr('class', 'crosshair-point')
+     .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
+     .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
+     .attr('r', 2)
+     .style('fill', 'red');
+
+    //draw average crosshair position
+    if (averageCrosshairPosition) {
+      svg.append('circle')
+        .attr('class', 'average-crosshair-point')
+        .attr('cx', averageCrosshairPosition.x)
+        .attr('cy', averageCrosshairPosition.y)
+        .attr('r', 5)
+        .style('fill', 'blue');
+    }
+  }, [dimensions, lastCrosshairPositions, averageCrosshairPosition]); // Dependencies for re-running the effect
 
 
     function onResults(results:any) {
@@ -509,13 +582,13 @@ function Calibration() {
         <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
-        {showBoxContainer && <BoxContainer crosshairPosition={predictedCrosshairPosition}/>}
+        {showBoxContainer && <BoxContainer crosshairPosition={averageCrosshairPosition}/>}
       </div>  
       <div>
-        {showErrorTest && <ErrorSequenceTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={predictedCrosshairPosition}/>}  
+        {showErrorTest && <ErrorSequenceTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={averageCrosshairPosition}/>}  
       </div>    
       <div>
-        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={predictedCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
+        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
       </div>
     </div>
     
