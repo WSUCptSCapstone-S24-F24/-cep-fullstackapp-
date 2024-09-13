@@ -5,6 +5,7 @@ import { VirtualBoxInfo } from '../types/interfaces';
 const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, height, width, top = '0', left = '0', right='0', onHit}) => {
     const boxRef = useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = useState(false);
+    const [isHit, setIsHit] = useState(false);
     const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null); // Timer for target practice hover duration
 
     useEffect(() =>{
@@ -34,6 +35,7 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
     const handleHoverStart = (boxId: number) => {
       const timer = setTimeout(() => {
           onHit(boxId);
+          setIsHit(true);
       }, 500); // duration crosshair must be in virtual box
 
       setHoverTimer(timer);
@@ -68,7 +70,7 @@ const VirtualBox: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
           <div style={{
             height: '20px',
             width: '20px',
-            backgroundColor: 'red',
+            backgroundColor: `${isHit ? 'green' : 'red'}`,
             borderRadius: '100%'
           }}/>
         </div>
