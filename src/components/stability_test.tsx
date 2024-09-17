@@ -9,6 +9,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
     const vectorSvgRef = useRef<SVGSVGElement>(null); // Ref for the SVG
     const [stabilityCrosshairPositions, setStabilityCrosshairPositions] = useState<{x: number, y: number}[]>([]);
     const [stabilityComplete, setStabilityComplete] = useState(false);
+    const [averageCrosshairPosition, setAverageCrosshairPosition] =  useState<{ x: number; y: number }>({ x: 0, y: 0 }); //average crosshair position over the duration of the test
 
     // Center dot
     useEffect(() => {
@@ -45,6 +46,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                 console.log("Stability sequence started...");
                 event.preventDefault();
                 const startTime = performance.now();
+                let stabilityPositions: {x: number, y: number}[] = [] //for average
                 
                 const capturePositions = (timestamp: number) => {
                     const elapsedTime = timestamp - startTime;
@@ -54,12 +56,28 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                         const predictedPosition = {x: predictedCrosshairPositionRef.current.x, y: predictedCrosshairPositionRef.current.y}
 
                         setStabilityCrosshairPositions(prevPositions => [...prevPositions, predictedPosition]);
+                        stabilityPositions.push(predictedPosition); //for average
+                        console.log(predictedPosition)
                         frameRequestId = requestAnimationFrame(capturePositions);
                     } else {
+                        //find average
+                        const totalPositions = stabilityPositions.length;
+                        if (totalPositions > 0) {
+                        const avgPosition = stabilityPositions.reduce(
+                            (acc, pos) => ({ x: acc.x + pos.x, y: acc.y + pos.y }),
+                            { x: 0, y: 0 }
+                        );
+                        const avgX = avgPosition.x / totalPositions;
+                        const avgY = avgPosition.y / totalPositions;
+
+                        setAverageCrosshairPosition({x: avgX, y: avgY});
+
+                        console.log("test putting math in variable: ", avgX, avgY);
+
                         setStabilityComplete(true);
                         console.log("Stability sequence ended...");
                         cancelAnimationFrame(frameRequestId!);
-                    }
+                    }}
                 };
 
                 frameRequestId = requestAnimationFrame(capturePositions);
@@ -100,9 +118,10 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                 .attr("markerHeight", 6)
                 .attr("orient", "auto")
                 .append("path")
-                .attr("fill", "red")
+                .attr("fill", "lightblue")
                 .attr("d", "M0,-5L10,0L0,5");
-
+                
+            
             // Draw vectors
             svg.selectAll(".vector")
                 .data(vectors)
@@ -112,9 +131,16 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
                 .attr("y1", centerY)
                 .attr("x2", d => centerX + d.dx)
                 .attr("y2", d => centerY + d.dy)
-                .attr("stroke", "red")
+                .attr("stroke", "lightblue")
                 .attr("stroke-width", 1)
                 .attr("marker-end", "url(#arrow)");
+
+            //draw average crosshair position
+            svg.append("circle")
+                .attr("cx", averageCrosshairPosition.x)
+                .attr("cy", averageCrosshairPosition.y)
+                .attr("r", 4)
+                .attr("fill", "red")
 
             setStabilityComplete(false);  // Reset for potential next test
         }

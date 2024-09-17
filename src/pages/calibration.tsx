@@ -213,10 +213,32 @@ function Calibration() {
                   dotPosition: { x: 0, y: 0 },
                   crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
               };
-              //keep the last 5 positions
-              const updatedPositions = [...prevPositions, newPosition].slice(-5);
+              //keep the last n positions
+              const updatedPositions = [...prevPositions, newPosition].slice(-20);
 
-              //get the average of those 5
+              //exclude outliers
+              const meanX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
+              const meanY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
+
+              const stdDevX = Math.sqrt(updatedPositions.reduce((sum, pos) => sum + Math.pow(pos.x - meanX, 2), 0) / updatedPositions.length);
+              const stdDevY = Math.sqrt(updatedPositions.reduce((sum, pos) => sum + Math.pow(pos.y - meanY, 2), 0) / updatedPositions.length);
+
+              //ignore outliers however many stddevs away
+              const stddevs = 1
+              const filteredPositions = updatedPositions.filter(pos => Math.abs(pos.x - meanX) <= stddevs * stdDevX && Math.abs(pos.y - meanY) <= stddevs * stdDevY);
+
+               //weighted average: give 2x weight to the 10 most recent positions
+              let weightedSumX = 0, weightedSumY = 0, totalWeight = 0;
+              const recentWeight = 2, olderWeight = 1;
+
+              filteredPositions.forEach((pos, index) => {
+                  const weight = index >= filteredPositions.length - 10 ? recentWeight : olderWeight;
+                  weightedSumX += pos.x * weight;
+                  weightedSumY += pos.y * weight;
+                  totalWeight += weight;
+              });
+
+              //get the average of the last n positions
               if (updatedPositions.length > 0) {
                   const avgX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
                   const avgY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
@@ -239,15 +261,15 @@ function Calibration() {
     svg.selectAll('.average-crosshair-point').remove();
     
      //draw last 5 crosshair positions
-     svg.selectAll('.crosshair-point')
-     .data(lastCrosshairPositions)
-     .enter()
-     .append('circle')
-     .attr('class', 'crosshair-point')
-     .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
-     .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
-     .attr('r', 2)
-     .style('fill', 'red');
+    //  svg.selectAll('.crosshair-point')
+    //  .data(lastCrosshairPositions)
+    //  .enter()
+    //  .append('circle')
+    //  .attr('class', 'crosshair-point')
+    //  .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
+    //  .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
+    //  .attr('r', 2)
+    //  .style('fill', 'red');
 
     //draw average crosshair position
     if (averageCrosshairPosition) {
