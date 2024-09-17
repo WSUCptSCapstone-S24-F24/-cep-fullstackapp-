@@ -214,7 +214,8 @@ function Calibration() {
                   crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
               };
               //keep the last n positions
-              const updatedPositions = [...prevPositions, newPosition].slice(-20);
+              const n = 20 //config
+              const updatedPositions = [...prevPositions, newPosition].slice(-n);
 
               //exclude outliers
               const meanX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
@@ -224,15 +225,15 @@ function Calibration() {
               const stdDevY = Math.sqrt(updatedPositions.reduce((sum, pos) => sum + Math.pow(pos.y - meanY, 2), 0) / updatedPositions.length);
 
               //ignore outliers however many stddevs away
-              const stddevs = 1
+              const stddevs = 1 //config
               const filteredPositions = updatedPositions.filter(pos => Math.abs(pos.x - meanX) <= stddevs * stdDevX && Math.abs(pos.y - meanY) <= stddevs * stdDevY);
 
                //weighted average: give 2x weight to the 10 most recent positions
               let weightedSumX = 0, weightedSumY = 0, totalWeight = 0;
-              const recentWeight = 2, olderWeight = 1;
+              const recentWeight = 2, olderWeight = 1; //config
 
               filteredPositions.forEach((pos, index) => {
-                  const weight = index >= filteredPositions.length - 10 ? recentWeight : olderWeight;
+                  const weight = index >= filteredPositions.length - n/2 ? recentWeight : olderWeight;
                   weightedSumX += pos.x * weight;
                   weightedSumY += pos.y * weight;
                   totalWeight += weight;
