@@ -11,6 +11,7 @@ import StabilityTest from '../components/stability_test';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
+import cv from "@techstark/opencv-js"
 
 declare global {
   interface Window {
@@ -500,7 +501,6 @@ function Calibration() {
       
   return (
     <div>
-      
       <canvas
         ref={crosshairCanvasRef}
         width={dimensions.width}
