@@ -76,6 +76,8 @@ function Calibration() {
     
     const [isPointDisplayed, setIsPointDisplayed] = useState(false);
 
+    const [isMemoryGameDisplayed, setMemoryGameDisplayed] = useState(false);
+
     // Update dimensions on window resize
     useEffect(() => {
       function handleResize() {
@@ -598,6 +600,9 @@ function Calibration() {
         </button>
         <button onClick={() => setShowErrorTest(!showErrorTest)}>
           {showErrorTest ? "Hide Error Test" : "Show Error Test"}
+        </button>
+        <button onClick={() => setMemoryGameDisplayed(!isMemoryGameDisplayed)}>
+          {isMemoryGameDisplayed ? "Hide Memory Game" : "Show Memory Game"}
         </button>
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
