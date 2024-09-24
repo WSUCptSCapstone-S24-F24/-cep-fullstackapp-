@@ -8,6 +8,7 @@ import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
+import MemoryGame from '../components/memory_game';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
@@ -76,7 +77,7 @@ function Calibration() {
     
     const [isPointDisplayed, setIsPointDisplayed] = useState(false);
 
-    const [isMemoryGameDisplayed, setMemoryGameDisplayed] = useState(false);
+    const [showMemoryGame, setShowMemoryGame] = useState(false);
 
     // Update dimensions on window resize
     useEffect(() => {
@@ -601,8 +602,8 @@ function Calibration() {
         <button onClick={() => setShowErrorTest(!showErrorTest)}>
           {showErrorTest ? "Hide Error Test" : "Show Error Test"}
         </button>
-        <button onClick={() => setMemoryGameDisplayed(!isMemoryGameDisplayed)}>
-          {isMemoryGameDisplayed ? "Hide Memory Game" : "Show Memory Game"}
+        <button onClick={() => setShowMemoryGame(!showMemoryGame)}>
+          {showMemoryGame ? "Hide Memory Game" : "Show Memory Game"}
         </button>
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
@@ -617,6 +618,9 @@ function Calibration() {
       </div>    
       <div>
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
+      </div>
+      <div>
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition}/>}
       </div>
     </div>
     
