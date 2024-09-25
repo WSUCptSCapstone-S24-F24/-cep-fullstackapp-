@@ -498,6 +498,56 @@ function Calibration() {
           camera.start();
         }
       }, []);
+
+      useEffect(() => {
+        const detectFace = () => {
+
+          if (typeof cv === 'undefined') {
+      console.error('OpenCV.js is not loaded yet');
+      return;
+    }
+
+          const video = webcamRef.current.video;
+          const canvas = canvasRef.current;
+          if (!video || !canvas) return;
+    
+          const ctx = canvas.getContext('2d');          
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Converted to grayscale with OpenCV
+          let src = cv.imread(canvas);
+          let gray = new cv.Mat();
+
+          cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+    
+          // Preparation for face detection (cascade classifier)
+          let faceCascade = new cv.CascadeClassifier();
+          faceCascade.load('src\models\haarcascade_frontalface_default.xml');
+    
+          // Perform face detection
+          let faces = new cv.RectVector();
+          let msize = new cv.Size(0, 0);
+          faceCascade.detectMultiScale(gray, faces, 1.1, 3, 0, msize, msize);
+    
+          // Drawing the detected face
+          for (let i = 0; i < faces.size(); ++i) {
+            let face = faces.get(i);
+            ctx.beginPath();
+            ctx.rect(face.x, face.y, face.width, face.height);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+          }
+    
+          src.delete();
+          gray.delete();
+          faces.delete();
+          faceCascade.delete();
+        };
+    
+        const interval = setInterval(detectFace, 100);
+        return () => clearInterval(interval);
+      }, []);
       
   return (
     <div>
@@ -614,6 +664,7 @@ function Calibration() {
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
       </div>
     </div>
+    
     
   );
 }
