@@ -11,7 +11,7 @@ const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
     useEffect(() =>{
         if (!boxRef.current) return;
 
-        // Will check if the crosshair is within the bounds of the virtual box
+        // Will check if the crosshair is within the bounds of the virtual card
         const box = boxRef.current.getBoundingClientRect();
         const isInsideBox = 
         crosshairPosition.x >= box.left &&
@@ -36,12 +36,12 @@ const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
       const timer = setTimeout(() => {
           onHit(boxId);
           setIsHit(true);
-      }, 500); // duration crosshair must be in virtual box
+      }, 1000); // duration crosshair must be in card
 
       setHoverTimer(timer);
     }
 
-    // Reset hover timer if crosshair leaves box
+    // Reset hover timer if crosshair leaves card
     const handleHoverEnd = () => {
       if (hoverTimer){
           clearTimeout(hoverTimer);
@@ -54,7 +54,7 @@ const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
         <div
           ref={boxRef}
           style={{
-            border: `2px solid ${isInside ? 'black' : 'green'}`, // Will change box color depending on if crosshair is inside the bounds of the box
+            border: `2px solid ${isInside ? 'red' : 'green'}`, // Will change box color depending on if crosshair is inside the bounds of the box
             height: height,
             width: width,
             position: 'relative',

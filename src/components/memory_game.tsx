@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BoxContainerInformation, Box } from '../types/interfaces';
 import MemoryCard from './memory_card';
+import { cross } from 'd3';
 
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 
@@ -8,40 +9,22 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
 
     // Initialize our box queue here
     useEffect(() => {
-        const cards: Box[] = generateCards(16, {width: 100, height: 100}); 
+        const cards: Box[] = generateCards(16); 
         setCardQueue(cards);
       }, [])
 
-      // Generate target box array
-      const generateCards = (numberOfCards: number, size: {width: number, height: number; }): Box[] => {
-        const rows = 4;
-        const cols = 4;
-        const zoneWidth = (window.innerWidth - size.width * 2) / 3;
-        const zoneHeight = (window.innerHeight - size.height * 2) / 3;
-
-        let zonePoints = [];
-        for (let row = 0; row < rows; row++){
-            for (let col = 0; col < cols; col++){
-                // Center each box in a cell
-                const point = {
-                    top: size.height + zoneHeight * col - size.height / 2,
-                    left: size.width + zoneWidth * row - size.width / 2,
-                };
-                zonePoints.push(point);
-            }
-        }
-
-        // Create boxes in order of zonePoints
-        return zonePoints.slice(0, numberOfCards).map((point, index) => ({
+      // Generate target card array
+      const generateCards = (numberOfCards: number): Box[] => {
+        return Array.from({length: numberOfCards}).map((_, index) => ({
             id: index,
-            name: `Target ${index + 1}`,
-            height: `${size.height}px`,
-            width: `${size.width}px`,
-            top: `${point.top}px`,
-            left: `${point.left}px`,
-            hit: false
+            name: `Card ${index + 1}`,
+            height: `1fr`,
+            width: `1fr`,
+            top: `1fr`,
+            left: `1fr`,
+            hit: false,
         }));
-      }
+      };
 
       const handleBoxHit = (cardId: number) => {
         setCardQueue(currentCard =>
@@ -52,23 +35,30 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
     };
 
     return (
-        <div style={{ position: 'relative', height: '100vh' }}>
-            {/* Display all the boxes at once */}
+        <div style={{
+            display: `grid`,
+            gridTemplateColumns: `repeat(4, 1fr)`,
+            gridTemplateRows: `repeat(4, 1fr)`,
+            gap: `10px`,
+            height: `100vh`,
+            width: `100vw`,
+            padding: `10px`,
+            boxSizing: `border-box`
+        }}>
+            {/* Fill the cards to the grid */}
             {cardQueue.map(card => (
                 <MemoryCard
                     key={card.id}
                     id={card.id}
                     crosshairPosition={crosshairPosition}
                     name={card.name}
-                    height={card.height}
-                    width={card.width}
-                    top={card.top}
-                    left={card.left}
+                    height={`100%`}
+                    width={`100%`}
                     onHit={handleBoxHit}
                 />
             ))}
-            </div>
-    );
+        </div>
+    )
 };
 
 export default MemoryGame;
