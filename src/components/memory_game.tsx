@@ -6,10 +6,11 @@ import { cross } from 'd3';
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 
     const [cardQueue, setCardQueue] = useState<Box[]>([]);
+    const numberOfCards = 16;
 
     // Initialize our box queue here
     useEffect(() => {
-        const cards: Box[] = generateCards(16); 
+        const cards: Box[] = generateCards(numberOfCards); 
         setCardQueue(cards);
       }, [])
 
@@ -37,8 +38,8 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
     return (
         <div style={{
             display: `grid`,
-            gridTemplateColumns: `repeat(4, 1fr)`,
-            gridTemplateRows: `repeat(4, 1fr)`,
+            gridTemplateColumns: `repeat(${Math.round(Math.sqrt(numberOfCards))}, 1fr)`,
+            gridTemplateRows: `repeat(${Math.round(Math.sqrt(numberOfCards))}, 1fr)`,
             gap: `10px`,
             height: `100vh`,
             width: `100vw`,
