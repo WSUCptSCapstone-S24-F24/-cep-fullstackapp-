@@ -12,6 +12,7 @@ import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
 import cv from "@techstark/opencv-js"
+import { loadDataFile } from '../utils/cvDataFile'
 
 declare global {
   interface Window {
@@ -521,8 +522,12 @@ function Calibration() {
           cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     
           // Preparation for face detection (cascade classifier)
+          loadDataFile(
+            "haarcascade_frontalface_default.xml",
+            "models/haarcascade_frontalface_default.xml"
+          );
           let faceCascade = new cv.CascadeClassifier();
-          faceCascade.load('src\models\haarcascade_frontalface_default.xml');
+          faceCascade.load('haarcascade_frontalface_default.xml');
     
           // Perform face detection
           let faces = new cv.RectVector();
