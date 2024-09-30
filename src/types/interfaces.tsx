@@ -59,6 +59,30 @@ export interface VirtualBoxInfo {
   onHit: (id: number) => void;
 }
 
+export interface MemoryCardBox {
+  id: number;
+  name: string;
+  imageSrc : string;
+  height: string;
+  width: string;
+  top: string;
+  left: string;
+  hit: boolean;
+}
+
+export interface MemoryCardInfo {
+  id: number;
+  crosshairPosition: {x: number, y: number};
+  imageSrc : string;
+  name: string;
+  height: string;
+  width: string;
+  top?: string;
+  left?: string;
+  right?: string;
+  onHit: (id: number) => void;
+}
+
 export interface ErrorSequenceProps {
   dimensions: { width: number, height: number };
   dpi: number;

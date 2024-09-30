@@ -1,24 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BoxContainerInformation, Box } from '../types/interfaces';
+import { BoxContainerInformation, MemoryCardBox } from '../types/interfaces';
 import MemoryCard from './memory_card';
 
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 
-    const [cardQueue, setCardQueue] = useState<Box[]>([]);
+    const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
     const rowSize = 4;
     const colSize = 4;
 
     // Initialize our box queue here
     useEffect(() => {
-        const cards: Box[] = generateCards(rowSize * colSize); 
+        const cards: MemoryCardBox[] = generateCards(rowSize * colSize); 
         setCardQueue(cards);
       }, [])
 
       // Generate target card array
-      const generateCards = (numberOfCards: number): Box[] => {
+      const generateCards = (numberOfCards: number): MemoryCardBox[] => {
+
+        const images = [
+            'images\test_image.jpg'
+        ];
+
         return Array.from({length: numberOfCards}).map((_, index) => ({
             id: index,
             name: `Card ${index + 1}`,
+            imageSrc: images[index % images.length],
             height: `1fr`,
             width: `1fr`,
             top: `1fr`,
@@ -53,6 +59,7 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
                     id={card.id}
                     crosshairPosition={crosshairPosition}
                     name={card.name}
+                    imageSrc={card.imageSrc}
                     height={`100%`}
                     width={`100%`}
                     onHit={handleBoxHit}

@@ -1,8 +1,8 @@
 import React from 'react';
 import {useRef, useEffect, useState} from 'react'
-import { VirtualBoxInfo } from '../types/interfaces';
+import { MemoryCardInfo } from '../types/interfaces';
 
-const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, height, width, top = '0', left = '0', right='0', onHit}) => {
+const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, imageSrc, height, width, top = '0', left = '0', right='0', onHit}) => {
     const boxRef = useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = useState(false);
     const [isHit, setIsHit] = useState(false);
