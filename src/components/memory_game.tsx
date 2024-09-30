@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BoxContainerInformation, Box } from '../types/interfaces';
 import MemoryCard from './memory_card';
-import { cross } from 'd3';
 
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 

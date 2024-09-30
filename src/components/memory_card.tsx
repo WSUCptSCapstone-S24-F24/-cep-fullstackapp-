@@ -64,7 +64,8 @@ const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
             zIndex: 12,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            backgroundColor: isHit ? 'transparent' : 'gray'
           }}
         >
           <div style={{
