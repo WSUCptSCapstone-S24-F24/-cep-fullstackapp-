@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BoxContainerInformation, MemoryCardBox } from '../types/interfaces';
 import MemoryCard from './memory_card';
+import { shuffle } from 'd3';
 
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 
@@ -16,15 +17,36 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
 
       // Generate target card array
       const generateCards = (numberOfCards: number): MemoryCardBox[] => {
+        const half = numberOfCards / 2;
 
         const images = [
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92c.png'
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92c.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f611.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/2620-fe0f.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47a.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92f.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f644.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f62b.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92a.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f641.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f634.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f912.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47f.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47d.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92e.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f624.png'
         ];
 
-        return Array.from({length: numberOfCards}).map((_, index) => ({
+        let pairedImages = images.slice(0, half);
+
+        pairedImages = [...pairedImages, ...pairedImages];
+
+        shuffle(pairedImages);
+
+        return pairedImages.map((imageSrc, index) => ({
             id: index,
             name: `Card ${index + 1}`,
-            imageSrc: images[index % images.length],
+            imageSrc: imageSrc,
             height: `1fr`,
             width: `1fr`,
             top: `1fr`,
