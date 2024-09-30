@@ -1,8 +1,8 @@
 import React from 'react';
 import {useRef, useEffect, useState} from 'react'
-import { VirtualBoxInfo } from '../types/interfaces';
+import { MemoryCardInfo } from '../types/interfaces';
 
-const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, height, width, top = '0', left = '0', right='0', onHit}) => {
+const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, imageSrc, height, width, top = '0', left = '0', right='0', onHit}) => {
     const boxRef = useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = useState(false);
     const [isHit, setIsHit] = useState(false);
@@ -64,15 +64,32 @@ const MemoryCard: React.FC<VirtualBoxInfo> = ({ id, crosshairPosition, name, hei
             zIndex: 12,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            backgroundColor: isHit ? 'transparent' : 'gray',
+            boxSizing: 'border-box',
+            aspectRatio: '1',
+            overflow: 'hidden'
           }}
         >
-          <div style={{
-            height: '20px',
-            width: '20px',
-            backgroundColor: `${isHit ? 'green' : 'red'}`,
-            borderRadius: '100%'
-          }}/>
+
+          {isHit ? (
+            <img
+            src={imageSrc}
+            alt={name}
+            style={{
+              height: '100%',
+              width: '100%',
+              objectFit: 'contain'
+            }}
+            />
+          ) : (
+            <div style={{
+              height: '0px',
+              width: '0px',
+              backgroundColor: 'green',
+              borderRadius: '100%'
+            }} />
+          )}
         </div>
     );
 }
