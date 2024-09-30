@@ -497,6 +497,10 @@ function Calibration() {
             height: 480,
           });
           camera.start();
+          loadDataFile(
+            "haarcascade_frontalface_default.xml",
+            "models/haarcascade_frontalface_default.xml"
+          );
         }
       }, []);
 
@@ -522,10 +526,6 @@ function Calibration() {
           cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
     
           // Preparation for face detection (cascade classifier)
-          loadDataFile(
-            "haarcascade_frontalface_default.xml",
-            "models/haarcascade_frontalface_default.xml"
-          );
           let faceCascade = new cv.CascadeClassifier();
           faceCascade.load('haarcascade_frontalface_default.xml');
     
