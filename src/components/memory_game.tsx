@@ -18,7 +18,7 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
       const generateCards = (numberOfCards: number): MemoryCardBox[] => {
 
         const images = [
-            'images\test_image.jpg'
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92c.png'
         ];
 
         return Array.from({length: numberOfCards}).map((_, index) => ({
