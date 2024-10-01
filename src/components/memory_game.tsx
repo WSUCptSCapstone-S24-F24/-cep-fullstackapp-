@@ -6,6 +6,7 @@ import { shuffle } from 'd3';
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
+    const [visibleCards, setVisibleCards] = useState<number[]>([]);
     const rowSize = 4;
     const colSize = 4;
 
@@ -56,11 +57,44 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
       };
 
       const handleBoxHit = (cardId: number) => {
+        // Ensure only 2 cards are visible at once
+        if (visibleCards.length === 2){
+            return;
+        }
+
+        const newVisibleCards = [...visibleCards, cardId];
+
+        // Set new card to visible cards
+        setVisibleCards(newVisibleCards);
+
+        // Reveal hidden card
         setCardQueue(currentCard =>
             currentCard.map(card =>
                 card.id === cardId ? { ...card, hit: true } : card
             )
         );
+
+        // check if both visible cards have a match
+        if (newVisibleCards.length === 2){
+            const [firstCardId, secondCardId] = newVisibleCards;
+            const firstCard = cardQueue.find(card => card.id === firstCardId);
+            const secondCard = cardQueue.find(card => card.id === secondCardId);
+
+            if (firstCard && secondCard){
+                if (firstCard.imageSrc === secondCard.imageSrc){
+                    // Cards match, remove both cards
+                    setTimeout(() => {
+                        setCardQueue(currentCards => currentCards.filter(card => card.id !== firstCardId && card.id !== secondCardId));
+                        setVisibleCards([]);
+                    }, 1000); // Delay before cards are removed
+                } else {
+                    setTimeout(() => {
+                        setCardQueue(currentCards => currentCards.map(card => card.id === firstCardId || card.id == secondCardId ? {...card, hit: false} : card));
+                        setVisibleCards([]);
+                    }, 1000);
+                }
+            }
+        }
     };
 
     return (
