@@ -6,6 +6,8 @@ import { shuffle } from 'd3';
 const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
 
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
+    const [visibleCards, setVisibleCards] = useState<number[]>([]);
+    const [matchedCards, setMatchedCards] = useState<number[]>([]);
     const rowSize = 4;
     const colSize = 4;
 
@@ -34,7 +36,13 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47f.png',
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47d.png',
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92e.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f624.png'
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f624.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f921.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f48e.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31a.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31e.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31b.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/2603-fe0f.png'
         ];
 
         let pairedImages = images.slice(0, half);
@@ -56,11 +64,45 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
       };
 
       const handleBoxHit = (cardId: number) => {
+        // Ensure only 2 cards are visible at once
+        if (visibleCards.length >= 2 || matchedCards.includes(cardId)){
+            return;
+        }
+
+        const newVisibleCards = [...visibleCards, cardId];
+
+        // Set new card to visible cards
+        setVisibleCards(newVisibleCards);
+
+        // Reveal hidden card
         setCardQueue(currentCard =>
             currentCard.map(card =>
                 card.id === cardId ? { ...card, hit: true } : card
             )
         );
+
+
+        // check if both visible cards have a match
+        if (newVisibleCards.length === 2){
+            const [firstCardId, secondCardId] = newVisibleCards;
+            const firstCard = cardQueue.find(card => card.id === firstCardId);
+            const secondCard = cardQueue.find(card => card.id === secondCardId);
+
+            if (firstCard && secondCard){
+                if (firstCard.imageSrc === secondCard.imageSrc){
+                    // Cards match, remove both cards
+                    setTimeout(() => {
+                        setMatchedCards(currentCard => [...currentCard, firstCardId, secondCardId]);
+                        setVisibleCards([]);
+                    }, 1000); // Delay before cards are removed
+                } else {
+                    setTimeout(() => {
+                        setCardQueue(currentCards => currentCards.map(card => card.id === firstCardId || card.id == secondCardId ? {...card, hit: false} : card));
+                        setVisibleCards([]);
+                    }, 1000);
+                }
+            }
+        }
     };
 
     return (
@@ -85,6 +127,8 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
                     height={`100%`}
                     width={`100%`}
                     onHit={handleBoxHit}
+                    isHit={visibleCards.includes(card.id) || matchedCards.includes(card.id)}
+                    isMatched={matchedCards.includes(card.id)}
                 />
             ))}
         </div>
