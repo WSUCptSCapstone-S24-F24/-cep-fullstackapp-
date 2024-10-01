@@ -75,7 +75,6 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
             )
         );
 
-        console.log(`Visible Cards Length : ${visibleCards.length}`);
 
         // check if both visible cards have a match
         if (newVisibleCards.length === 2){
