@@ -36,7 +36,13 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47f.png',
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47d.png',
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92e.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f624.png'
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f624.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f921.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f48e.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31a.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31e.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31b.png',
+            'https://emoji.aranja.com/static/emoji-data/img-apple-160/2603-fe0f.png'
         ];
 
         let pairedImages = images.slice(0, half);
