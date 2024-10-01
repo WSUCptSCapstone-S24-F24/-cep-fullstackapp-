@@ -81,6 +81,8 @@ export interface MemoryCardInfo {
   left?: string;
   right?: string;
   onHit: (id: number) => void;
+  isHit: boolean;
+  isMatched: boolean;
 }
 
 export interface ErrorSequenceProps {

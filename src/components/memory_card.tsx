@@ -2,10 +2,10 @@ import React from 'react';
 import {useRef, useEffect, useState} from 'react'
 import { MemoryCardInfo } from '../types/interfaces';
 
-const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, imageSrc, height, width, top = '0', left = '0', right='0', onHit}) => {
+const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, imageSrc, height, width, top = '0', left = '0', right='0', onHit, isHit, isMatched}) => {
     const boxRef = useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = useState(false);
-    const [isHit, setIsHit] = useState(false);
+    //const [isHit, setIsHit] = useState(false);
     const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null); // Timer for target practice hover duration
 
     useEffect(() =>{
@@ -35,7 +35,7 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, ima
     const handleHoverStart = (boxId: number) => {
       const timer = setTimeout(() => {
           onHit(boxId);
-          setIsHit(true);
+          //setIsHit(true);
       }, 1000); // duration crosshair must be in card
 
       setHoverTimer(timer);
@@ -48,7 +48,9 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, ima
           console.log(`reset`);
           setHoverTimer(null);
       }
-    }
+    };
+
+    if (isMatched) return null; // if card is matched, remove card
 
     return (
         <div

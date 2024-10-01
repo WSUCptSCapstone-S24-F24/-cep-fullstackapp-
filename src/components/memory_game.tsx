@@ -7,6 +7,7 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
 
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
     const [visibleCards, setVisibleCards] = useState<number[]>([]);
+    const [matchedCards, setMatchedCards] = useState<number[]>([]);
     const rowSize = 4;
     const colSize = 4;
 
@@ -58,7 +59,7 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
 
       const handleBoxHit = (cardId: number) => {
         // Ensure only 2 cards are visible at once
-        if (visibleCards.length === 2){
+        if (visibleCards.length >= 2 || matchedCards.includes(cardId)){
             return;
         }
 
@@ -74,6 +75,8 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
             )
         );
 
+        console.log(`Visible Cards Length : ${visibleCards.length}`);
+
         // check if both visible cards have a match
         if (newVisibleCards.length === 2){
             const [firstCardId, secondCardId] = newVisibleCards;
@@ -84,7 +87,7 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
                 if (firstCard.imageSrc === secondCard.imageSrc){
                     // Cards match, remove both cards
                     setTimeout(() => {
-                        setCardQueue(currentCards => currentCards.filter(card => card.id !== firstCardId && card.id !== secondCardId));
+                        setMatchedCards(currentCard => [...currentCard, firstCardId, secondCardId]);
                         setVisibleCards([]);
                     }, 1000); // Delay before cards are removed
                 } else {
@@ -119,6 +122,8 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
                     height={`100%`}
                     width={`100%`}
                     onHit={handleBoxHit}
+                    isHit={visibleCards.includes(card.id) || matchedCards.includes(card.id)}
+                    isMatched={matchedCards.includes(card.id)}
                 />
             ))}
         </div>
