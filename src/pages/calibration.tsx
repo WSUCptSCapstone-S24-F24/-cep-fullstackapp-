@@ -20,6 +20,8 @@ declare global {
   }
 }
 
+let faceCascade: cv.CascadeClassifier;
+
 function Calibration() {
     const [showOverlay, setShowOverlay] = useState(false);//toggles the camera display
 
@@ -505,6 +507,13 @@ function Calibration() {
         }
       }, []);
 
+      function initFaceCascade() {
+        if (!faceCascade) {
+          faceCascade = new cv.CascadeClassifier();
+          faceCascade.load('haarcascade_frontalface_default.xml');
+        }
+      }
+
       function detectFace(canvas: HTMLCanvasElement, video: HTMLVideoElement) {
         const ctx = canvas.getContext('2d');
         if (!ctx || !cv) return;
@@ -515,8 +524,7 @@ function Calibration() {
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
       
         // Load the OpenCV face detection cascade
-        let faceCascade = new cv.CascadeClassifier();
-        faceCascade.load('haarcascade_frontalface_default.xml');
+        initFaceCascade();
       
         // Perform face detection
         let faces = new cv.RectVector();
@@ -536,7 +544,6 @@ function Calibration() {
         src.delete();
         gray.delete();
         faces.delete();
-        faceCascade.delete();
       }
       
   return (
