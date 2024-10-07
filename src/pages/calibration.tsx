@@ -8,6 +8,7 @@ import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
+import GazeTracing from '../components/gaze_tracing';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
@@ -68,6 +69,8 @@ function Calibration() {
     const [showBoxContainer, setShowBoxContainer] = useState(false);
     // --Global stability test mode
     const [showStabilityTest, setShowStabilityTest] = useState<boolean>(false);
+    // = Gaze tracing
+    const [showGazeTracing, setShowGazeTracing] = useState(false);
 
     const [dpi, setDpi] = useState<number>(96);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
@@ -203,7 +206,7 @@ function Calibration() {
       predictedCrosshairPositionRef.current = predictedCrosshairPosition;
     }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
 
-    //avereage crosshair position logic
+    //average crosshair position logic
     useEffect(() => {
       if (predictedCrosshairPosition) {
           setLastCrosshairPositions(prevPositions => {
@@ -247,9 +250,11 @@ function Calibration() {
                   const avgY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
   
                   setAverageCrosshairPosition({ x: avgX, y: avgY });
-                  averageCrosshairPositionRef.current = averageCrosshairPosition;
+                  averageCrosshairPositionRef.current = averageCrosshairPosition; //the blue crosshair dot we draw on the screen
               }
   
+              
+
               return updatedPositions;
           });
       }
@@ -263,7 +268,7 @@ function Calibration() {
     svg.selectAll('.crosshair-point').remove();
     svg.selectAll('.average-crosshair-point').remove();
     
-     //draw last 5 crosshair positions
+    //  //draw last 5 crosshair positions
     //  svg.selectAll('.crosshair-point')
     //  .data(lastCrosshairPositions)
     //  .enter()
@@ -497,7 +502,12 @@ function Calibration() {
           camera.start();
         }
       }, []);
-      
+      const gazetraceprop = { //idk why this is needed but it is
+        dimensions: dimensions,
+        dpi: dpi,
+        predictedCrosshairPositionRef: averageCrosshairPositionRef,
+        showGazeTracing: showGazeTracing,
+      }
   return (
     <div>
       
@@ -602,6 +612,9 @@ function Calibration() {
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
+        <button onClick={() => setShowGazeTracing(!showGazeTracing)}>
+          {showGazeTracing ? "Leave Gaze Tracing" : "Enter Gaze Tracing"}
+        </button>
         <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
@@ -612,6 +625,9 @@ function Calibration() {
       </div>    
       <div>
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
+      </div>
+      <div>
+        {showGazeTracing && <GazeTracing {...gazetraceprop}/>} 
       </div>
     </div>
     

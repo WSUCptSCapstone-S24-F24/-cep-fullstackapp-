@@ -71,3 +71,10 @@ export interface StabilityTestProps {
   predictedCrosshairPositionRef: React.RefObject<{x: number, y: number}>;
   showStabilityTest: boolean;
 }
+
+export interface GazeTracingProps {
+  dimensions: { width: number, height: number };
+  dpi: number;
+  predictedCrosshairPositionRef: React.RefObject<{x: number, y: number}>;
+  showGazeTracing: boolean;
+}

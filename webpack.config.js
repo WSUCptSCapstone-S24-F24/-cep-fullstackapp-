@@ -9,6 +9,13 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/
+      },
+      //got this from https://github.com/chakra-ui/chakra-ui/issues/7266 to import a png for gaze tracing
+      { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+      // custom loader added by me and installed using npm i file-loader
+      {
+        test: /\.(gif|svg|jpg|png)$/,  // add whatever files you wanna use within this regEx
+        use: ["file-loader"]
       }
     ]
   },
