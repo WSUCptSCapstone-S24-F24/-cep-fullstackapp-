@@ -63,6 +63,10 @@ function Calibration() {
     const [lastCrosshairPositions, setLastCrosshairPositions] = useState<VectorDataB[]>([]);
     const [averageCrosshairPosition, setAverageCrosshairPosition] = useState({x:0, y: 0});
     const averageCrosshairPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+    const [drawPredicted, setDrawPredicted] = useState<boolean>(false);
+    const [drawAverage, setDrawAverage] = useState<boolean>(true);
+    const [drawPrevious, setDrawPrevious] = useState<boolean>(false);
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
     // --Global target practice mode
@@ -137,6 +141,8 @@ function Calibration() {
       if (!ctx) return;
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if(!drawPredicted) return;
 
       ctx.beginPath();
       ctx.moveTo(x - 10, y);
@@ -259,7 +265,28 @@ function Calibration() {
           });
       }
   }, [predictedCrosshairPosition]);
+  
+  //key press handler, currently used to show detailed crosshair info
+  useEffect(() => {
+    // Function to handle key presses
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === '1') {
+        setDrawAverage(drawAverage => !drawAverage); // Toggle drawAverage
+      } else if (event.key === '2') {
+        setDrawPredicted(drawPredicted => !drawPredicted); // Toggle drawLastFive
+      } else if (event.key === '3') {
+      setDrawPrevious(drawPrevious => !drawPrevious); // Toggle drawLastFive
+    }
+    };
 
+    // Add event listener for keydown events
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []); // Empty dependency array ensures this effect runs only once
   //debug: draw average crosshair and previous 5 points
   useEffect(() => {
     const svg = d3.select(vectorCalibRef.current);
@@ -267,20 +294,22 @@ function Calibration() {
     //remove existing crosshair points to prevent duplicates
     svg.selectAll('.crosshair-point').remove();
     svg.selectAll('.average-crosshair-point').remove();
-    
-    //  //draw last 5 crosshair positions
-    //  svg.selectAll('.crosshair-point')
-    //  .data(lastCrosshairPositions)
-    //  .enter()
-    //  .append('circle')
-    //  .attr('class', 'crosshair-point')
-    //  .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
-    //  .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
-    //  .attr('r', 2)
-    //  .style('fill', 'red');
+
+     //draw last n crosshair positions
+     if(drawPrevious){
+     svg.selectAll('.crosshair-point')
+     .data(lastCrosshairPositions)
+     .enter()
+     .append('circle')
+     .attr('class', 'crosshair-point')
+     .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
+     .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
+     .attr('r', 2)
+     .style('fill', 'red');
+     }
 
     //draw average crosshair position
-    if (averageCrosshairPosition) {
+    if (drawAverage && averageCrosshairPosition) {
       svg.append('circle')
         .attr('class', 'average-crosshair-point')
         .attr('cx', averageCrosshairPosition.x)
