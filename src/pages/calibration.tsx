@@ -310,51 +310,14 @@ function Calibration() {
         // Create landmarks for each point of interest
         if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
-          for (const landmarks of results.multiFaceLandmarks) {
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
-              color: "#eae8fd",
-              lineWidth: 1,
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
-              color: "#F50B0B",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
-              color: "#18FF00",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_FACE_OVAL, {
-              color: "#7367f0",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LIPS, {
-              color: "#7367f0",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_IRIS, {
-              color: "#18FF00",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
-              color: "#F50B0B",
-            });
-          }
-
           const landmarks = results.multiFaceLandmarks[0];
-          // Get both indexes on the landmarking grid
-          const leftIrisIndex = 473;
-          const rightIrisIndex = 468;
-          const noseIndex = 4;
+            // Draw face landmarks
+            drawLandmarks(canvasCtx, landmarks);
 
-          // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
-          const leftIrisLandmark = landmarks[leftIrisIndex];
-          const rightIrisLandmark = landmarks[rightIrisIndex];
-          const noseLandmark = landmarks[noseIndex];
-
-          // Saves iris coordinates to a global variable
-          applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
-
-          // Draw canvases for each iris
-          drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
-          drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
-          drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
+            // Estimate head pose
+            estimateHeadPose(landmarks);
         }
-        detectFace(canvasRef.current, webcamRef.current.video);
+        // detectFace(canvasRef.current, webcamRef.current.video);
         canvasCtx.restore();
       }
 
@@ -500,51 +463,92 @@ function Calibration() {
             height: 480,
           });
           camera.start();
-          loadDataFile(
-            "haarcascade_frontalface_default.xml",
-            "models/haarcascade_frontalface_default.xml"
-          );
         }
       }, []);
 
-      function initFaceCascade() {
-        if (!faceCascade) {
-          faceCascade = new cv.CascadeClassifier();
-          faceCascade.load('haarcascade_frontalface_default.xml');
+      function drawLandmarks(ctx: CanvasRenderingContext2D, landmarks: any) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        for (const point of landmarks) {
+            ctx.beginPath();
+            ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 1, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
         }
+    }
+
+    function estimateHeadPose(landmarks: any) {
+      // 3D model points
+      const modelPoints = cv.matFromArray(6, 3, cv.CV_64F, [
+          0.0, 0.0, 0.0,        // Nose tip
+          0.0, -330.0, -65.0,   // Chin
+          -225.0, 170.0, -135.0, // Left eye left corner
+          225.0, 170.0, -135.0,  // Right eye right corner
+          -150.0, -150.0, -125.0, // Left Mouth corner
+          150.0, -150.0, -125.0  // Right Mouth corner
+      ]);
+
+      // 2D image points
+      const imagePoints = cv.matFromArray(6, 2, cv.CV_64F, [
+          landmarks[1].x * canvasRef.current.width, landmarks[1].y * canvasRef.current.height,   // Nose tip
+          landmarks[152].x * canvasRef.current.width, landmarks[152].y * canvasRef.current.height, // Chin
+          landmarks[33].x * canvasRef.current.width, landmarks[33].y * canvasRef.current.height,  // Left eye left corner
+          landmarks[263].x * canvasRef.current.width, landmarks[263].y * canvasRef.current.height, // Right eye right corner
+          landmarks[61].x * canvasRef.current.width, landmarks[61].y * canvasRef.current.height,   // Left Mouth corner
+          landmarks[291].x * canvasRef.current.width, landmarks[291].y * canvasRef.current.height  // Right Mouth corner
+      ]);
+
+      // Camera matrix
+      const focalLength = canvasRef.current.width;
+      const center = [canvasRef.current.width / 2, canvasRef.current.height / 2];
+      const cameraMatrix = cv.matFromArray(3, 3, cv.CV_64F, [
+          focalLength, 0, center[0],
+          0, focalLength, center[1],
+          0, 0, 1
+      ]);
+
+      // Distortion coefficients (assuming no lens distortion)
+      const distCoeffs = cv.Mat.zeros(4, 1, cv.CV_64F);
+
+      // Solve PnP
+      const rvec = new cv.Mat();
+      const tvec = new cv.Mat();
+      const success = cv.solvePnP(modelPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec);
+
+      if (success) {
+          // Convert rotation vector to rotation matrix
+          const rotationMatrix = new cv.Mat();
+          cv.Rodrigues(rvec, rotationMatrix);
+
+          // Accessing the rotation matrix elements correctly
+        const r00 = rotationMatrix.doubleAt(0, 0);
+        const r01 = rotationMatrix.doubleAt(0, 1);
+        const r02 = rotationMatrix.doubleAt(0, 2);
+        const r10 = rotationMatrix.doubleAt(1, 0);
+        const r11 = rotationMatrix.doubleAt(1, 1);
+        const r12 = rotationMatrix.doubleAt(1, 2);
+        const r20 = rotationMatrix.doubleAt(2, 0);
+        const r21 = rotationMatrix.doubleAt(2, 1);
+        const r22 = rotationMatrix.doubleAt(2, 2);
+
+          // Calculate yaw, pitch, and roll
+          const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
+          const pitch = -(Math.atan2(-r21, -r22)); // have issues
+          const roll = Math.atan2(r10, r00);
+
+          console.log(`Yaw (left-right): ${yaw * (180 / Math.PI)}°`);
+          console.log(`Pitch (up-down): ${pitch * (180 / Math.PI)}°`);
+          console.log(`Roll (tilt): ${roll * (180 / Math.PI)}°`);
       }
 
-      function detectFace(canvas: HTMLCanvasElement, video: HTMLVideoElement) {
-        const ctx = canvas.getContext('2d');
-        if (!ctx || !cv) return;
-      
-        // Convert the canvas image to grayscale for OpenCV
-        let src = cv.imread(canvas);
-        let gray = new cv.Mat();
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-      
-        // Load the OpenCV face detection cascade
-        initFaceCascade();
-      
-        // Perform face detection
-        let faces = new cv.RectVector();
-        faceCascade.detectMultiScale(gray, faces, 1.1, 3, 0, new cv.Size(0, 0), new cv.Size(0, 0));
-      
-        // Draw the OpenCV face detection rectangles
-        for (let i = 0; i < faces.size(); ++i) {
-          let face = faces.get(i);
-          ctx.beginPath();
-          ctx.rect(face.x, face.y, face.width, face.height);
-          ctx.lineWidth = 3;
-          ctx.strokeStyle = 'red';
-          ctx.stroke();
-        }
-      
-        // Clean up OpenCV objects
-        src.delete();
-        gray.delete();
-        faces.delete();
-      }
+      // Cleanup
+      modelPoints.delete();
+      imagePoints.delete();
+      cameraMatrix.delete();
+      distCoeffs.delete();
+      rvec.delete();
+      tvec.delete();
+  }
+
       
   return (
     <div>
