@@ -67,6 +67,7 @@ function Calibration() {
     const [drawPredicted, setDrawPredicted] = useState<boolean>(false);
     const [drawAverage, setDrawAverage] = useState<boolean>(true);
     const [drawPrevious, setDrawPrevious] = useState<boolean>(false);
+    const [drawCursor, setDrawCursor] = useState<boolean>(false);
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
     // --Global target practice mode
@@ -258,8 +259,74 @@ function Calibration() {
                   setAverageCrosshairPosition({ x: avgX, y: avgY });
                   averageCrosshairPositionRef.current = averageCrosshairPosition; //the blue crosshair dot we draw on the screen
               }
-  
               
+              if(drawCursor){
+                // find the two furthest points a and b
+                let pointA = { x: 0, y: 0 };
+                let pointB = {x:0, y:0};
+                let maxDistance = 0;
+
+                for (let i = 0; i < updatedPositions.length; i++) {
+                  for (let j = i + 1; j < updatedPositions.length; j++) {
+                    const distance = Math.sqrt(
+                      Math.pow(updatedPositions[j].x - updatedPositions[i].x, 2) +
+                      Math.pow(updatedPositions[j].y - updatedPositions[i].y, 2)
+                    );
+                    if (distance > maxDistance) {
+                      maxDistance = distance;
+                      pointA = updatedPositions[i];
+                      pointB = updatedPositions[j];
+                    }
+                  }
+                }
+                // get the angle between those points so we can tilt the ellpise 
+                const angle = Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x);
+
+                // calculate the perpendicular angle so we can calculate the ellipse height
+                const perpendicularAngle = angle + Math.PI / 2;
+                // project the points onto the perpendicular axis (THIS IS CRAZY)
+                let minProj = Infinity;
+                let maxProj = -Infinity;
+                //find the two furthest points on that projection to get the ellipse height
+                for (let i = 0; i < updatedPositions.length; i++) {
+                  const projection =
+                    updatedPositions[i].x * Math.cos(perpendicularAngle) +
+                    updatedPositions[i].y * Math.sin(perpendicularAngle);
+
+                  if (projection < minProj) {
+                    minProj = projection;
+                  }
+                  if (projection > maxProj) {
+                    maxProj = projection;
+                  }
+                }
+
+                // calculate the ellipse parameters (center, width, height)
+                const centerX = (pointA.x + pointB.x) / 2;
+                const centerY = (pointA.y + pointB.y) / 2;
+                const ellipseWidth = maxDistance; // distance between pointA and pointB
+                const ellipseHeight = maxProj - minProj; // distance along the perpendicular axis
+
+                // draw the ellipse
+                if (crosshairCanvasRef.current) {
+                  const canvas = crosshairCanvasRef.current;
+                  const ctx = canvas.getContext('2d');
+                  if (ctx) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
+                    ctx.save(); // Save the current canvas state
+
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, ellipseWidth / 2, ellipseHeight / 2, 0, 0, 2 * Math.PI);
+                    ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.restore();
+                  }
+                }
+              }
 
               return updatedPositions;
           });
@@ -271,12 +338,14 @@ function Calibration() {
     // Function to handle key presses
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === '1') {
-        setDrawAverage(drawAverage => !drawAverage); // Toggle drawAverage
+        setDrawAverage(drawAverage => !drawAverage);
       } else if (event.key === '2') {
-        setDrawPredicted(drawPredicted => !drawPredicted); // Toggle drawLastFive
+        setDrawPredicted(drawPredicted => !drawPredicted);
       } else if (event.key === '3') {
-      setDrawPrevious(drawPrevious => !drawPrevious); // Toggle drawLastFive
-    }
+      setDrawPrevious(drawPrevious => !drawPrevious);
+      } else if (event.key === '4') {
+        setDrawCursor(drawCursor => !drawCursor);
+      }
     };
 
     // Add event listener for keydown events
