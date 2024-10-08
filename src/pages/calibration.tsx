@@ -710,20 +710,19 @@ function Calibration() {
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
         <div>
-          <button> Row Size </button>
+          <label> Row Size </label>
           <input
             type="number"
             value={rowSize}
             onChange={(event) => setRowSize(Number(event.target.value))}
           /> 
-          <button> Col Size </button>
+          <label> Col Size </label>
           <input
             type="number"
             value={colSize}
             onChange={(event) => setColSize(Number(event.target.value))}
           /> 
         </div>
-        
         <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
