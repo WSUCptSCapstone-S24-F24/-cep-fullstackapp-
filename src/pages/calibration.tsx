@@ -717,7 +717,7 @@ function Calibration() {
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
       </div>
       <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition}/>}
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={4} colSize={4}/>}
       </div>
       <div>
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
