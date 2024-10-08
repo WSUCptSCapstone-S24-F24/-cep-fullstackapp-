@@ -79,6 +79,12 @@ function Calibration() {
     const [showErrorTest, setShowErrorTest] = useState(false);
     
     const [isPointDisplayed, setIsPointDisplayed] = useState(false);
+    
+    const [headPose, setHeadPose] = useState({
+      yaw: 0,
+      pitch: 0,
+      roll: 0,
+    });
 
     // Update dimensions on window resize
     useEffect(() => {
@@ -290,36 +296,74 @@ function Calibration() {
   }, [dimensions, lastCrosshairPositions, averageCrosshairPosition]); // Dependencies for re-running the effect
 
 
-    function onResults(results:any) {
-        // const video = webcamRef.current.video;
-        const videoWidth = webcamRef.current.video.videoWidth;
-        const videoHeight = webcamRef.current.video.videoHeight;
+  function onResults(results:any) {
+    // const video = webcamRef.current.video;
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
 
-        // Set canvas width
-        canvasRef.current.width = videoWidth;
-        canvasRef.current.height = videoHeight;
+    // Set canvas width
+    canvasRef.current.width = videoWidth;
+    canvasRef.current.height = videoHeight;
 
-        const canvasElement = canvasRef.current;
-        const canvasCtx = canvasElement.getContext("2d");
+    const canvasElement = canvasRef.current;
+    const canvasCtx = canvasElement.getContext("2d");
 
-        // Resets face mesh so it can be updated for next image
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
+    // Resets face mesh so it can be updated for next image
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
 
-        // Create landmarks for each point of interest
-        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+    // Create landmarks for each point of interest
+    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
-          const landmarks = results.multiFaceLandmarks[0];
-            // Draw face landmarks
-            drawLandmarks(canvasCtx, landmarks);
-
-            // Estimate head pose
-            estimateHeadPose(landmarks);
-        }
-        // detectFace(canvasRef.current, webcamRef.current.video);
-        canvasCtx.restore();
+      for (const landmarks of results.multiFaceLandmarks) {
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
+          color: "#eae8fd",
+          lineWidth: 1,
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
+          color: "#F50B0B",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
+          color: "#18FF00",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_FACE_OVAL, {
+          color: "#7367f0",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LIPS, {
+          color: "#7367f0",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_IRIS, {
+          color: "#18FF00",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
+          color: "#F50B0B",
+        });
       }
+
+      const landmarks = results.multiFaceLandmarks[0];
+      // Get both indexes on the landmarking grid
+      const leftIrisIndex = 473;
+      const rightIrisIndex = 468;
+      const noseIndex = 4;
+
+      // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
+      const leftIrisLandmark = landmarks[leftIrisIndex];
+      const rightIrisLandmark = landmarks[rightIrisIndex];
+      const noseLandmark = landmarks[noseIndex];
+
+      // Saves iris coordinates to a global variable
+      applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
+
+      // Draw canvases for each iris
+      drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
+      drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
+      drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
+
+      estimateHeadPose(landmarks);      
+    }
+    canvasCtx.restore();
+  }
 
       // This function will crop our webcam and create a zoomed in video at inputted point
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
@@ -519,25 +563,27 @@ function Calibration() {
           const rotationMatrix = new cv.Mat();
           cv.Rodrigues(rvec, rotationMatrix);
 
-          // Accessing the rotation matrix elements correctly
-        const r00 = rotationMatrix.doubleAt(0, 0);
-        const r01 = rotationMatrix.doubleAt(0, 1);
-        const r02 = rotationMatrix.doubleAt(0, 2);
-        const r10 = rotationMatrix.doubleAt(1, 0);
-        const r11 = rotationMatrix.doubleAt(1, 1);
-        const r12 = rotationMatrix.doubleAt(1, 2);
-        const r20 = rotationMatrix.doubleAt(2, 0);
-        const r21 = rotationMatrix.doubleAt(2, 1);
-        const r22 = rotationMatrix.doubleAt(2, 2);
+          // Accessing the rotation matrix elements
+          const r00 = rotationMatrix.doubleAt(0, 0);
+          const r01 = rotationMatrix.doubleAt(0, 1);
+          const r02 = rotationMatrix.doubleAt(0, 2);
+          const r10 = rotationMatrix.doubleAt(1, 0);
+          const r11 = rotationMatrix.doubleAt(1, 1);
+          const r12 = rotationMatrix.doubleAt(1, 2);
+          const r20 = rotationMatrix.doubleAt(2, 0);
+          const r21 = rotationMatrix.doubleAt(2, 1);
+          const r22 = rotationMatrix.doubleAt(2, 2);
 
           // Calculate yaw, pitch, and roll
           const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
           const pitch = -(Math.atan2(-r21, -r22)); // have issues
           const roll = Math.atan2(r10, r00);
 
-          console.log(`Yaw (left-right): ${yaw * (180 / Math.PI)}°`);
-          console.log(`Pitch (up-down): ${pitch * (180 / Math.PI)}°`);
-          console.log(`Roll (tilt): ${roll * (180 / Math.PI)}°`);
+          setHeadPose({
+            yaw: yaw * (180 / Math.PI),
+            pitch: pitch * (180 / Math.PI),
+            roll: roll * (180 / Math.PI),
+          });
       }
 
       // Cleanup
@@ -663,6 +709,11 @@ function Calibration() {
       </div>    
       <div>
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
+      </div>
+      <div>
+        <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
+        <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
+        <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
       </div>
     </div>
     
