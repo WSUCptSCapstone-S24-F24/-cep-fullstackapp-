@@ -65,7 +65,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
 
       const handleBoxHit = (cardId: number) => {
         // Ensure only 2 cards are visible at once
-        if (visibleCards.length >= 2 || matchedCards.includes(cardId)){
+        if (visibleCards.length >= 2 || matchedCards.includes(cardId) || cardId === visibleCards[0]){
             return;
         }
 
