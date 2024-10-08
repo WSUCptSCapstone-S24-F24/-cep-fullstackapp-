@@ -12,12 +12,16 @@ import MemoryGame from '../components/memory_game';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
+import cv from "@techstark/opencv-js"
+import { loadDataFile } from '../utils/cvDataFile'
 
 declare global {
   interface Window {
     drawConnectors:any;
   }
 }
+
+let faceCascade: cv.CascadeClassifier;
 
 function Calibration() {
     const [showOverlay, setShowOverlay] = useState(false);//toggles the camera display
@@ -76,6 +80,12 @@ function Calibration() {
     const [showErrorTest, setShowErrorTest] = useState(false);
     
     const [isPointDisplayed, setIsPointDisplayed] = useState(false);
+    
+    const [headPose, setHeadPose] = useState({
+      yaw: 0,
+      pitch: 0,
+      roll: 0,
+    });
 
     const [showMemoryGame, setShowMemoryGame] = useState(false);
 
@@ -289,72 +299,74 @@ function Calibration() {
   }, [dimensions, lastCrosshairPositions, averageCrosshairPosition]); // Dependencies for re-running the effect
 
 
-    function onResults(results:any) {
-        // const video = webcamRef.current.video;
-        const videoWidth = webcamRef.current.video.videoWidth;
-        const videoHeight = webcamRef.current.video.videoHeight;
+  function onResults(results:any) {
+    // const video = webcamRef.current.video;
+    const videoWidth = webcamRef.current.video.videoWidth;
+    const videoHeight = webcamRef.current.video.videoHeight;
 
-        // Set canvas width
-        canvasRef.current.width = videoWidth;
-        canvasRef.current.height = videoHeight;
+    // Set canvas width
+    canvasRef.current.width = videoWidth;
+    canvasRef.current.height = videoHeight;
 
-        const canvasElement = canvasRef.current;
-        const canvasCtx = canvasElement.getContext("2d");
+    const canvasElement = canvasRef.current;
+    const canvasCtx = canvasElement.getContext("2d");
 
-        // Resets face mesh so it can be updated for next image
-        canvasCtx.save();
-        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
+    // Resets face mesh so it can be updated for next image
+    canvasCtx.save();
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
 
-        // Create landmarks for each point of interest
-        if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+    // Create landmarks for each point of interest
+    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
-          for (const landmarks of results.multiFaceLandmarks) {
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
-              color: "#eae8fd",
-              lineWidth: 1,
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
-              color: "#F50B0B",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
-              color: "#18FF00",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_FACE_OVAL, {
-              color: "#7367f0",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LIPS, {
-              color: "#7367f0",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_IRIS, {
-              color: "#18FF00",
-            });
-            connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
-              color: "#F50B0B",
-            });
-          }
-
-          const landmarks = results.multiFaceLandmarks[0];
-          // Get both indexes on the landmarking grid
-          const leftIrisIndex = 473;
-          const rightIrisIndex = 468;
-          const noseIndex = 4;
-
-          // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
-          const leftIrisLandmark = landmarks[leftIrisIndex];
-          const rightIrisLandmark = landmarks[rightIrisIndex];
-          const noseLandmark = landmarks[noseIndex];
-
-          // Saves iris coordinates to a global variable
-          applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
-
-          // Draw canvases for each iris
-          drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
-          drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
-          drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
-        }
-        canvasCtx.restore();
+      for (const landmarks of results.multiFaceLandmarks) {
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
+          color: "#eae8fd",
+          lineWidth: 1,
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
+          color: "#F50B0B",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
+          color: "#18FF00",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_FACE_OVAL, {
+          color: "#7367f0",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LIPS, {
+          color: "#7367f0",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_IRIS, {
+          color: "#18FF00",
+        });
+        connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
+          color: "#F50B0B",
+        });
       }
+
+      const landmarks = results.multiFaceLandmarks[0];
+      // Get both indexes on the landmarking grid
+      const leftIrisIndex = 473;
+      const rightIrisIndex = 468;
+      const noseIndex = 4;
+
+      // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
+      const leftIrisLandmark = landmarks[leftIrisIndex];
+      const rightIrisLandmark = landmarks[rightIrisIndex];
+      const noseLandmark = landmarks[noseIndex];
+
+      // Saves iris coordinates to a global variable
+      applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
+
+      // Draw canvases for each iris
+      drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
+      drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
+      drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
+
+      estimateHeadPose(landmarks);      
+    }
+    canvasCtx.restore();
+  }
 
       // This function will crop our webcam and create a zoomed in video at inputted point
       function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
@@ -500,10 +512,95 @@ function Calibration() {
           camera.start();
         }
       }, []);
+
+      function drawLandmarks(ctx: CanvasRenderingContext2D, landmarks: any) {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        for (const point of landmarks) {
+            ctx.beginPath();
+            ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 1, 0, 2 * Math.PI);
+            ctx.fillStyle = 'red';
+            ctx.fill();
+        }
+    }
+
+    function estimateHeadPose(landmarks: any) {
+      // 3D model points
+      const modelPoints = cv.matFromArray(6, 3, cv.CV_64F, [
+          0.0, 0.0, 0.0,        // Nose tip
+          0.0, -330.0, -65.0,   // Chin
+          -225.0, 170.0, -135.0, // Left eye left corner
+          225.0, 170.0, -135.0,  // Right eye right corner
+          -150.0, -150.0, -125.0, // Left Mouth corner
+          150.0, -150.0, -125.0  // Right Mouth corner
+      ]);
+
+      // 2D image points
+      const imagePoints = cv.matFromArray(6, 2, cv.CV_64F, [
+          landmarks[1].x * canvasRef.current.width, landmarks[1].y * canvasRef.current.height,   // Nose tip
+          landmarks[152].x * canvasRef.current.width, landmarks[152].y * canvasRef.current.height, // Chin
+          landmarks[33].x * canvasRef.current.width, landmarks[33].y * canvasRef.current.height,  // Left eye left corner
+          landmarks[263].x * canvasRef.current.width, landmarks[263].y * canvasRef.current.height, // Right eye right corner
+          landmarks[61].x * canvasRef.current.width, landmarks[61].y * canvasRef.current.height,   // Left Mouth corner
+          landmarks[291].x * canvasRef.current.width, landmarks[291].y * canvasRef.current.height  // Right Mouth corner
+      ]);
+
+      // Camera matrix
+      const focalLength = canvasRef.current.width;
+      const center = [canvasRef.current.width / 2, canvasRef.current.height / 2];
+      const cameraMatrix = cv.matFromArray(3, 3, cv.CV_64F, [
+          focalLength, 0, center[0],
+          0, focalLength, center[1],
+          0, 0, 1
+      ]);
+
+      // Distortion coefficients (assuming no lens distortion)
+      const distCoeffs = cv.Mat.zeros(4, 1, cv.CV_64F);
+
+      // Solve PnP
+      const rvec = new cv.Mat();
+      const tvec = new cv.Mat();
+      const success = cv.solvePnP(modelPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec);
+
+      if (success) {
+          // Convert rotation vector to rotation matrix
+          const rotationMatrix = new cv.Mat();
+          cv.Rodrigues(rvec, rotationMatrix);
+
+          // Accessing the rotation matrix elements
+          const r00 = rotationMatrix.doubleAt(0, 0);
+          const r01 = rotationMatrix.doubleAt(0, 1);
+          const r02 = rotationMatrix.doubleAt(0, 2);
+          const r10 = rotationMatrix.doubleAt(1, 0);
+          const r11 = rotationMatrix.doubleAt(1, 1);
+          const r12 = rotationMatrix.doubleAt(1, 2);
+          const r20 = rotationMatrix.doubleAt(2, 0);
+          const r21 = rotationMatrix.doubleAt(2, 1);
+          const r22 = rotationMatrix.doubleAt(2, 2);
+
+          // Calculate yaw, pitch, and roll
+          const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
+          const pitch = -(Math.atan2(-r21, -r22)); // have issues
+          const roll = Math.atan2(r10, r00);
+
+          setHeadPose({
+            yaw: yaw * (180 / Math.PI),
+            pitch: pitch * (180 / Math.PI),
+            roll: roll * (180 / Math.PI),
+          });
+      }
+
+      // Cleanup
+      modelPoints.delete();
+      imagePoints.delete();
+      cameraMatrix.delete();
+      distCoeffs.delete();
+      rvec.delete();
+      tvec.delete();
+  }
+
       
   return (
     <div>
-      
       <canvas
         ref={crosshairCanvasRef}
         width={dimensions.width}
@@ -622,7 +719,13 @@ function Calibration() {
       <div>
         {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition}/>}
       </div>
+      <div>
+        <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
+        <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
+        <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
+      </div>
     </div>
+    
     
   );
 }
