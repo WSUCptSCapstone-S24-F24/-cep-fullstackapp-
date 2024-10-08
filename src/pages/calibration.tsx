@@ -12,7 +12,7 @@ import MemoryGame from '../components/memory_game';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
-import cv from "@techstark/opencv-js"
+import cv, { cols } from "@techstark/opencv-js"
 import { loadDataFile } from '../utils/cvDataFile'
 
 declare global {
@@ -88,6 +88,10 @@ function Calibration() {
     });
 
     const [showMemoryGame, setShowMemoryGame] = useState(false);
+
+    // Row and col size for Memory Game
+    const [rowSize, setRowSize] = useState(4);
+    const [colSize, setColSize] = useState(4);
 
     // Update dimensions on window resize
     useEffect(() => {
@@ -705,6 +709,21 @@ function Calibration() {
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
+        <div>
+          <button> Row Size </button>
+          <input
+            type="number"
+            value={rowSize}
+            onChange={(event) => setRowSize(Number(event.target.value))}
+          /> 
+          <button> Col Size </button>
+          <input
+            type="number"
+            value={colSize}
+            onChange={(event) => setColSize(Number(event.target.value))}
+          /> 
+        </div>
+        
         <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
@@ -717,7 +736,7 @@ function Calibration() {
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
       </div>
       <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={4} colSize={4}/>}
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize}/>}  
       </div>
       <div>
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
