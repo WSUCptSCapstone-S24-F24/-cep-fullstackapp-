@@ -878,9 +878,6 @@ function Calibration() {
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
-        <button onClick={() => setShowGazeTracing(!showGazeTracing)}>
-          {showGazeTracing ? "Leave Gaze Tracing" : "Enter Gaze Tracing"}
-        </button>
         <div>
           <label> Row Size </label>
           <input
@@ -895,7 +892,6 @@ function Calibration() {
             onChange={(event) => setColSize(Number(event.target.value))}
           /> 
         </div>
-      <div>
         <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
@@ -908,13 +904,10 @@ function Calibration() {
         {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
       </div>
       <div>
+        {showGazeTracing && <GazeTracing {...gazetraceprop} />}
+      </div>
+      <div>
         {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize}/>}  
-      </div>
-      <div>
-        {showGazeTracing && <GazeTracing {...gazetraceprop}/>} 
-      </div>
-      <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition}/>}
       </div>
       <div>
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
