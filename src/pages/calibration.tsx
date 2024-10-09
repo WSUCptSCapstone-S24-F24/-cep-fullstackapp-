@@ -8,6 +8,8 @@ import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
 import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
+import GazeTracing from '../components/gaze_tracing';
+import useRefreshRate from '../components/get_refresh_rate'
 import MemoryGame from '../components/memory_game';
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
@@ -36,6 +38,7 @@ function Calibration() {
     const headRef = useRef<any>(null);
     const vectorCalibRef = useRef<SVGSVGElement>(null);
     const stabilityVectorRef = useRef<SVGSVGElement>(null);
+    const { refreshRate } = useRefreshRate(1000); //max refresh rate over 1 second, might need to change 
 
 
     const connect = window.drawConnectors;
@@ -64,15 +67,51 @@ function Calibration() {
       dotPosition?: { x: number; y: number };
       crosshairPosition?: { x: number; y: number };
     }
+
     const [lastCrosshairPositions, setLastCrosshairPositions] = useState<VectorDataB[]>([]);
     const [averageCrosshairPosition, setAverageCrosshairPosition] = useState({x:0, y: 0});
     const averageCrosshairPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+
+    const [drawPredicted, setDrawPredicted] = useState<boolean>(false);
+    const [drawAverage, setDrawAverage] = useState<boolean>(true);
+    const [drawPrevious, setDrawPrevious] = useState<boolean>(false);
+    const [drawCursor, setDrawCursor] = useState<boolean>(false);
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
     // --Global target practice mode
     const [showBoxContainer, setShowBoxContainer] = useState(false);
     // --Global stability test mode
     const [showStabilityTest, setShowStabilityTest] = useState<boolean>(false);
+    // = Gaze tracing
+    const [showGazeTracing, setShowGazeTracing] = useState(false);
+    //ellipses for gaze cursr
+    const[ellipseSVG, setEllipseSVG] = useState<{
+      centerX: number;
+      centerY: number;
+      ellipseWidth: number;
+      ellipseHeight: number;
+      angleInDeg: number;
+    }>({
+      centerX: 0,
+      centerY: 0,
+      ellipseWidth: 0,
+      ellipseHeight: 0,
+      angleInDeg: 0
+    });
+
+    const [ellipseSVG2, setEllipseSVG2] = useState<{
+      centerX: number;
+      centerY: number;
+      ellipseWidth: number;
+      ellipseHeight: number;
+      angleInDeg: number;
+    }>({
+      centerX: 0,
+      centerY: 0,
+      ellipseWidth: 0,
+      ellipseHeight: 0,
+      angleInDeg: 0
+    });
 
     const [dpi, setDpi] = useState<number>(96);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
@@ -107,7 +146,7 @@ function Calibration() {
         window.removeEventListener('resize', handleResize);
       };
     }, []);
-
+    
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
       if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
@@ -151,6 +190,9 @@ function Calibration() {
       if (!ctx) return;
       
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if(!drawPredicted) return;
+      console.log("drawing predicted")
 
       ctx.beginPath();
       ctx.moveTo(x - 10, y);
@@ -220,9 +262,9 @@ function Calibration() {
       predictedCrosshairPositionRef.current = predictedCrosshairPosition;
     }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
 
-    //avereage crosshair position logic
+    //average crosshair position logic
     useEffect(() => {
-      if (predictedCrosshairPosition) {
+      if (predictedCrosshairPosition && refreshRate) {
           setLastCrosshairPositions(prevPositions => {
               const newPosition: VectorDataB = {
                   x: predictedCrosshairPosition.x,
@@ -233,7 +275,15 @@ function Calibration() {
                   crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
               };
               //keep the last n positions
-              const n = 20 //config
+              // const n = 20 //config
+              // const stddevs = 1 //config
+              // const recentWeight = 2, olderWeight = 1; //config
+              //this might be bad but it seems to work good on 165hz and I think it should be good on 360hz too
+              const n = refreshRate/10 //config
+              const stddevs = refreshRate/150 //config
+              const recentWeight = 2, olderWeight = 1; //config
+              console.log("n :", n, "stddevs: ", stddevs)
+
               const updatedPositions = [...prevPositions, newPosition].slice(-n);
 
               //exclude outliers
@@ -244,12 +294,10 @@ function Calibration() {
               const stdDevY = Math.sqrt(updatedPositions.reduce((sum, pos) => sum + Math.pow(pos.y - meanY, 2), 0) / updatedPositions.length);
 
               //ignore outliers however many stddevs away
-              const stddevs = 1 //config
               const filteredPositions = updatedPositions.filter(pos => Math.abs(pos.x - meanX) <= stddevs * stdDevX && Math.abs(pos.y - meanY) <= stddevs * stdDevY);
 
                //weighted average: give 2x weight to the 10 most recent positions
               let weightedSumX = 0, weightedSumY = 0, totalWeight = 0;
-              const recentWeight = 2, olderWeight = 1; //config
 
               filteredPositions.forEach((pos, index) => {
                   const weight = index >= filteredPositions.length - n/2 ? recentWeight : olderWeight;
@@ -264,14 +312,113 @@ function Calibration() {
                   const avgY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
   
                   setAverageCrosshairPosition({ x: avgX, y: avgY });
-                  averageCrosshairPositionRef.current = averageCrosshairPosition;
+                  averageCrosshairPositionRef.current = averageCrosshairPosition; //the blue crosshair dot we draw on the screen
               }
-  
+
+              // gaze cursor
+              if(drawCursor){ 
+                // find the two furthest points a and b
+                let pointA = { x: 0, y: 0 };
+                let pointB = {x:0, y:0};
+                let maxDistance = 0;
+
+                for (let i = 0; i < updatedPositions.length; i++) {
+                  for (let j = i + 1; j < updatedPositions.length; j++) {
+                    const distance = Math.sqrt(
+                      Math.pow(updatedPositions[j].x - updatedPositions[i].x, 2) +
+                      Math.pow(updatedPositions[j].y - updatedPositions[i].y, 2)
+                    );
+                    if (distance > maxDistance) {
+                      maxDistance = distance;
+                      pointA = updatedPositions[i];
+                      pointB = updatedPositions[j];
+                    }
+                  }
+                }
+                // get the angle between those points so we can tilt the ellpise 
+                const angle = Math.atan2(pointB.y - pointA.y, pointB.x - pointA.x);
+                const angleInDeg = angle * (180 / Math.PI); //for drawing the ellipse with svg
+
+                // calculate the perpendicular angle so we can calculate the ellipse height
+                const perpendicularAngle = angle + Math.PI / 2;
+                // project the points onto the perpendicular axis (THIS IS CRAZY)
+                let minProj = Infinity;
+                let maxProj = -Infinity;
+                //find the two furthest points on that projection to get the ellipse height
+                for (let i = 0; i < updatedPositions.length; i++) {
+                  const projection =
+                    updatedPositions[i].x * Math.cos(perpendicularAngle) +
+                    updatedPositions[i].y * Math.sin(perpendicularAngle);
+
+                  if (projection < minProj) {
+                    minProj = projection;
+                  }
+                  if (projection > maxProj) {
+                    maxProj = projection;
+                  }
+                }
+
+                // calculate the ellipse parameters (center, width, height)
+                const centerX = (pointA.x + pointB.x) / 2;
+                const centerY = (pointA.y + pointB.y) / 2;
+                const ellipseWidth = maxDistance; // distance between pointA and pointB
+                const ellipseHeight = maxProj - minProj; // distance along the perpendicular axis
+
+                // draw the ellipse
+                if (crosshairCanvasRef.current) {
+                  if(ellipseSVG)setEllipseSVG2(ellipseSVG)
+                  setEllipseSVG({centerX, centerY, ellipseWidth, ellipseHeight, angleInDeg} )
+                  
+                  //ctx didnt work well. it would sometimes decide to not draw anything so the ellipse would flash on screen a lot. 
+
+                  // const canvas = crosshairCanvasRef.current;
+                  // const ctx = canvas.getContext('2d');
+                  // if (ctx) {
+                  //   console.log("drawing")
+                  //   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
+                  //   ctx.save(); // Save the current canvas state
+
+                  //   ctx.translate(centerX, centerY);
+                  //   ctx.rotate(angle);
+                  //   ctx.beginPath();
+                  //   ctx.ellipse(0, 0, ellipseWidth / 2, ellipseHeight / 2, 0, 0, 2 * Math.PI);
+                  //   ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+                  //   ctx.lineWidth = 2;
+                  //   ctx.stroke();
+
+                  //   ctx.restore();
+                  // }
+                }
+              }
+
               return updatedPositions;
           });
       }
   }, [predictedCrosshairPosition]);
+  
+  //key press handler, currently used to show detailed crosshair info
+  useEffect(() => {
+    // Function to handle key presses
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === '1') {
+        setDrawAverage(drawAverage => !drawAverage);
+      } else if (event.key === '2') {
+        setDrawPredicted(drawPredicted => !drawPredicted);
+      } else if (event.key === '3') {
+      setDrawPrevious(drawPrevious => !drawPrevious);
+      } else if (event.key === '4') {
+        setDrawCursor(drawCursor => !drawCursor);
+      }
+    };
 
+    // Add event listener for keydown events
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []); // Empty dependency array ensures this effect runs only once
   //debug: draw average crosshair and previous 5 points
   useEffect(() => {
     const svg = d3.select(vectorCalibRef.current);
@@ -279,26 +426,53 @@ function Calibration() {
     //remove existing crosshair points to prevent duplicates
     svg.selectAll('.crosshair-point').remove();
     svg.selectAll('.average-crosshair-point').remove();
-    
-     //draw last 5 crosshair positions
-    //  svg.selectAll('.crosshair-point')
-    //  .data(lastCrosshairPositions)
-    //  .enter()
-    //  .append('circle')
-    //  .attr('class', 'crosshair-point')
-    //  .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
-    //  .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
-    //  .attr('r', 2)
-    //  .style('fill', 'red');
+    svg.selectAll('.gaze-cursor-point').remove();
+
+     //draw last n crosshair positions
+     if(drawPrevious){
+     svg.selectAll('.crosshair-point')
+     .data(lastCrosshairPositions)
+     .enter()
+     .append('circle')
+     .attr('class', 'crosshair-point')
+     .attr('cx', d => (d.crosshairPosition ? d.crosshairPosition.x : 0))
+     .attr('cy', d => (d.crosshairPosition ? d.crosshairPosition.y : 0))
+     .attr('r', 2)
+     .style('fill', 'red');
+     }
 
     //draw average crosshair position
-    if (averageCrosshairPosition) {
+    if (drawAverage && averageCrosshairPosition) {
       svg.append('circle')
         .attr('class', 'average-crosshair-point')
         .attr('cx', averageCrosshairPosition.x)
         .attr('cy', averageCrosshairPosition.y)
         .attr('r', 5)
         .style('fill', 'blue');
+    }
+
+    const ellipses = [ellipseSVG, ellipseSVG2]
+    //draw gaze cursor
+    if(drawCursor)
+    {
+      svg.selectAll('ellipse')
+        .data([ellipses]) // Use your data here
+        .join('ellipse')
+        .attr('class', 'gaze-cursor-point')
+        .attr('cx', d => d[0].centerX)
+        .attr('cy', d => d[0].centerY)
+        .attr('rx', d => d[0].ellipseWidth / 2)
+        .attr('ry', d => d[0].ellipseHeight / 2)
+        .attr('transform', d => `rotate(${d[0].angleInDeg}, ${d[0].centerX}, ${d[0].centerY})`)
+        .style('fill', 'rgba(0, 0, 255, 0.1)')
+        // .transition()
+        // .duration(7)
+        // .ease(d3.easeCubicInOut)
+        // .attr('cx', d => d[1].centerX)
+        // .attr('cy', d => d[1].centerY)
+        // .attr('rx', d => d[1].ellipseWidth / 2)
+        // .attr('ry', d => d[1].ellipseHeight / 2)
+        // .attr('transform', d => `rotate(${d[1].angleInDeg}, ${d[1].centerX}, ${d[1].centerY})`);
     }
   }, [dimensions, lastCrosshairPositions, averageCrosshairPosition]); // Dependencies for re-running the effect
 
@@ -516,16 +690,12 @@ function Calibration() {
           camera.start();
         }
       }, []);
-
-      function drawLandmarks(ctx: CanvasRenderingContext2D, landmarks: any) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        for (const point of landmarks) {
-            ctx.beginPath();
-            ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, 1, 0, 2 * Math.PI);
-            ctx.fillStyle = 'red';
-            ctx.fill();
-        }
-    }
+      const gazetraceprop = { //idk why this is needed but it is
+        dimensions: dimensions,
+        dpi: dpi,
+        predictedCrosshairPositionRef: averageCrosshairPositionRef,
+        showGazeTracing: showGazeTracing,
+      }
 
     function estimateHeadPose(landmarks: any) {
       // 3D model points
@@ -602,7 +772,6 @@ function Calibration() {
       tvec.delete();
   }
 
-      
   return (
     <div>
       <canvas
@@ -709,6 +878,9 @@ function Calibration() {
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
+        <button onClick={() => setShowGazeTracing(!showGazeTracing)}>
+          {showGazeTracing ? "Leave Gaze Tracing" : "Enter Gaze Tracing"}
+        </button>
         <div>
           <label> Row Size </label>
           <input
@@ -723,6 +895,7 @@ function Calibration() {
             onChange={(event) => setColSize(Number(event.target.value))}
           /> 
         </div>
+      <div>
         <p>Start Static Calibration with "C" key</p>
       </div>
       <div>
@@ -736,6 +909,12 @@ function Calibration() {
       </div>
       <div>
         {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize}/>}  
+      </div>
+      <div>
+        {showGazeTracing && <GazeTracing {...gazetraceprop}/>} 
+      </div>
+      <div>
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition}/>}
       </div>
       <div>
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
