@@ -878,6 +878,9 @@ function Calibration() {
         <button onClick={() => setShowOverlay(!showOverlay)}>
           {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
         </button>
+        <button onClick={() => setShowGazeTracing(!showGazeTracing)}>
+          {showGazeTracing ? "Leave Gaze Tracing" : "Enter Gaze Tracing"}
+        </button>
         <div>
           <label> Row Size </label>
           <input
