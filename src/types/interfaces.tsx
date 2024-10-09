@@ -47,6 +47,15 @@ export interface BoxContainerInformation{
   };
 }
 
+export interface MemoryGameProps{
+  crosshairPosition: {
+    x: number,
+    y: number
+  };
+  rowSize: number;
+  colSize: number;
+}
+
 export interface VirtualBoxInfo {
   id: number;
   crosshairPosition: {x: number, y: number};
