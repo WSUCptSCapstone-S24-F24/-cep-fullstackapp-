@@ -75,12 +75,14 @@ After start the application by `npm run electron-start`, the application automat
   * [Sprint3](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint3_report.md)
   * [Sprint4](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint4_report.md)
   * [Sprint5](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint5_report.md)
+  * [Sprint6](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint6_report.md)
 * Client reports
   * [Sprint1](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/client_report_sprint1_CEP.md)
   * [Sprint2](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint2_client_report.md)
   * [Sprint3](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint3_client_report.md)
   * [Sprint4](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint4_client_report.md)
   * [Sprint5](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint5_client_report.md)
+  * [Sprint6](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint6_client_report.md)
 * Research report
   * [Research for eye-tracking methods](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/Reserch_report.md)
   * [Research for Convolution](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/Convolution_Research_Report.md)
