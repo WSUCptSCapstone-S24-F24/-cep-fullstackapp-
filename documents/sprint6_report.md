@@ -46,7 +46,7 @@ Please review the following code files, which were actively developed during thi
  * [src/components](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/tree/Yuuki_Sprint4_Report/src/components)
 
 ## Demo
-Sprint 6 Demo: 
+Sprint 6 Demo: https://youtu.be/sr7AAHAD67U
  
 ## Retrospective Summary
 Here's what went well:
