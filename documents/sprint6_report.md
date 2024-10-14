@@ -1,4 +1,4 @@
-# Sprint 5 Report (9/14/24 - 10/13/24)
+# Sprint 6 Report (9/14/24 - 10/13/24)
 
 ## What's New (User Facing)
 
