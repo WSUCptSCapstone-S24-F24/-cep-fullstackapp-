@@ -2,7 +2,7 @@ import React from 'react';
 import {useRef, useEffect, useState} from 'react'
 import { MemoryCardInfo } from '../types/interfaces';
 
-const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, imageSrc, height, width, top = '0', left = '0', right='0', onHit, isHit, isMatched}) => {
+const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, emoji, height, width, top = '0', left = '0', right='0', onHit, isHit, isMatched}) => {
     const boxRef = useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = useState(false);
     const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null); // Timer for target practice hover duration
@@ -72,15 +72,7 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, ima
         >
 
           {isHit ? (
-            <img
-            src={imageSrc}
-            alt={name}
-            style={{
-              height: '100%',
-              width: '100%',
-              objectFit: 'contain'
-            }}
-            />
+            <span>{emoji}</span>
           ) : (
             <div style={{
               height: '0px',

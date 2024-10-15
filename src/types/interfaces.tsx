@@ -71,7 +71,7 @@ export interface VirtualBoxInfo {
 export interface MemoryCardBox {
   id: number;
   name: string;
-  imageSrc : string;
+  emoji : string;
   height: string;
   width: string;
   top: string;
@@ -82,7 +82,7 @@ export interface MemoryCardBox {
 export interface MemoryCardInfo {
   id: number;
   crosshairPosition: {x: number, y: number};
-  imageSrc : string;
+  emoji : string;
   name: string;
   height: string;
   width: string;

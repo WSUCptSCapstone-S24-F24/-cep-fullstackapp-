@@ -11,6 +11,8 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
     const row = rowSize;
     const col = colSize;
 
+    const emojiList = ['😀', '🎉', '🚀', '❤️', '🐶', '🍕', '🎃', '🌟', '🐱', '🏀', '🚲', '🎯', '🧁', '🎈', '🚁', '🌈'];
+
     // Initialize our box queue here
     useEffect(() => {
         const cards: MemoryCardBox[] = generateCards(rowSize * colSize); 
@@ -45,16 +47,16 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             'https://emoji.aranja.com/static/emoji-data/img-apple-160/2603-fe0f.png'
         ];
 
-        let pairedImages = images.slice(0, half);
+        let pairedImages = emojiList.slice(0, half);
 
         pairedImages = [...pairedImages, ...pairedImages];
 
         shuffle(pairedImages);
 
-        return pairedImages.map((imageSrc, index) => ({
+        return pairedImages.map((emoji, index) => ({
             id: index,
             name: `Card ${index + 1}`,
-            imageSrc: imageSrc,
+            emoji: emoji,
             height: `1fr`,
             width: `1fr`,
             top: `1fr`,
@@ -89,7 +91,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             const secondCard = cardQueue.find(card => card.id === secondCardId);
 
             if (firstCard && secondCard){
-                if (firstCard.imageSrc === secondCard.imageSrc){
+                if (firstCard.emoji === secondCard.emoji){
                     // Cards match, remove both cards
                     setTimeout(() => {
                         setMatchedCards(currentCard => [...currentCard, firstCardId, secondCardId]);
@@ -123,7 +125,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
                     id={card.id}
                     crosshairPosition={crosshairPosition}
                     name={card.name}
-                    imageSrc={card.imageSrc}
+                    emoji={card.emoji}
                     height={`100%`}
                     width={`100%`}
                     onHit={handleBoxHit}
