@@ -11,7 +11,22 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
     const row = rowSize;
     const col = colSize;
 
-    const emojiList = ['😀', '🎉', '🚀', '❤️', '🐶', '🍕', '🎃', '🌟', '🐱', '🏀', '🚲', '🎯', '🧁', '🎈', '🚁', '🌈'];
+    const generateEmojiRange = (start: number, end: number) => {
+        let emojis = [];
+        for (let i = start; i <= end; i++){
+            emojis.push(String.fromCodePoint(i));
+        }
+        return emojis;
+    }
+
+    // Get every emoji from unicode ranges
+    // Taken from Chat GPT
+    const emojiList = [
+        ...generateEmojiRange(0x1F600, 0x1F64F), 
+        ...generateEmojiRange(0x1F300, 0x1F5FF), 
+        ...generateEmojiRange(0x1F680, 0x1F6FF), 
+        ...generateEmojiRange(0x2600, 0x26FF)    
+    ];
 
     // Initialize our box queue here
     useEffect(() => {
@@ -22,30 +37,6 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
       // Generate target card array
       const generateCards = (numberOfCards: number): MemoryCardBox[] => {
         const half = numberOfCards / 2;
-
-        const images = [
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92c.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f611.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/2620-fe0f.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47a.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92f.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f644.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f62b.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92a.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f641.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f634.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f912.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47f.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f47d.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f92e.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f624.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f921.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f48e.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31a.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31e.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/1f31b.png',
-            'https://emoji.aranja.com/static/emoji-data/img-apple-160/2603-fe0f.png'
-        ];
 
         let pairedImages = emojiList.slice(0, half);
 

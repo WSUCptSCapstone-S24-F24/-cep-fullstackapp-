@@ -67,7 +67,8 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, emo
             boxSizing: 'border-box',
             aspectRatio: '1',
             overflow: 'hidden',
-            visibility: isMatched ? 'hidden' : 'visible'
+            visibility: isMatched ? 'hidden' : 'visible',
+            fontSize: '10rem'
           }}
         >
 
