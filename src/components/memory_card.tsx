@@ -6,6 +6,17 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, emo
     const boxRef = useRef<HTMLDivElement>(null);
     const [isInside, setIsInside] = useState(false);
     const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null); // Timer for target practice hover duration
+    const [fontSize, setFontSize] = useState('10rem'); // default font size
+
+    // Calculate font size based on card dimensions
+    useEffect(() => {
+      if (boxRef.current) {
+          const { offsetWidth, offsetHeight } = boxRef.current;
+          const smallerDimension = Math.min(offsetWidth, offsetHeight);
+          const calculatedFontSize = `${smallerDimension * 0.5}px`;
+          setFontSize(calculatedFontSize);
+      }
+    }, [height, width]);
 
     useEffect(() =>{
         if (!boxRef.current) return;
@@ -68,7 +79,8 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, emo
             aspectRatio: '1',
             overflow: 'hidden',
             visibility: isMatched ? 'hidden' : 'visible',
-            fontSize: '10rem'
+            fontSize: fontSize,
+            transition: 'font-size 0.2s ease'
           }}
         >
 
