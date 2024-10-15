@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BoxContainerInformation, MemoryCardBox } from '../types/interfaces';
+import { MemoryCardBox, MemoryGameProps } from '../types/interfaces';
 import MemoryCard from './memory_card';
 import { shuffle } from 'd3';
 
-const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) => {
+const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, colSize }) => {
 
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
     const [visibleCards, setVisibleCards] = useState<number[]>([]);
     const [matchedCards, setMatchedCards] = useState<number[]>([]);
-    const rowSize = 4;
-    const colSize = 4;
+    const row = rowSize;
+    const col = colSize;
 
     // Initialize our box queue here
     useEffect(() => {
@@ -65,7 +65,7 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
 
       const handleBoxHit = (cardId: number) => {
         // Ensure only 2 cards are visible at once
-        if (visibleCards.length >= 2 || matchedCards.includes(cardId)){
+        if (visibleCards.length >= 2 || matchedCards.includes(cardId) || cardId === visibleCards[0]){
             return;
         }
 
@@ -108,8 +108,8 @@ const MemoryGame: React.FC<BoxContainerInformation> = ({ crosshairPosition }) =>
     return (
         <div style={{
             display: `grid`,
-            gridTemplateColumns: `repeat(${colSize}, 1fr)`,
-            gridTemplateRows: `repeat(${rowSize}, 1fr)`,
+            gridTemplateColumns: `repeat(${col}, 1fr)`,
+            gridTemplateRows: `repeat(${row}, 1fr)`,
             gap: `10px`,
             height: `100vh`,
             width: `100vw`,

@@ -47,6 +47,15 @@ export interface BoxContainerInformation{
   };
 }
 
+export interface MemoryGameProps{
+  crosshairPosition: {
+    x: number,
+    y: number
+  };
+  rowSize: number;
+  colSize: number;
+}
+
 export interface VirtualBoxInfo {
   id: number;
   crosshairPosition: {x: number, y: number};
@@ -96,4 +105,11 @@ export interface StabilityTestProps {
   dpi: number;
   predictedCrosshairPositionRef: React.RefObject<{x: number, y: number}>;
   showStabilityTest: boolean;
+}
+
+export interface GazeTracingProps {
+  dimensions: { width: number, height: number };
+  dpi: number;
+  predictedCrosshairPositionRef: React.RefObject<{x: number, y: number}>;
+  showGazeTracing: boolean;
 }
