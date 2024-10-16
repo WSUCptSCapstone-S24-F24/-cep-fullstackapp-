@@ -8,8 +8,11 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
     const [visibleCards, setVisibleCards] = useState<number[]>([]);
     const [matchedCards, setMatchedCards] = useState<number[]>([]);
+    const [score, setScore] = useState<number>(0);
+    const [attempts, setAttempts] = useState<number>(0);
     const row = rowSize;
     const col = colSize;
+    const scoreBonus = 10; // Amount of score we gain when we correctly match 2 cards
 
     const generateEmojiRange = (start: number, end: number) => {
         let emojis = [];
@@ -87,6 +90,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
                     setTimeout(() => {
                         setMatchedCards(currentCard => [...currentCard, firstCardId, secondCardId]);
                         setVisibleCards([]);
+                        setScore(score + scoreBonus);
                     }, 1000); // Delay before cards are removed
                 } else {
                     setTimeout(() => {
@@ -95,6 +99,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
                     }, 1000);
                 }
             }
+            setAttempts(attempts + 1);
         }
     };
 

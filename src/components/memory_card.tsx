@@ -7,6 +7,8 @@ const MemoryCard: React.FC<MemoryCardInfo> = ({ id, crosshairPosition, name, emo
     const [isInside, setIsInside] = useState(false);
     const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null); // Timer for target practice hover duration
     const [fontSize, setFontSize] = useState('10rem'); // default font size
+    const [score, setScore] = useState<number>(0);
+    const [attempts, setAttempts] = useState<number>(0);
 
     // Calculate font size based on card dimensions
     useEffect(() => {
