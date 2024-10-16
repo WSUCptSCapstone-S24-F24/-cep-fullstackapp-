@@ -114,6 +114,12 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             padding: `10px`,
             boxSizing: `border-box`
         }}>
+            {/*Display score*/}
+            <div style={{ position: 'absolute', bottom: '10px', right: "10px", zIndex: 20, fontSize: "3vh"}}>
+                <p>Score: {score}</p>
+                <p>Attempts: {attempts}</p>
+            </div>
+
             {/* Fill the cards to the grid */}
             {cardQueue.map(card => (
                 <MemoryCard
