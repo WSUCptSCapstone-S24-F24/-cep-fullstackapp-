@@ -55,6 +55,8 @@ function Calibration() {
     // --Global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+    const [savedMaxEyelidDistance, setSavedMaxEyelidDistance] = useState<number>(0.000);
+    const [eyelidDistances, setEyelidDistances] = useState<number[]>([]);
     // --Global predicted position
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     //predicted position for averages
@@ -149,7 +151,7 @@ function Calibration() {
     
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
-      if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
+      if (!refreshRate || !leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
 
       const irisPositionToPredict = {
         irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
@@ -169,18 +171,58 @@ function Calibration() {
       const predictedScreenX = coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
       const predictedScreenY  = coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
 
-      // Which will update to our global variable here
-      updateCrosshairPosition({
-        x: predictedScreenX,
-        y: predictedScreenY,
+      const n = refreshRate * 0.3; //storing eyelid distances over the last .3s
+      setEyelidDistances((prevDistances) => {
+        const newDistances = [...prevDistances, savedMaxEyelidDistance];
+
+        //limit the saved distances to just the ones over the past whatever fraction of a second
+        if (newDistances.length > n) {
+          newDistances.shift();
+        }
+
+        return newDistances;
       });
+      //MAYBE MAKE STDDEV = 0.5 OR SOMETHING DURING BLINKS
+      //blinkthreshold is now the average eyelid distance over the past 0.3s
+      const blinkThreshold = eyelidDistances.reduce((acc, val) => acc + val, 0) / eyelidDistances.length;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      //if the eyelid distance changed a lot over the period, its a blink
+      //console.log("current:", Math.abs(savedMaxEyelidDistance), "threshold: ", (blinkThreshold))
+      console.log("percentage: ", ((blinkThreshold / savedMaxEyelidDistance) * 100).toFixed(2), "%")
+      if (savedMaxEyelidDistance < (blinkThreshold * 0.75)) { //config: higher multiplier = more blinks detected. must be less than 1
+        updateCrosshairPosition({
+          x: predictedCrosshairPosition.x,
+          y: predictedCrosshairPosition.y,
+        });
+
+        // debug draw a red square when blinking
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
+          ctx.fillStyle = "red";
+          ctx.fillRect(10, 10, 50, 50); // Draw square at (10,10) with size 50x50
+        }
+      } else {
+        updateCrosshairPosition({
+          x: predictedScreenX,
+          y: predictedScreenY,
+        });
+
+        //debug draw a green square when not blinking
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
+          ctx.fillStyle = "green";
+          ctx.fillRect(10, 10, 50, 50); // Draw square at (10,10) with size 50x50
+        }
+      }
 
       // We will draw the crosshair
       if (crosshairCanvasRef.current) {
         drawCrosshair(crosshairCanvasRef.current, predictedScreenX, predictedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance]); // These are our dependent variables
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -280,7 +322,7 @@ function Calibration() {
               // const recentWeight = 2, olderWeight = 1; //config
               //this might be bad but it seems to work good on 165hz and I think it should be good on 360hz too
               const n = refreshRate/10 //config
-              const stddevs = refreshRate/150 //config
+              const stddevs = refreshRate/120 //config
               const recentWeight = 2, olderWeight = 1; //config
               console.log("n :", n, "stddevs: ", stddevs)
 
@@ -528,10 +570,24 @@ function Calibration() {
       const rightIrisIndex = 468;
       const noseIndex = 4;
 
+      const leftTopEyelidIndex = 386
+      const leftBottomEyelidIndex = 374
+      const rightTopEyelidIndex = 159
+      const rightBottomEyelidIndex = 145
+
       // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
       const leftIrisLandmark = landmarks[leftIrisIndex];
       const rightIrisLandmark = landmarks[rightIrisIndex];
       const noseLandmark = landmarks[noseIndex];
+
+      //calculating how open the eye is. if its way bigger or smaller than the distance we have saved, then the user is probably blinking
+      const currentMaxEyelidDistance = Math.max((landmarks[leftTopEyelidIndex].y - landmarks[leftBottomEyelidIndex].y), (landmarks[rightTopEyelidIndex].y - landmarks[rightBottomEyelidIndex].y))
+      //console.log("current", currentMaxEyelidDistance, "max", savedMaxEyelidDistance)
+      if ((Math.abs(currentMaxEyelidDistance)) > savedMaxEyelidDistance) //TODO this might be refresh rate dependent
+      {
+        //console.log("GO TIME")
+        setSavedMaxEyelidDistance(Math.abs(currentMaxEyelidDistance))
+      }
 
       // Saves iris coordinates to a global variable
       applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
