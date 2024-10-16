@@ -698,6 +698,8 @@ function Calibration() {
       }
 
     function estimateHeadPose(landmarks: any) {
+      const noseIndex = 4;
+      const noseLandmark = landmarks[noseIndex];
       // 3D model points
       const modelPoints = cv.matFromArray(6, 3, cv.CV_64F, [
           0.0, 0.0, 0.0,        // Nose tip
@@ -753,14 +755,15 @@ function Calibration() {
 
           // Calculate yaw, pitch, and roll
           const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
-          const pitch = -(Math.atan2(-r21, -r22)); // have issues
+          const pitch = -(Math.atan2(-r21, -r22));
           const roll = Math.atan2(r10, r00);
-
           setHeadPose({
             yaw: yaw * (180 / Math.PI),
             pitch: pitch * (180 / Math.PI),
             roll: roll * (180 / Math.PI),
           });
+
+          drawOrientationLine(noseLandmark, yaw, pitch);
       }
 
       // Cleanup
@@ -770,6 +773,33 @@ function Calibration() {
       distCoeffs.delete();
       rvec.delete();
       tvec.delete();
+  }
+
+  function drawOrientationLine(noseLandmark:any, yaw:any, pitch:any) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+  
+    // Convert the normalized nose landmark coordinates to actual pixel values
+    const noseX = noseLandmark.x * canvas.width;
+    const noseY = noseLandmark.y * canvas.height;
+  
+    // Length of the orientation line
+    const lineLength = 100;
+  
+    // Calculate the direction of the line based on yaw and pitch
+    const endX = noseX - lineLength * Math.sin(yaw);  // Adjust based on yaw (left-right)
+    const endY = noseY - lineLength * Math.sin(pitch); // Adjust based on pitch (up-down)
+
+  
+    // Draw the line from the nose
+    ctx.beginPath();
+    ctx.moveTo(noseX, noseY);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = 'red';  // Color of the orientation line
+    ctx.lineWidth = 3;
+    ctx.stroke();
   }
 
   return (
