@@ -66,8 +66,8 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             const containerWidth = containerRef.current.offsetWidth;
             const containerHeight = containerRef.current.offsetHeight;
 
-            const cardWidth = containerWidth / colSize;
-            const cardHeight = containerHeight / rowSize;
+            const cardWidth = (containerWidth / colSize)-10;
+            const cardHeight = (containerHeight / rowSize)-10;
 
             setCardSize({width: cardWidth, height: cardHeight});
         }
@@ -144,7 +144,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             <div style={{ position: 'absolute', bottom: '10px', right: "10px", zIndex: 20, fontSize: "3vh"}}>
                 <p>Score: {score}</p>
                 <p>Attempts: {attempts}</p>
-                <p>Card Size: {Math.floor(cardSize.width)}px x {Math.floor(cardSize.height)}px</p>
+                <p>Card Size: {(cardSize.width/DPI).toFixed(2)}in x {(cardSize.height/DPI).toFixed(2)}px</p>
             </div>
 
             {/* Fill the cards to the grid */}
