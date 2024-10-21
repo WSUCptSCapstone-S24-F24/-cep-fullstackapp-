@@ -161,13 +161,25 @@ function Calibration() {
       const screenX = calibrationPoints.map(data => data.screenX);
       const irisY = calibrationPoints.map(data => data.irisY);
       const screenY = calibrationPoints.map(data => data.screenY);
+      const yaw = calibrationPoints.map(data => data.yaw);
+      const pitch = calibrationPoints.map(data => data.pitch);
 
-      const coefficientsX = linearRegression(irisX, screenX);
-      const coefficientsY = linearRegression(irisY, screenY);
+      const coefficientsX = linearRegression(irisX, screenX, yaw, pitch);
+      const coefficientsY = linearRegression(irisY, screenY, yaw, pitch);
 
       // These will be our eye tracking crosshair predicted points
-      const predictedScreenX = coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
-      const predictedScreenY  = coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+      const predictedScreenX =
+      coefficientsX.slopeIris * irisPositionToPredict.irisX +
+      coefficientsX.slopeYaw * headPose.yaw +
+      coefficientsX.slopePitch * headPose.pitch +
+      coefficientsX.intercept;
+
+      const predictedScreenY =
+      coefficientsY.slopeIris * irisPositionToPredict.irisY +
+      coefficientsY.slopeYaw * headPose.yaw +
+      coefficientsY.slopePitch * headPose.pitch +
+      coefficientsY.intercept;
+
 
       // Which will update to our global variable here
       updateCrosshairPosition({
@@ -244,7 +256,9 @@ function Calibration() {
           irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
           irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2,
           screenX: clickCoordX,
-          screenY: clickCoordY
+          screenY: clickCoordY,
+          yaw: headPose.yaw,
+          pitch: headPose.pitch
         };
 
         setCalibrationPoints([...calibrationPoints, newPoint]);
@@ -623,7 +637,9 @@ function Calibration() {
                   irisX: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2 : 0,
                   irisY: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2 : 0,
                   screenX: x,
-                  screenY: y
+                  screenY: y,
+                  yaw: headPose.yaw,
+                  pitch: headPose.pitch
               }
           ]);
         

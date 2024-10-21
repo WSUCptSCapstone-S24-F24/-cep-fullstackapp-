@@ -5,6 +5,8 @@ export interface CalibrationPoint{
     irisY: number,
     screenX: number,
     screenY: number;
+    yaw: number;
+    pitch: number;
   }
 
 export interface DotData {
