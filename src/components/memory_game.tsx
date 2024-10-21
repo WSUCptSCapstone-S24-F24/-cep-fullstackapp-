@@ -3,13 +3,18 @@ import { MemoryCardBox, MemoryGameProps } from '../types/interfaces';
 import MemoryCard from './memory_card';
 import { shuffle } from 'd3';
 
-const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, colSize }) => {
+const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, colSize, DPI }) => {
 
+    const containerRef = useRef<HTMLDivElement>(null);
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
     const [visibleCards, setVisibleCards] = useState<number[]>([]);
     const [matchedCards, setMatchedCards] = useState<number[]>([]);
+    const [score, setScore] = useState<number>(0);
+    const [attempts, setAttempts] = useState<number>(0);
+    const [cardSize, setCardSize] = useState({width: 0, height: 0 });
     const row = rowSize;
     const col = colSize;
+    const scoreBonus = 10; // Amount of score we gain when we correctly match 2 cards
 
     const generateEmojiRange = (start: number, end: number) => {
         let emojis = [];
@@ -56,6 +61,28 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
         }));
       };
 
+      const calculateCardSize = () => {
+        if (containerRef.current){
+            const containerWidth = containerRef.current.offsetWidth;
+            const containerHeight = containerRef.current.offsetHeight;
+
+            const cardWidth = (containerWidth / colSize)-10;
+            const cardHeight = (containerHeight / rowSize)-10;
+
+            setCardSize({width: cardWidth, height: cardHeight});
+        }
+      }
+
+      // Calculate the size of each card whenever the window size changes
+    useEffect(() => {
+        window.addEventListener('resize', calculateCardSize);
+        calculateCardSize(); // initial calculation
+
+        return () => {
+            window.removeEventListener('resize', calculateCardSize);
+        };
+    }, [rowSize, colSize]);
+
       const handleBoxHit = (cardId: number) => {
         // Ensure only 2 cards are visible at once
         if (visibleCards.length >= 2 || matchedCards.includes(cardId) || cardId === visibleCards[0]){
@@ -87,6 +114,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
                     setTimeout(() => {
                         setMatchedCards(currentCard => [...currentCard, firstCardId, secondCardId]);
                         setVisibleCards([]);
+                        setScore(score + scoreBonus);
                     }, 1000); // Delay before cards are removed
                 } else {
                     setTimeout(() => {
@@ -95,11 +123,14 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
                     }, 1000);
                 }
             }
+            setAttempts(attempts + 1);
         }
     };
 
     return (
-        <div style={{
+        <div
+        ref={containerRef}
+        style={{
             display: `grid`,
             gridTemplateColumns: `repeat(${col}, 1fr)`,
             gridTemplateRows: `repeat(${row}, 1fr)`,
@@ -109,6 +140,13 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             padding: `10px`,
             boxSizing: `border-box`
         }}>
+            {/*Display score*/}
+            <div style={{ position: 'absolute', bottom: '10px', right: "10px", zIndex: 20, fontSize: "3vh"}}>
+                <p>Score: {score}</p>
+                <p>Attempts: {attempts}</p>
+                <p>Card Size: {(cardSize.width/DPI).toFixed(2)}in x {(cardSize.height/DPI).toFixed(2)}px</p>
+            </div>
+
             {/* Fill the cards to the grid */}
             {cardQueue.map(card => (
                 <MemoryCard

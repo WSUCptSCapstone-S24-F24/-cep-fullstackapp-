@@ -54,6 +54,7 @@ export interface MemoryGameProps{
   };
   rowSize: number;
   colSize: number;
+  DPI: number;
 }
 
 export interface VirtualBoxInfo {
