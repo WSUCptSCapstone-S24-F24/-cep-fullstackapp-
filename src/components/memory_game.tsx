@@ -3,7 +3,7 @@ import { MemoryCardBox, MemoryGameProps } from '../types/interfaces';
 import MemoryCard from './memory_card';
 import { shuffle } from 'd3';
 
-const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, colSize }) => {
+const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, colSize, DPI }) => {
 
     const [cardQueue, setCardQueue] = useState<MemoryCardBox[]>([]);
     const [visibleCards, setVisibleCards] = useState<number[]>([]);
@@ -118,6 +118,7 @@ const MemoryGame: React.FC<MemoryGameProps> = ({ crosshairPosition, rowSize, col
             <div style={{ position: 'absolute', bottom: '10px', right: "10px", zIndex: 20, fontSize: "3vh"}}>
                 <p>Score: {score}</p>
                 <p>Attempts: {attempts}</p>
+                <p>Card Size: {DPI}</p>
             </div>
 
             {/* Fill the cards to the grid */}

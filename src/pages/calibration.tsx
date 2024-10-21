@@ -940,7 +940,7 @@ function Calibration() {
         {showGazeTracing && <GazeTracing {...gazetraceprop} />}
       </div>
       <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize}/>}  
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize} DPI={dpi}/>}  
       </div>
       <div>
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>

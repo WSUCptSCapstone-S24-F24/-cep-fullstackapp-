@@ -1,4 +1,4 @@
-// MathUtils.tsx
+ // MathUtils.tsx
 
 // This function will get the line of best fit between all of our points
 // Returns the slope and intercept of the line of best fit
