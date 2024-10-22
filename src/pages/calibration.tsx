@@ -179,16 +179,17 @@ function Calibration() {
       // Trigonometric compensation for head movement
       const yawRadians = headPose.yaw * (Math.PI / 180);
       const pitchRadians = headPose.pitch * (Math.PI / 180);
-      const focalLength = 2200; // distance nose is from camera (play around with this number)
-      const yawScale = 1.0;  // closer to 1 is most reponsive but can overshoot
-      const pitchScale = 1.0; // closer to 1 is most reponsive but can overshoot
+      const focalLength = 1200; // distance nose is from camera (play around with this number)
+      const yawScale = 1.5;  // higher the number, the quicker the response. (more change for over adjusing)
+      const pitchScale = 1.0;
 
       const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
       const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
 
       // Apply the compensation
       const correctedScreenX = predictedScreenX - yawCompensation;
-      const correctedScreenY = predictedScreenY - pitchCompensation;
+      const correctedScreenY = predictedScreenY + pitchCompensation;
+      //console.log(`Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}`);
 
 
       // Which will update to our global variable here
