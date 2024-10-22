@@ -4,37 +4,25 @@
 // Returns the slope and intercept of the line of best fit
 export const linearRegression = (
   irisCoords: number[], 
-  screenCoords: number[], 
-  yaw: number[], 
-  pitch: number[]
+  screenCoords: number[]
 ) => {
   const n = irisCoords.length;
 
   // Sum of each variable
   const sumX = irisCoords.reduce((a, b) => a + b, 0);
-  const sumYaw = yaw.reduce((a, b) => a + b, 0);
-  const sumPitch = pitch.reduce((a, b) => a + b, 0);
   const sumY = screenCoords.reduce((a, b) => a + b, 0);
 
   // Sum of products of each variable
   const sumXy = irisCoords.reduce((a, b, i) => a + b * screenCoords[i], 0);
-  const sumYawY = yaw.reduce((a, b, i) => a + b * screenCoords[i], 0);
-  const sumPitchY = pitch.reduce((a, b, i) => a + b * screenCoords[i], 0);
 
   // Sum of squares of each variable
   const sumXx = irisCoords.reduce((a, b) => a + b * b, 0);
-  const sumYawYaw = yaw.reduce((a, b) => a + b * b, 0);
-  const sumPitchPitch = pitch.reduce((a, b) => a + b * b, 0);
 
-  // Computing linear regression
-  // Here we perform multiple regression for irisCoords, yaw, and pitch.
-  const denominator = (n * (sumXx + sumYawYaw + sumPitchPitch)) - (sumX + sumYaw + sumPitch) ** 2;
-  const slopeIris = (n * sumXy - sumX * sumY) / denominator;
-  const slopeYaw = (n * sumYawY - sumYaw * sumY) / denominator;
-  const slopePitch = (n * sumPitchY - sumPitch * sumY) / denominator;
-  const intercept = (sumY - (slopeIris * sumX + slopeYaw * sumYaw + slopePitch * sumPitch)) / n;
+  // Compute slope and intercept for simple linear regression
+  const slope = (n * sumXy - sumX * sumY) / (n * sumXx - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
 
-  return { slopeIris, slopeYaw, slopePitch, intercept };
+  return { slope, intercept };
 };
 
 

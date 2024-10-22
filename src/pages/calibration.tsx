@@ -146,7 +146,8 @@ function Calibration() {
         window.removeEventListener('resize', handleResize);
       };
     }, []);
-    
+  
+
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
       if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
@@ -163,36 +164,45 @@ function Calibration() {
       const screenY = calibrationPoints.map(data => data.screenY);
       const yaw = calibrationPoints.map(data => data.yaw);
       const pitch = calibrationPoints.map(data => data.pitch);
+      const roll = calibrationPoints.map(data => data.roll);
 
-      const coefficientsX = linearRegression(irisX, screenX, yaw, pitch);
-      const coefficientsY = linearRegression(irisY, screenY, yaw, pitch);
+      const coefficientsX = linearRegression(irisX, screenX);
+      const coefficientsY = linearRegression(irisY, screenY);
 
       // These will be our eye tracking crosshair predicted points
       const predictedScreenX =
-      coefficientsX.slopeIris * irisPositionToPredict.irisX +
-      coefficientsX.slopeYaw * headPose.yaw +
-      coefficientsX.slopePitch * headPose.pitch +
-      coefficientsX.intercept;
+      coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
 
       const predictedScreenY =
-      coefficientsY.slopeIris * irisPositionToPredict.irisY +
-      coefficientsY.slopeYaw * headPose.yaw +
-      coefficientsY.slopePitch * headPose.pitch +
-      coefficientsY.intercept;
+      coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+
+      // Trigonometric compensation for head movement
+      const yawRadians = headPose.yaw * (Math.PI / 180);
+      const pitchRadians = headPose.pitch * (Math.PI / 180);
+      const focalLength = 2200; // distance nose is from camera (play around with this number)
+      const yawScale = 1.0;  // closer to 1 is most reponsive but can overshoot
+      const pitchScale = 1.0; // closer to 1 is most reponsive but can overshoot
+
+      const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
+      const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
+
+      // Apply the compensation
+      const correctedScreenX = predictedScreenX - yawCompensation;
+      const correctedScreenY = predictedScreenY - pitchCompensation;
 
 
       // Which will update to our global variable here
       updateCrosshairPosition({
-        x: predictedScreenX,
-        y: predictedScreenY,
+        x: correctedScreenX,
+        y: correctedScreenY,
       });
 
       // We will draw the crosshair
       if (crosshairCanvasRef.current) {
-        drawCrosshair(crosshairCanvasRef.current, predictedScreenX, predictedScreenY);
+        drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose]); // These are our dependent variables
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -258,7 +268,8 @@ function Calibration() {
           screenX: clickCoordX,
           screenY: clickCoordY,
           yaw: headPose.yaw,
-          pitch: headPose.pitch
+          pitch: headPose.pitch,
+          roll: headPose.roll
         };
 
         setCalibrationPoints([...calibrationPoints, newPoint]);
@@ -639,7 +650,8 @@ function Calibration() {
                   screenX: x,
                   screenY: y,
                   yaw: headPose.yaw,
-                  pitch: headPose.pitch
+                  pitch: headPose.pitch,
+                  roll: headPose.roll
               }
           ]);
         
