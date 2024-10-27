@@ -2,18 +2,29 @@
 
 // This function will get the line of best fit between all of our points
 // Returns the slope and intercept of the line of best fit
-export const linearRegression = (irisCoords: number[], screenCoords: number[]) => {
-    const n = irisCoords.length;
-    const sumX = irisCoords.reduce((a,b) => a + b, 0);
-    const sumY = screenCoords.reduce((a,b) => a + b, 0);
-    const sumXx = irisCoords.reduce((a,b) => a + b * b, 0);
-    const sumXy = irisCoords.reduce((a,b,i) => a + b * screenCoords[i], 0);
+export const linearRegression = (
+  irisCoords: number[], 
+  screenCoords: number[]
+) => {
+  const n = irisCoords.length;
 
-    const slope = (n * sumXy - sumX * sumY) / (n * sumXx - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
+  // Sum of each variable
+  const sumX = irisCoords.reduce((a, b) => a + b, 0);
+  const sumY = screenCoords.reduce((a, b) => a + b, 0);
 
-    return {slope, intercept};
+  // Sum of products of each variable
+  const sumXy = irisCoords.reduce((a, b, i) => a + b * screenCoords[i], 0);
+
+  // Sum of squares of each variable
+  const sumXx = irisCoords.reduce((a, b) => a + b * b, 0);
+
+  // Compute slope and intercept for simple linear regression
+  const slope = (n * sumXy - sumX * sumY) / (n * sumXx - sumX * sumX);
+  const intercept = (sumY - slope * sumX) / n;
+
+  return { slope, intercept };
 };
+
 
 // Converts number of pixels to inches
 export function pixelsToInches(pixels : number, dpi: number) {

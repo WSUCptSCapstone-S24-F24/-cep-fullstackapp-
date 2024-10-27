@@ -146,7 +146,8 @@ function Calibration() {
         window.removeEventListener('resize', handleResize);
       };
     }, []);
-    
+  
+
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
       if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
@@ -161,26 +162,50 @@ function Calibration() {
       const screenX = calibrationPoints.map(data => data.screenX);
       const irisY = calibrationPoints.map(data => data.irisY);
       const screenY = calibrationPoints.map(data => data.screenY);
+      const yaw = calibrationPoints.map(data => data.yaw);
+      const pitch = calibrationPoints.map(data => data.pitch);
+      const roll = calibrationPoints.map(data => data.roll);
 
       const coefficientsX = linearRegression(irisX, screenX);
       const coefficientsY = linearRegression(irisY, screenY);
 
       // These will be our eye tracking crosshair predicted points
-      const predictedScreenX = coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
-      const predictedScreenY  = coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+      const predictedScreenX =
+      coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
+
+      const predictedScreenY =
+      coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+
+      // YAW Compensation (Trigonometric)
+      const yawRadians = headPose.yaw * (Math.PI / 180);
+      const focalLength = 1200; // distance nose is from camera (play around with this number)
+      const yawScale = 5.0;  // higher the number, the quicker the response. (more change for over adjusing)
+      const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
+
+      // PITCH Compensation 
+      const pitchRadians = headPose.pitch * (Math.PI / 180);
+      const pitchScale = 5.0;
+      const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
+
+      // Apply the compensation
+      const correctedScreenX = predictedScreenX - yawCompensation;
+      const correctedScreenY = predictedScreenY + pitchCompensation;
+      console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}`);
+      console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}`);
+
 
       // Which will update to our global variable here
       updateCrosshairPosition({
-        x: predictedScreenX,
-        y: predictedScreenY,
+        x: correctedScreenX,
+        y: correctedScreenY,
       });
 
       // We will draw the crosshair
       if (crosshairCanvasRef.current) {
-        drawCrosshair(crosshairCanvasRef.current, predictedScreenX, predictedScreenY);
+        drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose]); // These are our dependent variables
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -244,7 +269,10 @@ function Calibration() {
           irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
           irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2,
           screenX: clickCoordX,
-          screenY: clickCoordY
+          screenY: clickCoordY,
+          yaw: headPose.yaw,
+          pitch: headPose.pitch,
+          roll: headPose.roll
         };
 
         setCalibrationPoints([...calibrationPoints, newPoint]);
@@ -623,7 +651,10 @@ function Calibration() {
                   irisX: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2 : 0,
                   irisY: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2 : 0,
                   screenX: x,
-                  screenY: y
+                  screenY: y,
+                  yaw: headPose.yaw,
+                  pitch: headPose.pitch,
+                  roll: headPose.roll
               }
           ]);
         
