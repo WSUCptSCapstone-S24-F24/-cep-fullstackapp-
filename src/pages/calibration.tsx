@@ -585,8 +585,8 @@ function Calibration() {
       drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
 
       var dx = irisLeftMaxX - irisLeftMinX;
-      var dX = 11.7; //It means camera focal. It works well but we can change it depends on the camera.
-      var normalizedFocaleX = 1.40625;
+      var dX = 11.7;
+      var normalizedFocaleX = 1.40625; //It means camera focal. It works well but we can change it depends on the camera.
       var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
       var dZ = (fx * (dX / dx))/10.0;
       setDistance(dZ);
