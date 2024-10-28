@@ -131,6 +131,7 @@ function Calibration() {
     // Row and col size for Memory Game
     const [rowSize, setRowSize] = useState(4);
     const [colSize, setColSize] = useState(4);
+    const [distance, setDistance] = useState(0);
 
     // Update dimensions on window resize
     useEffect(() => {
@@ -525,6 +526,9 @@ function Calibration() {
     // Create landmarks for each point of interest
     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
+      var irisLeftMinX = -1;
+      var irisLeftMaxX = -1;
+
       for (const landmarks of results.multiFaceLandmarks) {
         connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
           color: "#eae8fd",
@@ -548,6 +552,17 @@ function Calibration() {
         connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
           color: "#F50B0B",
         });
+
+        for (const point of Facemesh.FACEMESH_LEFT_IRIS) {
+          var point0 = landmarks[point[0]];
+          
+          if (irisLeftMinX == -1 || point0.x * videoWidth < irisLeftMinX) {
+            irisLeftMinX = point0.x * videoWidth;
+          }
+          if (irisLeftMaxX == -1 || point0.x * videoWidth > irisLeftMaxX) {
+            irisLeftMaxX = point0.x * videoWidth;
+          }
+        }
       }
 
       const landmarks = results.multiFaceLandmarks[0];
@@ -568,6 +583,13 @@ function Calibration() {
       drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
       drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
       drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
+
+      var dx = irisLeftMaxX - irisLeftMinX;
+      var dX = 11.7; //It means camera focal. It works well but we can change it depends on the camera.
+      var normalizedFocaleX = 1.40625;
+      var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
+      var dZ = (fx * (dX / dx))/10.0;
+      setDistance(dZ);
 
       estimateHeadPose(landmarks);      
     }
@@ -977,6 +999,7 @@ function Calibration() {
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
+        <p>Distance : {distance.toFixed(2)} cm</p>
       </div>
     </div>
     
