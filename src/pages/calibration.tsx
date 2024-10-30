@@ -1010,7 +1010,7 @@ function Calibration() {
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
         <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
         <p>Camera FOV : {cameraFOV.toFixed(2)}°</p>
-        <p>Focal Length : {focalLength.toFixed(2)} cm</p>
+        <p>Focal Length : {focalLength.toFixed(2)} px</p>
 
       </div>
     </div>
