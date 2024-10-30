@@ -598,7 +598,7 @@ function Calibration() {
       setCameraFOV(newCameraFov);
 
       // Set focal length with camera FOV. This is used for head compensation
-      setFocalLength(1440 / (2 * Math.tan((newCameraFov / 2.0) * Math.PI / 180.0)));
+      setFocalLength(screen.width / (2 * Math.tan((newCameraFov / 2.0) * Math.PI / 180.0)));
 
       estimateHeadPose(landmarks);      
     }
