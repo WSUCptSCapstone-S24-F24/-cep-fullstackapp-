@@ -114,6 +114,7 @@ function Calibration() {
     });
 
     const [dpi, setDpi] = useState<number>(96);
+    const [distanceFromCam, setDistanceFromCam] = useState(0);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     const [showErrorTest, setShowErrorTest] = useState(false);
@@ -131,12 +132,11 @@ function Calibration() {
     // Row and col size for Memory Game
     const [rowSize, setRowSize] = useState(4);
     const [colSize, setColSize] = useState(4);
-    const [distance, setDistance] = useState(0);
 
     // Update dimensions on window resize
     useEffect(() => {
       function handleResize() {
-        setDimensions({
+        setDimensions({ 
           width: window.innerWidth,
           height: window.innerHeight
         });
@@ -179,13 +179,13 @@ function Calibration() {
 
       // YAW Compensation (Trigonometric)
       const yawRadians = headPose.yaw * (Math.PI / 180);
-      const focalLength = 1200; // distance nose is from camera (play around with this number)
-      const yawScale = 5.0;  // higher the number, the quicker the response. (more change for over adjusing)
+      const focalLength = 1383; // distance nose is from camera (play around with this number)
+      const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
       const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
 
       // PITCH Compensation 
       const pitchRadians = headPose.pitch * (Math.PI / 180);
-      const pitchScale = 5.0;
+      const pitchScale = 1.0;
       const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
 
       // Apply the compensation
@@ -589,7 +589,7 @@ function Calibration() {
       var normalizedFocaleX = 1.40625; //It means camera focal. It works well but we can change it depends on the camera.
       var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
       var dZ = (fx * (dX / dx))/10.0;
-      setDistance(dZ);
+      setDistanceFromCam(dZ);
 
       estimateHeadPose(landmarks);      
     }
@@ -999,7 +999,7 @@ function Calibration() {
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
-        <p>Distance : {distance.toFixed(2)} cm</p>
+        <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
       </div>
     </div>
     
