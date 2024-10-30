@@ -55,6 +55,10 @@ function Calibration() {
     // --Global iris coordinates
     const [leftIrisCoordinate, setLeftIrisCoordinate] = useState<{x: number, y: number} | null>(null);
     const [rightIrisCoordinate, setRightIrisCoordinate] = useState<{x: number, y: number} | null>(null);
+    const [savedMaxEyelidDistance, setSavedMaxEyelidDistance] = useState<number>(0.000);
+    const [eyelidDistances, setEyelidDistances] = useState<number[]>([]);
+    const [stddevscale, setstddevscale] = useState<number>(1); //the stdev scale changes during blinks to compensate
+    const [isBlinkCooldown, setIsBlinkCooldown] = useState(false);
     // --Global predicted position
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     //predicted position for averages
@@ -69,13 +73,17 @@ function Calibration() {
     }
 
     const [lastCrosshairPositions, setLastCrosshairPositions] = useState<VectorDataB[]>([]);
+    const [filteredLastCrosshairPositions, setFilteredLastCrosshairPositions] = useState<VectorDataB[]>([]);
     const [averageCrosshairPosition, setAverageCrosshairPosition] = useState({x:0, y: 0});
     const averageCrosshairPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
     const [drawPredicted, setDrawPredicted] = useState<boolean>(false);
     const [drawAverage, setDrawAverage] = useState<boolean>(true);
-    const [drawPrevious, setDrawPrevious] = useState<boolean>(false);
-    const [drawCursor, setDrawCursor] = useState<boolean>(false);
+    const [drawRawArray, setDrawRawArray] = useState<boolean>(false);
+    const [drawRawCursor, setDrawRawCursor] = useState<boolean>(false);
+    const [drawFilteredArray, setDrawFilteredArray] = useState<boolean>(false); //unused but im leaving it in case we add something like it later
+    const [DrawBlinkStatus, setDrawBlinkStatus] = useState<boolean>(false);
+    const [isBlinking, setIsBlinking] = useState<boolean>(false);
     // --Our array which holds the set of coordinates for a point
     const [calibrationPoints, setCalibrationPoints] = useState<CalibrationPoint[]>([]);
     // --Global target practice mode
@@ -86,20 +94,6 @@ function Calibration() {
     const [showGazeTracing, setShowGazeTracing] = useState(false);
     //ellipses for gaze cursr
     const[ellipseSVG, setEllipseSVG] = useState<{
-      centerX: number;
-      centerY: number;
-      ellipseWidth: number;
-      ellipseHeight: number;
-      angleInDeg: number;
-    }>({
-      centerX: 0,
-      centerY: 0,
-      ellipseWidth: 0,
-      ellipseHeight: 0,
-      angleInDeg: 0
-    });
-
-    const [ellipseSVG2, setEllipseSVG2] = useState<{
       centerX: number;
       centerY: number;
       ellipseWidth: number;
@@ -153,7 +147,7 @@ function Calibration() {
 
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
-      if (!leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
+      if (!refreshRate || !leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
 
       const irisPositionToPredict = {
         irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
@@ -196,18 +190,48 @@ function Calibration() {
       console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}`);
 
 
-      // Which will update to our global variable here
-      updateCrosshairPosition({
-        x: correctedScreenX,
-        y: correctedScreenY,
+
+      const n = refreshRate * 0.8; //storing eyelid distances over the last .3s
+      setEyelidDistances((prevDistances) => {
+        const newDistances = [...prevDistances, savedMaxEyelidDistance];
+
+        //limit the saved distances to just the ones over the past whatever fraction of a second
+        if (newDistances.length > n) {
+          newDistances.shift();
+        }
+
+        return newDistances;
       });
+      //blinkthreshold is now the average eyelid distance over the past 0.3s
+      const blinkThreshold = eyelidDistances.reduce((acc, val) => acc + val, 0) / eyelidDistances.length;
+
+      if (isBlinkCooldown) return; // Skip check if in cooldown
+      //if the eyelid distance changed a lot over the period, its a blink
+      console.log(isBlinkCooldown)
+      if (savedMaxEyelidDistance < (blinkThreshold * 0.75)) { //config: higher multiplier = more blinks detected. must be less than 1
+        setstddevscale(0.2); //so the crosshair doesnt freak out as much during blinks
+        setIsBlinking(true)
+        setIsBlinkCooldown(true);
+        setTimeout(() => {
+          setIsBlinkCooldown(false); // re-enable check after 0.12 seconds
+        }, 120);
+      } 
+      else {
+        setstddevscale(1);
+        setIsBlinking(false)
+        updateCrosshairPosition({
+          x: predictedScreenX,
+          y: predictedScreenY,
+        });
+      }
 
       // We will draw the crosshair
       if (crosshairCanvasRef.current) {
         drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose, focalLength]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance, isBlinkCooldown]); // These are our dependent variables
+
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -304,26 +328,21 @@ function Calibration() {
                   dotPosition: { x: 0, y: 0 },
                   crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
               };
-              //keep the last n positions
-              // const n = 20 //config
-              // const stddevs = 1 //config
-              // const recentWeight = 2, olderWeight = 1; //config
-              //this might be bad but it seems to work good on 165hz and I think it should be good on 360hz too
               const n = refreshRate/10 //config
-              const stddevs = refreshRate/150 //config
+              const stddevs = stddevscale //config: lower stddevs = stricter filter
               const recentWeight = 2, olderWeight = 1; //config
-              console.log("n :", n, "stddevs: ", stddevs)
+              console.log("stddevs: ", stddevs)
 
               const updatedPositions = [...prevPositions, newPosition].slice(-n);
 
-              //exclude outliers
+              //get stdevs for our array
               const meanX = updatedPositions.reduce((sum, pos) => sum + pos.x, 0) / updatedPositions.length;
               const meanY = updatedPositions.reduce((sum, pos) => sum + pos.y, 0) / updatedPositions.length;
 
               const stdDevX = Math.sqrt(updatedPositions.reduce((sum, pos) => sum + Math.pow(pos.x - meanX, 2), 0) / updatedPositions.length);
               const stdDevY = Math.sqrt(updatedPositions.reduce((sum, pos) => sum + Math.pow(pos.y - meanY, 2), 0) / updatedPositions.length);
 
-              //ignore outliers however many stddevs away
+              //only keep points within however many stddevs
               const filteredPositions = updatedPositions.filter(pos => Math.abs(pos.x - meanX) <= stddevs * stdDevX && Math.abs(pos.y - meanY) <= stddevs * stdDevY);
 
                //weighted average: give 2x weight to the 10 most recent positions
@@ -344,9 +363,9 @@ function Calibration() {
                   setAverageCrosshairPosition({ x: avgX, y: avgY });
                   averageCrosshairPositionRef.current = averageCrosshairPosition; //the blue crosshair dot we draw on the screen
               }
-
-              // gaze cursor
-              if(drawCursor){ 
+              setFilteredLastCrosshairPositions(updatedPositions)
+              // raw gaze cursor
+              if(drawRawCursor){ 
                 // find the two furthest points a and b
                 let pointA = { x: 0, y: 0 };
                 let pointB = {x:0, y:0};
@@ -396,35 +415,14 @@ function Calibration() {
 
                 // draw the ellipse
                 if (crosshairCanvasRef.current) {
-                  if(ellipseSVG)setEllipseSVG2(ellipseSVG)
                   setEllipseSVG({centerX, centerY, ellipseWidth, ellipseHeight, angleInDeg} )
-                  
-                  //ctx didnt work well. it would sometimes decide to not draw anything so the ellipse would flash on screen a lot. 
-
-                  // const canvas = crosshairCanvasRef.current;
-                  // const ctx = canvas.getContext('2d');
-                  // if (ctx) {
-                  //   console.log("drawing")
-                  //   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
-                  //   ctx.save(); // Save the current canvas state
-
-                  //   ctx.translate(centerX, centerY);
-                  //   ctx.rotate(angle);
-                  //   ctx.beginPath();
-                  //   ctx.ellipse(0, 0, ellipseWidth / 2, ellipseHeight / 2, 0, 0, 2 * Math.PI);
-                  //   ctx.strokeStyle = 'rgba(0, 0, 255, 0.5)';
-                  //   ctx.lineWidth = 2;
-                  //   ctx.stroke();
-
-                  //   ctx.restore();
-                  // }
                 }
-              }
+              }   
 
               return updatedPositions;
           });
       }
-  }, [predictedCrosshairPosition]);
+  }, [predictedCrosshairPosition, stddevscale]);
   
   //key press handler, currently used to show detailed crosshair info
   useEffect(() => {
@@ -435,9 +433,13 @@ function Calibration() {
       } else if (event.key === '2') {
         setDrawPredicted(drawPredicted => !drawPredicted);
       } else if (event.key === '3') {
-      setDrawPrevious(drawPrevious => !drawPrevious);
+        setDrawRawArray(drawRawArray => !drawRawArray);
       } else if (event.key === '4') {
-        setDrawCursor(drawCursor => !drawCursor);
+        setDrawRawCursor(drawRawCursor => !drawRawCursor);
+      } else if (event.key === '5') {
+        //setDrawFilteredArray(drawFilteredArray => !drawFilteredArray);
+      } else if (event.key === '6') {
+        setDrawBlinkStatus(DrawBlinkStatus => !DrawBlinkStatus);
       }
     };
 
@@ -459,7 +461,7 @@ function Calibration() {
     svg.selectAll('.gaze-cursor-point').remove();
 
      //draw last n crosshair positions
-     if(drawPrevious){
+     if(drawRawArray){
      svg.selectAll('.crosshair-point')
      .data(lastCrosshairPositions)
      .enter()
@@ -481,30 +483,37 @@ function Calibration() {
         .style('fill', 'blue');
     }
 
-    const ellipses = [ellipseSVG, ellipseSVG2]
-    //draw gaze cursor
-    if(drawCursor)
+    const ellipse1 = ellipseSVG
+    //draw raw gaze cursor
+    if(drawRawCursor)
     {
-      svg.selectAll('ellipse')
-        .data([ellipses]) // Use your data here
+      svg.selectAll('ellipse.red-fill')
+        .data([ellipse1]) // Use your data here
         .join('ellipse')
-        .attr('class', 'gaze-cursor-point')
-        .attr('cx', d => d[0].centerX)
-        .attr('cy', d => d[0].centerY)
-        .attr('rx', d => d[0].ellipseWidth / 2)
-        .attr('ry', d => d[0].ellipseHeight / 2)
-        .attr('transform', d => `rotate(${d[0].angleInDeg}, ${d[0].centerX}, ${d[0].centerY})`)
-        .style('fill', 'rgba(0, 0, 255, 0.1)')
-        // .transition()
-        // .duration(7)
-        // .ease(d3.easeCubicInOut)
-        // .attr('cx', d => d[1].centerX)
-        // .attr('cy', d => d[1].centerY)
-        // .attr('rx', d => d[1].ellipseWidth / 2)
-        // .attr('ry', d => d[1].ellipseHeight / 2)
-        // .attr('transform', d => `rotate(${d[1].angleInDeg}, ${d[1].centerX}, ${d[1].centerY})`);
+        .attr('class', 'gaze-cursor-point red-fill')
+        .attr('cx', d => d.centerX)
+        .attr('cy', d => d.centerY)
+        .attr('rx', d => d.ellipseWidth / 2)
+        .attr('ry', d => d.ellipseHeight / 2)
+        .attr('transform', d => `rotate(${d.angleInDeg}, ${d.centerX}, ${d.centerY})`)
+        .style('fill', 'rgba(255, 0, 0, 0.1)')
+        .style('stroke', 'none')
+        .raise(); // Bring the red-filled ellipse to the front
     }
-  }, [dimensions, lastCrosshairPositions, averageCrosshairPosition]); // Dependencies for re-running the effect
+
+    if(DrawBlinkStatus)
+    {
+      svg.selectAll('rect.blink-status')
+        .data([isBlinking])
+        .join('rect')
+        .attr('class', 'blink-status')
+        .attr('x', 80)
+        .attr('y', 20)
+        .attr('width', 50)
+        .attr('height', 50)
+        .style('fill', d => d ? 'red' : 'green');
+    }
+  }, [dimensions, lastCrosshairPositions, averageCrosshairPosition, filteredLastCrosshairPositions, isBlinking]); // Dependencies for re-running the effect
 
 
   function onResults(results:any) {
@@ -572,10 +581,24 @@ function Calibration() {
       const rightIrisIndex = 468;
       const noseIndex = 4;
 
+      const leftTopEyelidIndex = 386
+      const leftBottomEyelidIndex = 374
+      const rightTopEyelidIndex = 159
+      const rightBottomEyelidIndex = 145
+
       // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
       const leftIrisLandmark = landmarks[leftIrisIndex];
       const rightIrisLandmark = landmarks[rightIrisIndex];
       const noseLandmark = landmarks[noseIndex];
+
+      //calculating how open the eye is. if its way bigger or smaller than the distance we have saved, then the user is probably blinking
+      const currentMaxEyelidDistance = Math.max((landmarks[leftTopEyelidIndex].y - landmarks[leftBottomEyelidIndex].y), (landmarks[rightTopEyelidIndex].y - landmarks[rightBottomEyelidIndex].y))
+      //console.log("current", currentMaxEyelidDistance, "max", savedMaxEyelidDistance)
+      if ((Math.abs(currentMaxEyelidDistance)) > savedMaxEyelidDistance) //TODO this might be refresh rate dependent
+      {
+        //console.log("GO TIME")
+        setSavedMaxEyelidDistance(Math.abs(currentMaxEyelidDistance))
+      }
 
       // Saves iris coordinates to a global variable
       applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
