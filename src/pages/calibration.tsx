@@ -108,6 +108,9 @@ function Calibration() {
     });
 
     const [dpi, setDpi] = useState<number>(96);
+    const [distanceFromCam, setDistanceFromCam] = useState(0);
+    const [cameraFOV, setCameraFOV] = useState(0);
+    const [focalLength, setFocalLength] = useState(0);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     const [showErrorTest, setShowErrorTest] = useState(false);
@@ -129,7 +132,7 @@ function Calibration() {
     // Update dimensions on window resize
     useEffect(() => {
       function handleResize() {
-        setDimensions({
+        setDimensions({ 
           width: window.innerWidth,
           height: window.innerHeight
         });
@@ -140,7 +143,8 @@ function Calibration() {
         window.removeEventListener('resize', handleResize);
       };
     }, []);
-    
+  
+
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
       if (!refreshRate || !leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
@@ -155,13 +159,37 @@ function Calibration() {
       const screenX = calibrationPoints.map(data => data.screenX);
       const irisY = calibrationPoints.map(data => data.irisY);
       const screenY = calibrationPoints.map(data => data.screenY);
+      const yaw = calibrationPoints.map(data => data.yaw);
+      const pitch = calibrationPoints.map(data => data.pitch);
+      const roll = calibrationPoints.map(data => data.roll);
 
       const coefficientsX = linearRegression(irisX, screenX);
       const coefficientsY = linearRegression(irisY, screenY);
 
       // These will be our eye tracking crosshair predicted points
-      const predictedScreenX = coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
-      const predictedScreenY  = coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+      const predictedScreenX =
+      coefficientsX.slope * irisPositionToPredict.irisX + coefficientsX.intercept;
+
+      const predictedScreenY =
+      coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
+
+      // YAW Compensation (Trigonometric)
+      const yawRadians = headPose.yaw * (Math.PI / 180);
+      const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
+      const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
+
+      // PITCH Compensation 
+      const pitchRadians = headPose.pitch * (Math.PI / 180);
+      const pitchScale = 1.0;
+      const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
+
+      // Apply the compensation
+      const correctedScreenX = predictedScreenX - yawCompensation;
+      const correctedScreenY = predictedScreenY + pitchCompensation;
+      console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}`);
+      console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}`);
+
+
 
       const n = refreshRate * 0.8; //storing eyelid distances over the last .3s
       setEyelidDistances((prevDistances) => {
@@ -199,10 +227,11 @@ function Calibration() {
 
       // We will draw the crosshair
       if (crosshairCanvasRef.current) {
-        drawCrosshair(crosshairCanvasRef.current, predictedScreenX, predictedScreenY);
+        drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance, isBlinkCooldown]); // These are our dependent variables
+
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -266,7 +295,10 @@ function Calibration() {
           irisX: (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2,
           irisY: (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2,
           screenX: clickCoordX,
-          screenY: clickCoordY
+          screenY: clickCoordY,
+          yaw: headPose.yaw,
+          pitch: headPose.pitch,
+          roll: headPose.roll
         };
 
         setCalibrationPoints([...calibrationPoints, newPoint]);
@@ -504,6 +536,9 @@ function Calibration() {
     // Create landmarks for each point of interest
     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
+      var irisLeftMinX = -1;
+      var irisLeftMaxX = -1;
+
       for (const landmarks of results.multiFaceLandmarks) {
         connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
           color: "#eae8fd",
@@ -527,6 +562,17 @@ function Calibration() {
         connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
           color: "#F50B0B",
         });
+
+        for (const point of Facemesh.FACEMESH_LEFT_IRIS) {
+          var point0 = landmarks[point[0]];
+          
+          if (irisLeftMinX == -1 || point0.x * videoWidth < irisLeftMinX) {
+            irisLeftMinX = point0.x * videoWidth;
+          }
+          if (irisLeftMaxX == -1 || point0.x * videoWidth > irisLeftMaxX) {
+            irisLeftMaxX = point0.x * videoWidth;
+          }
+        }
       }
 
       const landmarks = results.multiFaceLandmarks[0];
@@ -561,6 +607,21 @@ function Calibration() {
       drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
       drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
       drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
+
+      var dx = irisLeftMaxX - irisLeftMinX;
+      var dX = 11.7;
+      var normalizedFocaleX = 1.40625; //It means camera focal. It works well but we can change it depends on the camera.
+      var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
+      var dZ = (fx * (dX / dx))/10.0;
+      setDistanceFromCam(dZ);
+
+      // We will calculate FOV of camera here
+      const cameraSensorSize = 0.6; // We will use this as universal camera size
+      let newCameraFov = ((2 * Math.atan(cameraSensorSize / (2 * dZ))) * (180/Math.PI)) * 100;
+      setCameraFOV(newCameraFov);
+
+      // Set focal length with camera FOV. This is used for head compensation
+      setFocalLength(screen.width / (2 * Math.tan((newCameraFov / 2.0) * Math.PI / 180.0)));
 
       estimateHeadPose(landmarks);      
     }
@@ -644,7 +705,10 @@ function Calibration() {
                   irisX: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.x + rightIrisCoordinate.x) / 2 : 0,
                   irisY: (leftIrisCoordinate && rightIrisCoordinate) ? (leftIrisCoordinate.y + rightIrisCoordinate.y) / 2 : 0,
                   screenX: x,
-                  screenY: y
+                  screenY: y,
+                  yaw: headPose.yaw,
+                  pitch: headPose.pitch,
+                  roll: headPose.roll
               }
           ]);
         
@@ -719,6 +783,8 @@ function Calibration() {
       }
 
     function estimateHeadPose(landmarks: any) {
+      const noseIndex = 4;
+      const noseLandmark = landmarks[noseIndex];
       // 3D model points
       const modelPoints = cv.matFromArray(6, 3, cv.CV_64F, [
           0.0, 0.0, 0.0,        // Nose tip
@@ -774,14 +840,15 @@ function Calibration() {
 
           // Calculate yaw, pitch, and roll
           const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
-          const pitch = -(Math.atan2(-r21, -r22)); // have issues
+          const pitch = -(Math.atan2(-r21, -r22));
           const roll = Math.atan2(r10, r00);
-
           setHeadPose({
             yaw: yaw * (180 / Math.PI),
             pitch: pitch * (180 / Math.PI),
             roll: roll * (180 / Math.PI),
           });
+
+          drawOrientationLine(noseLandmark, yaw, pitch);
       }
 
       // Cleanup
@@ -791,6 +858,33 @@ function Calibration() {
       distCoeffs.delete();
       rvec.delete();
       tvec.delete();
+  }
+
+  function drawOrientationLine(noseLandmark:any, yaw:any, pitch:any) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+  
+    // Convert the normalized nose landmark coordinates to actual pixel values
+    const noseX = noseLandmark.x * canvas.width;
+    const noseY = noseLandmark.y * canvas.height;
+  
+    // Length of the orientation line
+    const lineLength = 100;
+  
+    // Calculate the direction of the line based on yaw and pitch
+    const endX = noseX - lineLength * Math.sin(yaw);  // Adjust based on yaw (left-right)
+    const endY = noseY - lineLength * Math.sin(pitch); // Adjust based on pitch (up-down)
+
+  
+    // Draw the line from the nose
+    ctx.beginPath();
+    ctx.moveTo(noseX, noseY);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = 'red';  // Color of the orientation line
+    ctx.lineWidth = 3;
+    ctx.stroke();
   }
 
   return (
@@ -931,12 +1025,16 @@ function Calibration() {
         {showGazeTracing && <GazeTracing {...gazetraceprop} />}
       </div>
       <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize}/>}  
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize} DPI={dpi}/>}  
       </div>
       <div>
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
+        <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
+        <p>Camera FOV : {cameraFOV.toFixed(2)}°</p>
+        <p>Focal Length : {focalLength.toFixed(2)} px</p>
+
       </div>
     </div>
     

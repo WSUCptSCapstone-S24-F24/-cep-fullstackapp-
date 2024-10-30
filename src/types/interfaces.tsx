@@ -5,6 +5,9 @@ export interface CalibrationPoint{
     irisY: number,
     screenX: number,
     screenY: number;
+    yaw: number;
+    pitch: number;
+    roll: number;
   }
 
 export interface DotData {
@@ -54,6 +57,7 @@ export interface MemoryGameProps{
   };
   rowSize: number;
   colSize: number;
+  DPI: number;
 }
 
 export interface VirtualBoxInfo {
