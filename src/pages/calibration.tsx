@@ -181,7 +181,6 @@ function Calibration() {
 
       // YAW Compensation (Trigonometric)
       const yawRadians = headPose.yaw * (Math.PI / 180);
-      const focalLength = 1383; // distance nose is from camera (play around with this number)
       const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
       const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
 
@@ -595,7 +594,11 @@ function Calibration() {
 
       // We will calculate FOV of camera here
       const cameraSensorSize = 0.6; // We will use this as universal camera size
-      setCameraFOV(((2 * Math.atan(cameraSensorSize / (2 * dZ))) * (180/Math.PI)) * 100);
+      let newCameraFov = ((2 * Math.atan(cameraSensorSize / (2 * dZ))) * (180/Math.PI)) * 100;
+      setCameraFOV(newCameraFov);
+
+      // Set focal length with camera FOV. This is used for head compensation
+      setFocalLength(1440 / (2 * Math.tan((newCameraFov / 2.0) * Math.PI / 180.0)));
 
       estimateHeadPose(landmarks);      
     }
