@@ -114,6 +114,9 @@ function Calibration() {
     });
 
     const [dpi, setDpi] = useState<number>(96);
+    const [distanceFromCam, setDistanceFromCam] = useState(0);
+    const [cameraFOV, setCameraFOV] = useState(0);
+    const [focalLength, setFocalLength] = useState(0);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     const [showErrorTest, setShowErrorTest] = useState(false);
@@ -135,7 +138,7 @@ function Calibration() {
     // Update dimensions on window resize
     useEffect(() => {
       function handleResize() {
-        setDimensions({
+        setDimensions({ 
           width: window.innerWidth,
           height: window.innerHeight
         });
@@ -178,13 +181,12 @@ function Calibration() {
 
       // YAW Compensation (Trigonometric)
       const yawRadians = headPose.yaw * (Math.PI / 180);
-      const focalLength = 1200; // distance nose is from camera (play around with this number)
-      const yawScale = 5.0;  // higher the number, the quicker the response. (more change for over adjusing)
+      const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
       const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
 
       // PITCH Compensation 
       const pitchRadians = headPose.pitch * (Math.PI / 180);
-      const pitchScale = 5.0;
+      const pitchScale = 1.0;
       const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
 
       // Apply the compensation
@@ -205,7 +207,7 @@ function Calibration() {
         drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose, focalLength]); // These are our dependent variables
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -525,6 +527,9 @@ function Calibration() {
     // Create landmarks for each point of interest
     if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
 
+      var irisLeftMinX = -1;
+      var irisLeftMaxX = -1;
+
       for (const landmarks of results.multiFaceLandmarks) {
         connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
           color: "#eae8fd",
@@ -548,6 +553,17 @@ function Calibration() {
         connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
           color: "#F50B0B",
         });
+
+        for (const point of Facemesh.FACEMESH_LEFT_IRIS) {
+          var point0 = landmarks[point[0]];
+          
+          if (irisLeftMinX == -1 || point0.x * videoWidth < irisLeftMinX) {
+            irisLeftMinX = point0.x * videoWidth;
+          }
+          if (irisLeftMaxX == -1 || point0.x * videoWidth > irisLeftMaxX) {
+            irisLeftMaxX = point0.x * videoWidth;
+          }
+        }
       }
 
       const landmarks = results.multiFaceLandmarks[0];
@@ -568,6 +584,21 @@ function Calibration() {
       drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
       drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
       drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
+
+      var dx = irisLeftMaxX - irisLeftMinX;
+      var dX = 11.7;
+      var normalizedFocaleX = 1.40625; //It means camera focal. It works well but we can change it depends on the camera.
+      var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
+      var dZ = (fx * (dX / dx))/10.0;
+      setDistanceFromCam(dZ);
+
+      // We will calculate FOV of camera here
+      const cameraSensorSize = 0.6; // We will use this as universal camera size
+      let newCameraFov = ((2 * Math.atan(cameraSensorSize / (2 * dZ))) * (180/Math.PI)) * 100;
+      setCameraFOV(newCameraFov);
+
+      // Set focal length with camera FOV. This is used for head compensation
+      setFocalLength(screen.width / (2 * Math.tan((newCameraFov / 2.0) * Math.PI / 180.0)));
 
       estimateHeadPose(landmarks);      
     }
@@ -977,6 +1008,10 @@ function Calibration() {
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
+        <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
+        <p>Camera FOV : {cameraFOV.toFixed(2)}°</p>
+        <p>Focal Length : {focalLength.toFixed(2)} px</p>
+
       </div>
     </div>
     
