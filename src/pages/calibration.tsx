@@ -115,6 +115,8 @@ function Calibration() {
 
     const [dpi, setDpi] = useState<number>(96);
     const [distanceFromCam, setDistanceFromCam] = useState(0);
+    const [cameraFOV, setCameraFOV] = useState(0);
+    const [focalLength, setFocalLength] = useState(0);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     const [showErrorTest, setShowErrorTest] = useState(false);
@@ -206,7 +208,7 @@ function Calibration() {
         drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, headPose, focalLength]); // These are our dependent variables
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
     function drawCrosshair(canvas : HTMLCanvasElement, x: number, y:number ) {
@@ -590,6 +592,10 @@ function Calibration() {
       var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
       var dZ = (fx * (dX / dx))/10.0;
       setDistanceFromCam(dZ);
+
+      // We will calculate FOV of camera here
+      const cameraSensorSize = 0.6; // We will use this as universal camera size
+      setCameraFOV(((2 * Math.atan(cameraSensorSize / (2 * dZ))) * (180/Math.PI)) * 100);
 
       estimateHeadPose(landmarks);      
     }
@@ -1000,6 +1006,9 @@ function Calibration() {
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
         <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
+        <p>Camera FOV : {cameraFOV.toFixed(2)}°</p>
+        <p>Focal Length : {focalLength.toFixed(2)} cm</p>
+
       </div>
     </div>
     
