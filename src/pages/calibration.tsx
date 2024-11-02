@@ -145,6 +145,16 @@ function Calibration() {
     }, []);
   
 
+    function getDynamicYawScale(yawAngle: number): number {
+      // Increase scaling for larger yaw angles
+      return Math.abs(yawAngle) > 20 ? 2.0 : Math.max(1.5, 0.05 * Math.abs(yawAngle) + 1); // Base: return Math.abs(yawAngle) > 20 ? 2.0 : Math.max(1.5, 0.05 * Math.abs(yawAngle) + 1
+    }
+    
+    function getDynamicPitchScale(pitchAngle: number): number {
+      // Increase scaling for larger pitch angles
+      return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5); // Base: return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5
+    }
+
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
     useEffect(() => {
       if (!refreshRate || !leftIrisCoordinate || !rightIrisCoordinate || calibrationPoints.length === 0) return;
@@ -159,9 +169,6 @@ function Calibration() {
       const screenX = calibrationPoints.map(data => data.screenX);
       const irisY = calibrationPoints.map(data => data.irisY);
       const screenY = calibrationPoints.map(data => data.screenY);
-      const yaw = calibrationPoints.map(data => data.yaw);
-      const pitch = calibrationPoints.map(data => data.pitch);
-      const roll = calibrationPoints.map(data => data.roll);
 
       const coefficientsX = linearRegression(irisX, screenX);
       const coefficientsY = linearRegression(irisY, screenY);
@@ -173,21 +180,24 @@ function Calibration() {
       const predictedScreenY =
       coefficientsY.slope * irisPositionToPredict.irisY + coefficientsY.intercept;
 
+      const adaptiveYawScale = getDynamicYawScale(headPose.yaw);
+      const adaptivePitchScale = getDynamicPitchScale(headPose.pitch);
+
       // YAW Compensation (Trigonometric)
       const yawRadians = headPose.yaw * (Math.PI / 180);
       const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
-      const yawCompensation = Math.tan(yawRadians) * focalLength * yawScale;
+      const yawCompensation = Math.tan(yawRadians) * focalLength * adaptiveYawScale;
 
       // PITCH Compensation 
       const pitchRadians = headPose.pitch * (Math.PI / 180);
       const pitchScale = 1.0;
-      const pitchCompensation = Math.tan(pitchRadians) * focalLength * pitchScale;
+      const pitchCompensation = Math.tan(pitchRadians) * focalLength * adaptivePitchScale;
 
       // Apply the compensation
       const correctedScreenX = predictedScreenX - yawCompensation;
       const correctedScreenY = predictedScreenY + pitchCompensation;
-      console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}`);
-      console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}`);
+      console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
+      console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
 
 
 
