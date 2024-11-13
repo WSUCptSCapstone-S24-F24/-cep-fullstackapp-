@@ -186,13 +186,11 @@ function Calibration() {
 
       // YAW Compensation (Trigonometric)
       const yawRadians = headPose.yaw * (Math.PI / 180);
-      const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
-      const yawCompensation = Math.tan(yawRadians) * 2458 * adaptiveYawScale;
+      const yawCompensation = Math.tan(yawRadians) * focalLength * adaptiveYawScale;
 
       // PITCH Compensation 
       const pitchRadians = headPose.pitch * (Math.PI / 180);
-      const pitchScale = 1.0;
-      const pitchCompensation = Math.tan(pitchRadians) * 2458 * adaptivePitchScale;
+      const pitchCompensation = Math.tan(pitchRadians) * focalLength * adaptivePitchScale;
 
       // Apply the compensation
       const correctedScreenX = predictedScreenX - yawCompensation;
