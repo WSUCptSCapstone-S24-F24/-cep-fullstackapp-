@@ -6,6 +6,7 @@ import { useRef, useEffect, useState } from 'react'
 import React from 'react'
 import BoxContainer from '../components/box_container'
 import ScreenDPI from '../components/screen_dpi'
+import CameraFOV from '../components/camera_fov'
 import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
 import GazeTracing from '../components/gaze_tracing';
@@ -109,7 +110,6 @@ function Calibration() {
 
     const [dpi, setDpi] = useState<number>(96);
     const [distanceFromCam, setDistanceFromCam] = useState(0);
-    const [cameraFOV, setCameraFOV] = useState(0);
     const [focalLength, setFocalLength] = useState(0);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
@@ -152,7 +152,7 @@ function Calibration() {
     
     function getDynamicPitchScale(pitchAngle: number): number {
       // Increase scaling for larger pitch angles
-      return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5); // Base: return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5
+      return Math.abs(pitchAngle) > 10 ? 1.0 : Math.max(0.4, 0.02 * Math.abs(pitchAngle) + 0.4); // Base: return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5
     }
 
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
@@ -185,12 +185,10 @@ function Calibration() {
 
       // YAW Compensation (Trigonometric)
       const yawRadians = headPose.yaw * (Math.PI / 180);
-      const yawScale = 2.0;  // higher the number, the quicker the response. (more change for over adjusing)
       const yawCompensation = Math.tan(yawRadians) * focalLength * adaptiveYawScale;
 
       // PITCH Compensation 
       const pitchRadians = headPose.pitch * (Math.PI / 180);
-      const pitchScale = 1.0;
       const pitchCompensation = Math.tan(pitchRadians) * focalLength * adaptivePitchScale;
 
       // Apply the compensation
@@ -240,7 +238,7 @@ function Calibration() {
         drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
 
-    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance, isBlinkCooldown]); // These are our dependent variables
+    }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance, isBlinkCooldown, focalLength]); // These are our dependent variables
 
 
     // Draws the green crosshair on our screen which will act as our predicted point via eye tracking
@@ -624,15 +622,7 @@ function Calibration() {
       var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
       var dZ = (fx * (dX / dx))/10.0;
       setDistanceFromCam(dZ);
-
-      // We will calculate FOV of camera here
-      const cameraSensorSize = 0.6; // We will use this as universal camera size
-      let newCameraFov = ((2 * Math.atan(cameraSensorSize / (2 * dZ))) * (180/Math.PI)) * 100;
-      setCameraFOV(newCameraFov);
-
-      // Set focal length with camera FOV. This is used for head compensation
-      setFocalLength(screen.width / (2 * Math.tan((newCameraFov / 2.0) * Math.PI / 180.0)));
-
+  
       estimateHeadPose(landmarks);      
     }
     canvasCtx.restore();
@@ -988,6 +978,7 @@ function Calibration() {
       />
       <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
         <ScreenDPI setDPI={setDpi}/>
+        <CameraFOV setFocalLength={setFocalLength}/>
         <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
           {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
         </button>
@@ -1042,7 +1033,6 @@ function Calibration() {
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
         <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
-        <p>Camera FOV : {cameraFOV.toFixed(2)}°</p>
         <p>Focal Length : {focalLength.toFixed(2)} px</p>
 
       </div>
