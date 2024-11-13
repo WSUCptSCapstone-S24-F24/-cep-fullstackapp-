@@ -153,7 +153,7 @@ function Calibration() {
     
     function getDynamicPitchScale(pitchAngle: number): number {
       // Increase scaling for larger pitch angles
-      return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5); // Base: return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5
+      return Math.abs(pitchAngle) > 10 ? 1.0 : Math.max(0.4, 0.02 * Math.abs(pitchAngle) + 0.4); // Base: return Math.abs(pitchAngle) > 5 ? 1.0 : Math.max(0.5, 0.03 * Math.abs(pitchAngle) + 0.5
     }
 
     // This UseEffect will better handle our useState variables. (Allows them to be changed more responsibly)
@@ -1034,7 +1034,6 @@ function Calibration() {
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
         <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
-        <p>Camera FOV : {cameraFOV.toFixed(2)}°</p>
         <p>Focal Length : {focalLength.toFixed(2)} px</p>
 
       </div>
