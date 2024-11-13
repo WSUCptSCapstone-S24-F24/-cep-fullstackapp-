@@ -33,6 +33,10 @@ export interface DPI {
     setDPI: (dpi: number) => void;
 }
 
+export interface FOV {
+  setFOV: (fov: number) => void;
+}
+
 export interface Box {
   id: number;
   name: string;
