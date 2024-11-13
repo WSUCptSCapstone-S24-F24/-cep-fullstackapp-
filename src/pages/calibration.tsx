@@ -110,7 +110,6 @@ function Calibration() {
 
     const [dpi, setDpi] = useState<number>(96);
     const [distanceFromCam, setDistanceFromCam] = useState(0);
-    const [cameraFOV, setCameraFOV] = useState(55);
     const [focalLength, setFocalLength] = useState(0);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
