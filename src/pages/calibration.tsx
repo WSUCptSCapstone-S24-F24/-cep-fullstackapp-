@@ -521,6 +521,9 @@ function Calibration() {
         .attr('height', 50)
         .style('fill', d => d ? 'red' : 'green');
     }
+    else {
+      svg.selectAll('rect.blink-status').remove();
+    }
   }, [dimensions, lastCrosshairPositions, averageCrosshairPosition, filteredLastCrosshairPositions, isBlinking]); // Dependencies for re-running the effect
 
 
