@@ -1017,7 +1017,8 @@ function Calibration() {
             onChange={(event) => setColSize(Number(event.target.value))}
           /> 
         </div>
-        <p>Start Static Calibration with "C" key</p>
+        <p>Press "C" key to cycle through static calibration  |  Press "R" key to reset calibration</p>
+        <p>Press "LMB" anywhere on the screen to create manual calibration point</p>
       </div>
       <div>
         {showBoxContainer && <BoxContainer crosshairPosition={averageCrosshairPosition}/>}
