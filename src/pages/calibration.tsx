@@ -737,6 +737,9 @@ function Calibration() {
         const handleKeyPress = (event: KeyboardEvent) => {
             if (event.key === 'c' || event.key === 'C') {
                 StaticCalibration(3, 3, 45, 45, clickCanvasRef); // 10% from the top and left, 40% interval (default)
+            } else if (event.key === 'r' || event.key === 'R'){
+              setCalibrationPoints([]);
+              setCurrentPointIndex(0);
             }
         };
 
