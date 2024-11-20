@@ -10,6 +10,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
     const [currentDotIndex, setCurrentDotIndex] = useState<number | null>(0);
     const [userInputs, setUserInputs] = useState<VectorData[]>([]);
 
+
     // Generate Error Sequence Dots and Data
     useEffect(() => {
         // Create initial data set

@@ -60,6 +60,14 @@ function Calibration() {
     const [eyelidDistances, setEyelidDistances] = useState<number[]>([]);
     const [stddevscale, setstddevscale] = useState<number>(1); //the stdev scale changes during blinks to compensate
     const [isBlinkCooldown, setIsBlinkCooldown] = useState(false);
+
+    const [leftHeadCoordinate, setLeftHeadCoordinate] = useState<{ x: number, y: number } | null>(null);
+    const [rightHeadCoordinate, setRightHeadCoordinate] = useState<{ x: number, y: number } | null>(null);
+    const [initialHeadCenter, setInitialHeadCenter] = useState<{ x: number, y: number } | null>(null); //original head center when we started calibration
+    const [curHeadCenter, setCurHeadCenter] = useState<{ x: number, y: number } | null>(null); //current location of the center of the head
+    const [devHeadCenter, setDevHeadCenter] = useState<{ x: number, y: number } | null>(null); //deviation between initial and current head center
+
+    const [isInFrame, setIsInFrame] = useState<boolean>(false);
     // --Global predicted position
     const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
     //predicted position for averages
@@ -194,8 +202,8 @@ function Calibration() {
       // Apply the compensation
       const correctedScreenX = predictedScreenX - yawCompensation;
       const correctedScreenY = predictedScreenY + pitchCompensation;
-      console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
-      console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
+      //console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
+      //console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
 
 
 
@@ -215,7 +223,6 @@ function Calibration() {
 
       if (isBlinkCooldown) return; // Skip check if in cooldown
       //if the eyelid distance changed a lot over the period, its a blink
-      console.log(isBlinkCooldown)
       if (savedMaxEyelidDistance < (blinkThreshold * 0.75)) { //config: higher multiplier = more blinks detected. must be less than 1
         setstddevscale(0.2); //so the crosshair doesnt freak out as much during blinks
         setIsBlinking(true)
@@ -237,7 +244,6 @@ function Calibration() {
       if (crosshairCanvasRef.current) {
         drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
       }
-
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance, isBlinkCooldown, focalLength]); // These are our dependent variables
 
 
@@ -290,7 +296,7 @@ function Calibration() {
       const x = event.clientX - (rect?.left ?? 0);
       const y = event.clientY - (rect?.top ?? 0);
       setClickCoords({x,y});
-      console.log(`Clicked at: ${x}, ${y}`);
+      //console.log(`Clicked at: ${x}, ${y}`);
 
       printIrisCoordinates();
       addCalibrationPointsToArray(x,y);
@@ -324,6 +330,33 @@ function Calibration() {
       predictedCrosshairPositionRef.current = predictedCrosshairPosition;
     }, [predictedCrosshairPosition]); // Update the ref whenever the position changes
 
+  useEffect(() => {
+    const updateHeadCenter = () => {
+      if (initialHeadCenter && curHeadCenter && leftHeadCoordinate && rightHeadCoordinate) {
+        setCurHeadCenter({
+          x: (leftHeadCoordinate.x + rightHeadCoordinate.x) / 2,
+          y: (leftHeadCoordinate.y + rightHeadCoordinate.y) / 2
+        });
+
+        setDevHeadCenter({
+          x: -(initialHeadCenter.x - curHeadCenter.x),
+          y: -(initialHeadCenter.y - curHeadCenter.y)
+        });
+
+        console.log(rightHeadCoordinate);
+        console.log(-(initialHeadCenter.x - curHeadCenter.x), -(initialHeadCenter.y - curHeadCenter.y));
+      }
+    };
+    console.log("hey")
+    // Set an interval to call updateHeadCenter every 500ms
+    const intervalId = setInterval(updateHeadCenter, 500);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []); // Empty dependency array to ensure it only sets up once
+
+
+
     //average crosshair position logic
     useEffect(() => {
       if (predictedCrosshairPosition && refreshRate) {
@@ -339,7 +372,6 @@ function Calibration() {
               const n = refreshRate/10 //config
               const stddevs = stddevscale //config: lower stddevs = stricter filter
               const recentWeight = 2, olderWeight = 1; //config
-              console.log("stddevs: ", stddevs)
 
               const updatedPositions = [...prevPositions, newPosition].slice(-n);
 
@@ -524,7 +556,46 @@ function Calibration() {
     else {
       svg.selectAll('rect.blink-status').remove();
     }
-  }, [dimensions, lastCrosshairPositions, averageCrosshairPosition, filteredLastCrosshairPositions, isBlinking]); // Dependencies for re-running the effect
+
+    if (true && devHeadCenter && initialHeadCenter) {
+      console.log("pls")
+      // Set up dimensions for SVG visualization
+      const width = 200;
+      const height = 200;
+
+      // Calculate the center of the SVG window
+      const svgCenterX = width / 2;
+      const svgCenterY = height / 2;
+
+      // Normalize the initialHeadCenter to the center of the SVG window
+      const initialDotX = svgCenterX;
+      const initialDotY = svgCenterY;
+
+      // Calculate the deviation dot position relative to the initialHeadCenter
+      const deviationDotX = devHeadCenter ? (svgCenterX + (devHeadCenter.x - initialHeadCenter.x)) : svgCenterX;
+      const deviationDotY = devHeadCenter ? (svgCenterY + (devHeadCenter.y - initialHeadCenter.y)) : svgCenterY;
+
+      // Add or update the initial and deviation dots
+      svg.selectAll('circle.initial-dot')
+        .data([initialHeadCenter])
+        .join('circle')
+        .attr('class', 'initial-dot')
+        .attr('cx', initialDotX)
+        .attr('cy', initialDotY)
+        .attr('r', 5)
+        .style('fill', 'blue');
+
+      svg.selectAll('circle.deviation-dot')
+        .data(devHeadCenter ? [devHeadCenter] : [])
+        .join('circle')
+        .attr('class', 'deviation-dot')
+        .attr('cx', deviationDotX)
+        .attr('cy', deviationDotY)
+        .attr('r', 5)
+        .style('fill', 'red');
+    }
+
+  }, [dimensions, lastCrosshairPositions, averageCrosshairPosition, filteredLastCrosshairPositions, isBlinking, devHeadCenter, initialHeadCenter, isInFrame]); // Dependencies for re-running the effect
 
 
   function onResults(results:any) {
@@ -601,6 +672,13 @@ function Calibration() {
       const leftIrisLandmark = landmarks[leftIrisIndex];
       const rightIrisLandmark = landmarks[rightIrisIndex];
       const noseLandmark = landmarks[noseIndex];
+
+      const leftFaceIndex = 454 //its like right at the center of the earhole
+      const rightFaceIndex = 234 //its like right at the center of the earhole
+
+      setLeftHeadCoordinate(landmarks[rightFaceIndex])
+      setRightHeadCoordinate(landmarks[leftFaceIndex])
+      setCurHeadCenter({ x: (landmarks[leftFaceIndex].x + landmarks[rightFaceIndex].x) / 2, y: (landmarks[leftFaceIndex].y + landmarks[rightFaceIndex].y) / 2 }) //sorta the center of the head
 
       //calculating how open the eye is. if its way bigger or smaller than the distance we have saved, then the user is probably blinking
       const currentMaxEyelidDistance = Math.max((landmarks[leftTopEyelidIndex].y - landmarks[leftBottomEyelidIndex].y), (landmarks[rightTopEyelidIndex].y - landmarks[rightBottomEyelidIndex].y))
@@ -736,6 +814,9 @@ function Calibration() {
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
             if (event.key === 'c' || event.key === 'C') {
+                if(!initialHeadCenter){
+                  setInitialHeadCenter(curHeadCenter)//when we start calibrating, it saves our initial head center
+                } 
                 StaticCalibration(3, 3, 45, 45, clickCanvasRef); // 10% from the top and left, 40% interval (default)
             }
         };
@@ -744,7 +825,7 @@ function Calibration() {
         return () => {
             window.removeEventListener('keydown', handleKeyPress);
         };
-    } , [StaticCalibration, isPointDisplayed]);
+    }, [StaticCalibration, isPointDisplayed, initialHeadCenter, curHeadCenter]);
 
 
       // Instantiate FaceMesh
@@ -1037,6 +1118,12 @@ function Calibration() {
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
         <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
         <p>Focal Length : {focalLength.toFixed(2)} px</p>
+        {refreshRate != null && (
+          <p>Framerate: {refreshRate.toFixed(2)} fps</p>
+        )}
+        {devHeadCenter != null && (
+          <p>ce: {devHeadCenter.x.toFixed(2)} fps</p>
+        )}
 
       </div>
     </div>
