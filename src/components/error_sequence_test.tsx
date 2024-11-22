@@ -189,10 +189,14 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
             .attr("font-size", "10px")
             .attr("fill", "black");
     
+
+        const width = +svg.attr("width");
+        const height = +svg.attr("height");
+
         // Display sum of magnitudes
         svg.append("text")
             .attr("x", 10)
-            .attr("y", 20)
+            .attr("y", height-30)
             .text("Sum of Magnitudes: " + sumOfMagnitudes.toFixed(2))
             .attr("font-size", "12px")
             .attr("fill", "black");
@@ -200,7 +204,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
         // Display max magnitude
         svg.append("text")
             .attr("x", 10)
-            .attr("y", 40)
+            .attr("y", height-50)
             .text("Max Magnitude: " + maxMagnitude.toFixed(2))
             .attr("font-size", "12px")
             .attr("fill", "black");
@@ -208,7 +212,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
         // Display min magnitude
         svg.append("text")
             .attr("x", 10)
-            .attr("y", 60)
+            .attr("y", height-70)
             .text("Min Magnitude: " + minMagnitude.toFixed(2))
             .attr("font-size", "12px")
             .attr("fill", "black");
@@ -216,7 +220,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
         // Display average magnitude
         svg.append("text")
             .attr("x", 10)
-            .attr("y", 80)
+            .attr("y", height-90)
             .text("Average Magnitude: " + averageMagnitude.toFixed(2))
             .attr("font-size", "12px")
             .attr("fill", "black");
@@ -224,7 +228,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
         // Display mean absolute error
         svg.append("text")
         .attr("x", 10)
-        .attr("y", 100)
+        .attr("y", height-110)
         .text("Mean Absolute Error: " + meanAbsoluteError.toFixed(2))
         .attr("font-size", "12px")
         .attr("fill", "black");
@@ -232,7 +236,7 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
          // Display root mean square error
         svg.append("text")
         .attr("x", 10)
-        .attr("y", 120)
+        .attr("y", height-130)
         .text("Root Mean Square Error: " + rootMeanSquaredError.toFixed(2))
         .attr("font-size", "12px")
         .attr("fill", "black");
