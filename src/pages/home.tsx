@@ -28,7 +28,7 @@ declare global {
 
 let faceCascade: cv.CascadeClassifier;
 
-function Calibration() {
+function Home() {
     const [showOverlay, setShowOverlay] = useState(false);//toggles the camera display
 
   // All of our references
@@ -780,4 +780,4 @@ function Calibration() {
   );
 }
 
-export default Calibration;
+export default Home;
