@@ -614,11 +614,6 @@ function Calibration() {
       // Saves iris coordinates to a global variable
       applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
 
-      // Draw canvases for each iris
-      drawZoomedEye(leftEyeRef.current, webcamRef.current.video, leftIrisLandmark.x, leftIrisLandmark.y, 3);
-      drawZoomedEye(rightEyeRef.current, webcamRef.current.video, rightIrisLandmark.x, rightIrisLandmark.y, 3);
-      drawZoomedEye(headRef.current, webcamRef.current.video, noseLandmark.x, noseLandmark.y, 0.75);
-
       var dx = irisLeftMaxX - irisLeftMinX;
       var dX = 11.7;
       var normalizedFocaleX = 1.40625; //It means camera focal. It works well but we can change it depends on the camera.
@@ -630,42 +625,6 @@ function Calibration() {
     }
     canvasCtx.restore();
   }
-
-      // This function will crop our webcam and create a zoomed in video at inputted point
-      function drawZoomedEye(canvas:HTMLCanvasElement, video: HTMLVideoElement, pointX:number, pointY:number, zoom:number){
-        if (!canvas || !video || !pointX || !pointY) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        
-        // Enlarges are image to video size
-        pointX = pointX * video.videoWidth;
-        pointY = pointY * video.videoHeight;
-
-        //console.log(`pointX : ${pointX}, pointY : ${pointY}`);
-
-        // Zooms in our camera to focus on the specific point
-        const newWidth = canvas.width / zoom;
-        const newHeight = canvas.height / zoom;
-
-        const newX = pointX - newWidth / 2;
-        const newY = pointY - newHeight / 2;
-
-        // Reset our canvas (so images are cleared after each frame)
-        ctx.clearRect(0,0, canvas.width, canvas.height);
-
-        // Draw video
-        ctx.drawImage(
-          video,
-          newX, newY,
-          newWidth, newHeight,
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-      }
 
     function StaticCalibration(startXPercent: number, startYPercent: number, intervalXPercent: number, intervalYPercent: number, canvasRef: React.RefObject<HTMLCanvasElement>) { 
         const canvas = canvasRef.current;
