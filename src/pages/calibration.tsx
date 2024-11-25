@@ -16,7 +16,7 @@ import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
 import cv, { cols } from "@techstark/opencv-js"
-import { loadDataFile } from '../utils/cvDataFile'
+import { estimateHeadPose, drawOrientationLine } from "../utils/openCVUtils";
 
 declare global {
   interface Window {
@@ -621,7 +621,11 @@ function Calibration() {
       var dZ = (fx * (dX / dx))/10.0;
       setDistanceFromCam(dZ);
   
-      estimateHeadPose(landmarks);      
+      estimateHeadPose(
+        landmarks,
+        canvasRef.current.width,
+        canvasRef.current.height,
+        setHeadPose, (noseLandmark, yaw, pitch) => drawOrientationLine(canvasRef.current, noseLandmark, yaw, pitch));      
     }
     canvasCtx.restore();
   }
@@ -746,111 +750,6 @@ function Calibration() {
         predictedCrosshairPositionRef: averageCrosshairPositionRef,
         showGazeTracing: showGazeTracing,
       }
-
-    function estimateHeadPose(landmarks: any) {
-      const noseIndex = 4;
-      const noseLandmark = landmarks[noseIndex];
-      // 3D model points
-      const modelPoints = cv.matFromArray(6, 3, cv.CV_64F, [
-          0.0, 0.0, 0.0,        // Nose tip
-          0.0, -330.0, -65.0,   // Chin
-          -225.0, 170.0, -135.0, // Left eye left corner
-          225.0, 170.0, -135.0,  // Right eye right corner
-          -150.0, -150.0, -125.0, // Left Mouth corner
-          150.0, -150.0, -125.0  // Right Mouth corner
-      ]);
-
-      // 2D image points
-      const imagePoints = cv.matFromArray(6, 2, cv.CV_64F, [
-          landmarks[1].x * canvasRef.current.width, landmarks[1].y * canvasRef.current.height,   // Nose tip
-          landmarks[152].x * canvasRef.current.width, landmarks[152].y * canvasRef.current.height, // Chin
-          landmarks[33].x * canvasRef.current.width, landmarks[33].y * canvasRef.current.height,  // Left eye left corner
-          landmarks[263].x * canvasRef.current.width, landmarks[263].y * canvasRef.current.height, // Right eye right corner
-          landmarks[61].x * canvasRef.current.width, landmarks[61].y * canvasRef.current.height,   // Left Mouth corner
-          landmarks[291].x * canvasRef.current.width, landmarks[291].y * canvasRef.current.height  // Right Mouth corner
-      ]);
-
-      // Camera matrix
-      const focalLength = canvasRef.current.width;
-      const center = [canvasRef.current.width / 2, canvasRef.current.height / 2];
-      const cameraMatrix = cv.matFromArray(3, 3, cv.CV_64F, [
-          focalLength, 0, center[0],
-          0, focalLength, center[1],
-          0, 0, 1
-      ]);
-
-      // Distortion coefficients (assuming no lens distortion)
-      const distCoeffs = cv.Mat.zeros(4, 1, cv.CV_64F);
-
-      // Solve PnP
-      const rvec = new cv.Mat();
-      const tvec = new cv.Mat();
-      const success = cv.solvePnP(modelPoints, imagePoints, cameraMatrix, distCoeffs, rvec, tvec);
-
-      if (success) {
-          // Convert rotation vector to rotation matrix
-          const rotationMatrix = new cv.Mat();
-          cv.Rodrigues(rvec, rotationMatrix);
-
-          // Accessing the rotation matrix elements
-          const r00 = rotationMatrix.doubleAt(0, 0);
-          const r01 = rotationMatrix.doubleAt(0, 1);
-          const r02 = rotationMatrix.doubleAt(0, 2);
-          const r10 = rotationMatrix.doubleAt(1, 0);
-          const r11 = rotationMatrix.doubleAt(1, 1);
-          const r12 = rotationMatrix.doubleAt(1, 2);
-          const r20 = rotationMatrix.doubleAt(2, 0);
-          const r21 = rotationMatrix.doubleAt(2, 1);
-          const r22 = rotationMatrix.doubleAt(2, 2);
-
-          // Calculate yaw, pitch, and roll
-          const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
-          const pitch = -(Math.atan2(-r21, -r22));
-          const roll = Math.atan2(r10, r00);
-          setHeadPose({
-            yaw: yaw * (180 / Math.PI),
-            pitch: pitch * (180 / Math.PI),
-            roll: roll * (180 / Math.PI),
-          });
-
-          drawOrientationLine(noseLandmark, yaw, pitch);
-      }
-
-      // Cleanup
-      modelPoints.delete();
-      imagePoints.delete();
-      cameraMatrix.delete();
-      distCoeffs.delete();
-      rvec.delete();
-      tvec.delete();
-  }
-
-  function drawOrientationLine(noseLandmark:any, yaw:any, pitch:any) {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-  
-    // Convert the normalized nose landmark coordinates to actual pixel values
-    const noseX = noseLandmark.x * canvas.width;
-    const noseY = noseLandmark.y * canvas.height;
-  
-    // Length of the orientation line
-    const lineLength = 100;
-  
-    // Calculate the direction of the line based on yaw and pitch
-    const endX = noseX - lineLength * Math.sin(yaw);  // Adjust based on yaw (left-right)
-    const endY = noseY - lineLength * Math.sin(pitch); // Adjust based on pitch (up-down)
-
-  
-    // Draw the line from the nose
-    ctx.beginPath();
-    ctx.moveTo(noseX, noseY);
-    ctx.lineTo(endX, endY);
-    ctx.strokeStyle = 'red';  // Color of the orientation line
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
 
   return (
     <div>
