@@ -18,6 +18,7 @@ import * as d3 from 'd3';
 import cv, { cols } from "@techstark/opencv-js"
 import { estimateHeadPose, drawOrientationLine } from "../utils/openCVUtils";
 import { performStaticCalibration, performManualCalibration } from '../utils/calibrationUtils';
+import { handleFaceMeshResults } from '../utils/faceMeshUtils'
 
 declare global {
   interface Window {
@@ -35,9 +36,6 @@ function Calibration() {
     const canvasRef = useRef<any>(null);
     const clickCanvasRef = useRef<any>(null);
     const crosshairCanvasRef = useRef<any>(null);
-    const leftEyeRef = useRef<any>(null);
-    const rightEyeRef = useRef<any>(null);
-    const headRef = useRef<any>(null);
     const vectorCalibRef = useRef<SVGSVGElement>(null);
     const stabilityVectorRef = useRef<SVGSVGElement>(null);
     const { refreshRate } = useRefreshRate(1000); //max refresh rate over 1 second, might need to change 
@@ -144,6 +142,34 @@ function Calibration() {
         window.removeEventListener('resize', handleResize);
       };
     }, []);
+
+    //key press handler, currently used to show detailed crosshair info
+  useEffect(() => {
+    // Function to handle key presses
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === '1') {
+        setDrawAverage(drawAverage => !drawAverage);
+      } else if (event.key === '2') {
+        setDrawPredicted(drawPredicted => !drawPredicted);
+      } else if (event.key === '3') {
+        setDrawRawArray(drawRawArray => !drawRawArray);
+      } else if (event.key === '4') {
+        setDrawRawCursor(drawRawCursor => !drawRawCursor);
+      } else if (event.key === '5') {
+        //setDrawFilteredArray(drawFilteredArray => !drawFilteredArray);
+      } else if (event.key === '6') {
+        setDrawBlinkStatus(DrawBlinkStatus => !DrawBlinkStatus);
+      }
+    };
+
+    // Add event listener for keydown events
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []); // Empty dependency array ensures this effect runs only once
   
 
     function getDynamicYawScale(yawAngle: number): number {
@@ -420,33 +446,7 @@ function Calibration() {
       }
   }, [predictedCrosshairPosition, stddevscale]);
   
-  //key press handler, currently used to show detailed crosshair info
-  useEffect(() => {
-    // Function to handle key presses
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === '1') {
-        setDrawAverage(drawAverage => !drawAverage);
-      } else if (event.key === '2') {
-        setDrawPredicted(drawPredicted => !drawPredicted);
-      } else if (event.key === '3') {
-        setDrawRawArray(drawRawArray => !drawRawArray);
-      } else if (event.key === '4') {
-        setDrawRawCursor(drawRawCursor => !drawRawCursor);
-      } else if (event.key === '5') {
-        //setDrawFilteredArray(drawFilteredArray => !drawFilteredArray);
-      } else if (event.key === '6') {
-        setDrawBlinkStatus(DrawBlinkStatus => !DrawBlinkStatus);
-      }
-    };
 
-    // Add event listener for keydown events
-    window.addEventListener('keydown', handleKeyPress);
-
-    // Clean up event listener on component unmount
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, []); // Empty dependency array ensures this effect runs only once
   //debug: draw average crosshair and previous 5 points
   useEffect(() => {
     const svg = d3.select(vectorCalibRef.current);
@@ -515,110 +515,40 @@ function Calibration() {
   }, [dimensions, lastCrosshairPositions, averageCrosshairPosition, filteredLastCrosshairPositions, isBlinking]); // Dependencies for re-running the effect
 
 
+  // Handle Generating the Face Mesh
   function onResults(results:any) {
-    // const video = webcamRef.current.video;
-    const videoWidth = webcamRef.current.video.videoWidth;
-    const videoHeight = webcamRef.current.video.videoHeight;
-
-    // Set canvas width
-    canvasRef.current.width = videoWidth;
-    canvasRef.current.height = videoHeight;
-
-    const canvasElement = canvasRef.current;
-    const canvasCtx = canvasElement.getContext("2d");
-
-    // Resets face mesh so it can be updated for next image
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    canvasCtx.drawImage(results.image,0,0,canvasElement.width,canvasElement.height);
-
-    // Create landmarks for each point of interest
-    if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
-
-      var irisLeftMinX = -1;
-      var irisLeftMaxX = -1;
-
-      for (const landmarks of results.multiFaceLandmarks) {
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_TESSELATION, {
-          color: "#eae8fd",
-          lineWidth: 1,
-        });
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_EYEBROW, {
-          color: "#F50B0B",
-        });
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_EYEBROW, {
-          color: "#18FF00",
-        });
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_FACE_OVAL, {
-          color: "#7367f0",
-        });
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LIPS, {
-          color: "#7367f0",
-        });
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_LEFT_IRIS, {
-          color: "#18FF00",
-        });
-        connect(canvasCtx, landmarks, Facemesh.FACEMESH_RIGHT_IRIS, {
-          color: "#F50B0B",
-        });
-
-        for (const point of Facemesh.FACEMESH_LEFT_IRIS) {
-          var point0 = landmarks[point[0]];
-          
-          if (irisLeftMinX == -1 || point0.x * videoWidth < irisLeftMinX) {
-            irisLeftMinX = point0.x * videoWidth;
-          }
-          if (irisLeftMaxX == -1 || point0.x * videoWidth > irisLeftMaxX) {
-            irisLeftMaxX = point0.x * videoWidth;
-          }
+    handleFaceMeshResults(
+      results,
+      webcamRef,
+      canvasRef,
+      savedMaxEyelidDistance,
+      setSavedMaxEyelidDistance,
+      setDistanceFromCam,
+      setHeadPose,
+      (leftIris, rightIris) => {
+        setLeftIrisCoordinate(leftIris);
+        setRightIrisCoordinate(rightIris);
+      },
+      (canvas, noseLandmark, yaw, pitch) => {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          // Draw orientation lines
+          ctx.beginPath();
+          const length = 100;
+          ctx.moveTo(noseLandmark.x * canvas.width, noseLandmark.y * canvas.height);
+          ctx.lineTo(
+            noseLandmark.x * canvas.width - length * Math.sin(yaw),
+            noseLandmark.y * canvas.height - length * Math.sin(pitch)
+          );
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 3;
+          ctx.stroke();
         }
       }
-
-      const landmarks = results.multiFaceLandmarks[0];
-      // Get both indexes on the landmarking grid
-      const leftIrisIndex = 473;
-      const rightIrisIndex = 468;
-      const noseIndex = 4;
-
-      const leftTopEyelidIndex = 386
-      const leftBottomEyelidIndex = 374
-      const rightTopEyelidIndex = 159
-      const rightBottomEyelidIndex = 145
-
-      // Grabs the x,y coordinates from landmark library so it will follow and track irises on the facemesh
-      const leftIrisLandmark = landmarks[leftIrisIndex];
-      const rightIrisLandmark = landmarks[rightIrisIndex];
-      const noseLandmark = landmarks[noseIndex];
-
-      //calculating how open the eye is. if its way bigger or smaller than the distance we have saved, then the user is probably blinking
-      const currentMaxEyelidDistance = Math.max((landmarks[leftTopEyelidIndex].y - landmarks[leftBottomEyelidIndex].y), (landmarks[rightTopEyelidIndex].y - landmarks[rightBottomEyelidIndex].y))
-      //console.log("current", currentMaxEyelidDistance, "max", savedMaxEyelidDistance)
-      if ((Math.abs(currentMaxEyelidDistance)) > savedMaxEyelidDistance) //TODO this might be refresh rate dependent
-      {
-        //console.log("GO TIME")
-        setSavedMaxEyelidDistance(Math.abs(currentMaxEyelidDistance))
-      }
-
-      // Saves iris coordinates to a global variable
-      applyIrisCoordinates(leftIrisLandmark, rightIrisLandmark);
-
-      var dx = irisLeftMaxX - irisLeftMinX;
-      var dX = 11.7;
-      var normalizedFocaleX = 1.40625; //It means camera focal. It works well but we can change it depends on the camera.
-      var fx = Math.min(videoWidth, videoHeight) * normalizedFocaleX;
-      var dZ = (fx * (dX / dx))/10.0;
-      setDistanceFromCam(dZ);
-  
-      // Find YAW, PITCH, ROll and draw orientation line using OpenCV
-      estimateHeadPose(
-        landmarks,
-        canvasRef.current.width,
-        canvasRef.current.height,
-        setHeadPose, (noseLandmark, yaw, pitch) => drawOrientationLine(canvasRef.current, noseLandmark, yaw, pitch));      
-    }
-    canvasCtx.restore();
+    );
   }
 
+  // Use Effect for static calibration
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
         if (event.key === 'c' || event.key === 'C') {
