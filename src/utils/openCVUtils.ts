@@ -1,7 +1,7 @@
 import cv from "@techstark/opencv-js";
 
 /**
- * Estimate hjead pose using landmarks and openCV
+ * Estimate head pose using landmarks and openCV
  * @param landmarks Facial landmarks
  * @param canvasWidth Width of canvas
  * @param canvasHeight Height of canvas
