@@ -94,3 +94,28 @@ export const performStaticCalibration = (
         console.log(`Displayed at: ${x}, ${y}`);
     }
 } 
+
+/**
+ * Handles the canvas click event and calculates screen coordinates.
+ * @param event React mouse event from the canvas click
+ * @param clickCanvasRef Reference to the canvas element
+ * @param setClickCoords Function to update the clicked coordinates state
+ * @param printIrisCoordinates Function to log iris coordinates
+ * @param addCalibrationPointsToArray Function to add calibration points
+ */
+export const performManualCalibration = (
+  event: React.MouseEvent<HTMLCanvasElement>,
+  clickCanvasRef: RefObject<HTMLCanvasElement>,
+  setClickCoords: (coords: { x: number; y: number }) => void,
+  printIrisCoordinates: () => void,
+  addCalibrationPointsToArray: (x: number, y: number) => void
+) => {
+  const rect = clickCanvasRef.current?.getBoundingClientRect();
+  const x = event.clientX - (rect?.left ?? 0);
+  const y = event.clientY - (rect?.top ?? 0);
+  setClickCoords({x,y});
+  console.log(`Clicked at: ${x}, ${y}`);
+
+  printIrisCoordinates();
+  addCalibrationPointsToArray(x,y);
+}

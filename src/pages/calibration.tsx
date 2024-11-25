@@ -17,7 +17,7 @@ import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
 import cv, { cols } from "@techstark/opencv-js"
 import { estimateHeadPose, drawOrientationLine } from "../utils/openCVUtils";
-import { performStaticCalibration } from '../utils/staticCalibrationUtils';
+import { performStaticCalibration, performManualCalibration } from '../utils/calibrationUtils';
 
 declare global {
   interface Window {
@@ -199,7 +199,6 @@ function Calibration() {
       console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
 
 
-
       const n = refreshRate * 0.8; //storing eyelid distances over the last .3s
       setEyelidDistances((prevDistances) => {
         const newDistances = [...prevDistances, savedMaxEyelidDistance];
@@ -283,18 +282,6 @@ function Calibration() {
         console.log(`Left Iris Coord: ${leftIrisCoordinate.x}, ${leftIrisCoordinate.y}`);
         console.log(`Right Iris Coord: ${rightIrisCoordinate.x}, ${rightIrisCoordinate.y}`);
       }
-    }
-
-    // Saves our x,y coordinates on the screen where we click
-    const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-      const rect = clickCanvasRef.current?.getBoundingClientRect();
-      const x = event.clientX - (rect?.left ?? 0);
-      const y = event.clientY - (rect?.top ?? 0);
-      setClickCoords({x,y});
-      console.log(`Clicked at: ${x}, ${y}`);
-
-      printIrisCoordinates();
-      addCalibrationPointsToArray(x,y);
     }
 
     // Takes the iris x,y coord and click coords and adds to calibrationPointsArray
@@ -720,7 +707,15 @@ function Calibration() {
         ref={clickCanvasRef}
         width={dimensions.width}
         height={dimensions.height}
-        onClick={handleCanvasClick}
+        onClick={(event) => 
+          performManualCalibration(
+            event,
+            clickCanvasRef,
+            setClickCoords,
+            printIrisCoordinates,
+            addCalibrationPointsToArray
+          )
+        }
         style={{
           position: "absolute",
           marginRight: 'auto',
@@ -775,7 +770,7 @@ function Calibration() {
       
       <canvas
         ref={canvasRef}
-          onClick={handleCanvasClick}
+          //onClick={handleCanvasClick}
           style={{
             position:"absolute",
             marginRight:'auto',
