@@ -1,4 +1,5 @@
 import cv from "@techstark/opencv-js";
+import { globalFocalLengthRef } from './globals';
 
 /**
  * Estimate head pose using landmarks and openCV
@@ -14,7 +15,8 @@ export const estimateHeadPose =(
     canvasWidth: number,
     canvasHeight: number,
     setHeadPose: (pose: {yaw: number; pitch: number; roll: number}) => void,
-    drawOrientationLine: (noseLandmark: any, yaw: number, pitch: number) => void
+    drawOrientationLine: (noseLandmark: any, yaw: number, pitch: number) => void,
+    focalLength: number = 1,
 ) => {
     // 3D model points
     const modelPoints = cv.matFromArray(6, 3, cv.CV_64F, [
@@ -43,7 +45,7 @@ export const estimateHeadPose =(
     ]);
 
     // Camera matrix
-    const focalLength = canvasWidth;
+    focalLength = globalFocalLengthRef.current
     const center = [canvasWidth / 2, canvasHeight / 2];
     const cameraMatrix = cv.matFromArray(3, 3, cv.CV_64F, [
         focalLength, 0, center[0],

@@ -18,7 +18,9 @@ import * as d3 from 'd3';
 import cv, { cols } from "@techstark/opencv-js"
 import { estimateHeadPose, drawOrientationLine } from "../utils/openCVUtils";
 import { performStaticCalibration, performManualCalibration } from '../utils/calibrationUtils';
-import { handleFaceMeshResults } from '../utils/faceMeshUtils'
+import { handleFaceMeshResults } from '../utils/faceMeshUtils';
+import { useFocalLength } from '../utils/useFocalLength';
+import { setGlobalFocalLengthRef } from '../utils/globals';
 
 declare global {
   interface Window {
@@ -27,6 +29,7 @@ declare global {
 }
 
 let faceCascade: cv.CascadeClassifier;
+let globalFocalLengthRef: React.MutableRefObject<number> | null = null;
 
 function Home() {
     const [showOverlay, setShowOverlay] = useState(false);//toggles the camera display
@@ -109,7 +112,7 @@ function Home() {
 
     const [dpi, setDpi] = useState<number>(96);
     const [distanceFromCam, setDistanceFromCam] = useState(0);
-    const [focalLength, setFocalLength] = useState(0);
+    const [focalLength, setFocalLength] = useState(window.innerWidth);
     const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
     const [showErrorTest, setShowErrorTest] = useState(false);
@@ -615,6 +618,16 @@ function Home() {
         predictedCrosshairPositionRef: averageCrosshairPositionRef,
         showGazeTracing: showGazeTracing,
       }
+
+      const { focalLengthRef, updateFocalLength } = useFocalLength();
+
+      useEffect(() => {
+        setGlobalFocalLengthRef(focalLengthRef); // Update the focal length
+      }, [focalLength]);
+
+      useEffect(() => {
+        updateFocalLength(focalLength);
+      }, [focalLength]);
 
   return (
     <div>
