@@ -84,7 +84,6 @@ function Home() {
     const [drawAverage, setDrawAverage] = useState<boolean>(true);
     const [drawRawArray, setDrawRawArray] = useState<boolean>(false);
     const [drawRawCursor, setDrawRawCursor] = useState<boolean>(false);
-    const [drawFilteredArray, setDrawFilteredArray] = useState<boolean>(false); //unused but im leaving it in case we add something like it later
     const [DrawBlinkStatus, setDrawBlinkStatus] = useState<boolean>(false);
     const [isBlinking, setIsBlinking] = useState<boolean>(false);
     // --Our array which holds the set of coordinates for a point
@@ -147,36 +146,7 @@ function Home() {
       return () => {
         window.removeEventListener('resize', handleResize);
       };
-    }, []);
-
-    //key press handler, currently used to show detailed crosshair info
-  useEffect(() => {
-    // Function to handle key presses
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === 'a') {
-        setDrawAverage(drawAverage => !drawAverage);
-      } else if (event.key === 'p') {
-        setDrawPredicted(drawPredicted => !drawPredicted);
-      } else if (event.key === 'n') {
-        setDrawRawArray(drawRawArray => !drawRawArray);
-      } else if (event.key === 'm') {
-        setDrawRawCursor(drawRawCursor => !drawRawCursor);
-      } else if (event.key === 's') {
-        //setDrawFilteredArray(drawFilteredArray => !drawFilteredArray);
-      } else if (event.key === 'b') {
-        setDrawBlinkStatus(DrawBlinkStatus => !DrawBlinkStatus);
-      }
-    };
-
-    // Add event listener for keydown events
-    window.addEventListener('keydown', handleKeyPress);
-
-    // Clean up event listener on component unmount
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, []); // Empty dependency array ensures this effect runs only once
-  
+    }, []);  
 
     function getDynamicYawScale(yawAngle: number): number {
       // Increase scaling for larger yaw angles
@@ -554,36 +524,6 @@ function Home() {
     );
   }
 
-  // Use Effect for static calibration
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-        if (event.key === 'c' || event.key === 'C') {
-          // Perform static calibration
-          performStaticCalibration(3, 3, 45, 45,
-            clickCanvasRef,
-            currentPointIndex,
-            isPointDisplayed,
-            setCalibrationPoints,
-            setCurrentPointIndex,
-            setIsPointDisplayed,
-            leftIrisCoordinate,
-            rightIrisCoordinate,
-            headPose
-          ); // 10% from the top and left, 40% interval (default)
-        } 
-        else if (event.key === 'r' || event.key === 'R') {
-          // Reset calibration
-          setCalibrationPoints([]);
-          setCurrentPointIndex(0);
-        }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => {
-        window.removeEventListener('keydown', handleKeyPress);
-    };
-} , [currentPointIndex, isPointDisplayed, leftIrisCoordinate, rightIrisCoordinate, headPose]);
-
       // Instantiate FaceMesh
       useEffect(() => {
         const faceMesh = new FaceMesh({
@@ -632,17 +572,48 @@ function Home() {
         updateFocalLength(focalLength);
       }, [focalLength]);
 
-      // Toggle UI visibility
-      useEffect(() => {
-        const handleKeyPress = (event: KeyboardEvent) => {
-          if (event.key === 'h') {
-            setShowUIControls((prev) => !prev);
-          }
-        };
+  //key press handler, currently used to show detailed crosshair info
+  useEffect(() => {
+    // Function to handle key presses
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'a') {
+        setDrawAverage(drawAverage => !drawAverage);
+      } else if (event.key === 'p') {
+        setDrawPredicted(drawPredicted => !drawPredicted);
+      } else if (event.key === 'n') {
+        setDrawRawArray(drawRawArray => !drawRawArray);
+      } else if (event.key === 'm') {
+        setDrawRawCursor(drawRawCursor => !drawRawCursor);
+      } else if (event.key === 'b') {
+        setDrawBlinkStatus(DrawBlinkStatus => !DrawBlinkStatus);
+      } else if (event.key === 'h'){
+        setShowUIControls((prev) => !prev);
+      } else if (event.key === 'c'){
+        performStaticCalibration(3, 3, 45, 45,
+          clickCanvasRef,
+          currentPointIndex,
+          isPointDisplayed,
+          setCalibrationPoints,
+          setCurrentPointIndex,
+          setIsPointDisplayed,
+          leftIrisCoordinate,
+          rightIrisCoordinate,
+          headPose);
+      } else if (event.key === 'r'){
+        // Reset calibration
+        setCalibrationPoints([]);
+        setCurrentPointIndex(0);
+      }
+    };
 
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-      }, []);
+    // Add event listener for keydown events
+    window.addEventListener('keydown', handleKeyPress);
+
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentPointIndex, isPointDisplayed, leftIrisCoordinate, rightIrisCoordinate, headPose]); // Empty dependency array ensures this effect runs only once
 
   return (
     <div>
@@ -800,7 +771,6 @@ function Home() {
             <li>"P" - Toggle Predicted Crosshair</li>
             <li>"N" - Toggle Raw Array</li>
             <li>"M" - Toggle Raw Cursor</li>
-            <li>"S" - Toggle Filtered Array (Disabled)</li>
             <li>"B" - Toggle Blink Status</li>
             <li>----------------------------------------------------</li>
           </ul>
