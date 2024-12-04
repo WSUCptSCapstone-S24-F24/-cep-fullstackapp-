@@ -150,17 +150,17 @@ function Home() {
   useEffect(() => {
     // Function to handle key presses
     const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === 'q') {
+      if (event.key === 'a') {
         setDrawAverage(drawAverage => !drawAverage);
-      } else if (event.key === 'w') {
+      } else if (event.key === 'p') {
         setDrawPredicted(drawPredicted => !drawPredicted);
-      } else if (event.key === 'e') {
+      } else if (event.key === 'n') {
         setDrawRawArray(drawRawArray => !drawRawArray);
-      } else if (event.key === 'r') {
+      } else if (event.key === 'm') {
         setDrawRawCursor(drawRawCursor => !drawRawCursor);
-      } else if (event.key === 't') {
+      } else if (event.key === 's') {
         //setDrawFilteredArray(drawFilteredArray => !drawFilteredArray);
-      } else if (event.key === 'y') {
+      } else if (event.key === 'b') {
         setDrawBlinkStatus(DrawBlinkStatus => !DrawBlinkStatus);
       }
     };
