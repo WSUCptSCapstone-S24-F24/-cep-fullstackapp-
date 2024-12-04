@@ -128,24 +128,10 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
         const svg = d3.select(svgRef.current); 
         svg.selectAll("*").remove(); // Clear previous SVG contents
         
-        const maxVectorLength = 50;
     
         const magnitudes = vectors.map(vector => {       // Gets the magnitude of each vector
             return Math.sqrt(vector.dx ** 2 + vector.dy ** 2);
         });
-        const maxMagnitude = Math.max(...magnitudes);
-        const minMagnitude = Math.min(...magnitudes);
-        const sumOfMagnitudes = magnitudes.reduce((acc, val) => acc + val, 0); // Calculate sum of magnitudes
-        const averageMagnitude = sumOfMagnitudes / magnitudes.length; // Calculate average magnitude
-        
-        // Calculate mean absolute error
-        const absoluteErrors = magnitudes.map(magnitude => Math.abs(magnitude - averageMagnitude));
-        const meanAbsoluteError = absoluteErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
-  
-        // Calculate root mean square error
-        const squaredErrors = magnitudes.map(magnitude => (magnitude - averageMagnitude) ** 2);
-        const meanSquaredError = squaredErrors.reduce((acc, val) => acc + val, 0) / magnitudes.length;
-        const rootMeanSquaredError = Math.sqrt(meanSquaredError);
   
     
         // Draws the vector field
@@ -188,58 +174,6 @@ const ErrorSequenceTest: React.FC<ErrorSequenceProps> = ({ dimensions, dpi, pred
             .text((d, i) => `${pixelsToInches(magnitudes[i], dpi).toFixed(2)}in`)
             .attr("font-size", "10px")
             .attr("fill", "black");
-    
-
-        const width = +svg.attr("width");
-        const height = +svg.attr("height");
-
-        // Display sum of magnitudes
-        svg.append("text")
-            .attr("x", 10)
-            .attr("y", height-30)
-            .text("Sum of Magnitudes: " + sumOfMagnitudes.toFixed(2))
-            .attr("font-size", "12px")
-            .attr("fill", "black");
-    
-        // Display max magnitude
-        svg.append("text")
-            .attr("x", 10)
-            .attr("y", height-50)
-            .text("Max Magnitude: " + maxMagnitude.toFixed(2))
-            .attr("font-size", "12px")
-            .attr("fill", "black");
-  
-        // Display min magnitude
-        svg.append("text")
-            .attr("x", 10)
-            .attr("y", height-70)
-            .text("Min Magnitude: " + minMagnitude.toFixed(2))
-            .attr("font-size", "12px")
-            .attr("fill", "black");
-    
-        // Display average magnitude
-        svg.append("text")
-            .attr("x", 10)
-            .attr("y", height-90)
-            .text("Average Magnitude: " + averageMagnitude.toFixed(2))
-            .attr("font-size", "12px")
-            .attr("fill", "black");
-  
-        // Display mean absolute error
-        svg.append("text")
-        .attr("x", 10)
-        .attr("y", height-110)
-        .text("Mean Absolute Error: " + meanAbsoluteError.toFixed(2))
-        .attr("font-size", "12px")
-        .attr("fill", "black");
-  
-         // Display root mean square error
-        svg.append("text")
-        .attr("x", 10)
-        .attr("y", height-130)
-        .text("Root Mean Square Error: " + rootMeanSquaredError.toFixed(2))
-        .attr("font-size", "12px")
-        .attr("fill", "black");
     };
 
     return (
