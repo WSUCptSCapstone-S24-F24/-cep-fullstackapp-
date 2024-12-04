@@ -131,6 +131,9 @@ function Home() {
     const [rowSize, setRowSize] = useState(4);
     const [colSize, setColSize] = useState(4);
 
+    // Toggle UI
+    const [showUIControls, setShowUIControls] = useState(true);
+
     // Update dimensions on window resize
     useEffect(() => {
       function handleResize() {
@@ -629,6 +632,18 @@ function Home() {
         updateFocalLength(focalLength);
       }, [focalLength]);
 
+      // Toggle UI visibility
+      useEffect(() => {
+        const handleKeyPress = (event: KeyboardEvent) => {
+          if (event.key === 'h') {
+            setShowUIControls((prev) => !prev);
+          }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+      }, []);
+
   return (
     <div>
       <canvas
@@ -726,84 +741,94 @@ function Home() {
             height:480
       }}
       />
-      <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
-        <ScreenDPI setDPI={setDpi}/>
-        <CameraFOV setFocalLength={setFocalLength}/>
-        <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
-          {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
-        </button>
-        <button onClick={() => setShowStabilityTest(!showStabilityTest)}>
-          {showStabilityTest ? "Hide Stability Test" : "Show Stability Test"}
-        </button>
-        <button onClick={() => setShowErrorTest(!showErrorTest)}>
-          {showErrorTest ? "Hide Error Test" : "Show Error Test"}
-        </button>
-        <button onClick={() => setShowMemoryGame(!showMemoryGame)}>
-          {showMemoryGame ? "Hide Memory Game" : "Show Memory Game"}
-        </button>
-        <button onClick={() => setShowOverlay(!showOverlay)}>
-          {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
-        </button>
-        <button onClick={() => setShowGazeTracing(!showGazeTracing)}>
-          {showGazeTracing ? "Leave Gaze Tracing" : "Enter Gaze Tracing"}
-        </button>
+  <div>
+      {/* Conditionally render all UI controls */}
+      {showUIControls && (
         <div>
-          <label> Row Size </label>
-          <input
-            type="number"
-            value={rowSize}
-            onChange={(event) => setRowSize(Number(event.target.value))}
-          /> 
-          <label> Col Size </label>
-          <input
-            type="number"
-            value={colSize}
-            onChange={(event) => setColSize(Number(event.target.value))}
-          /> 
+          <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 20 }}>
+            <ScreenDPI setDPI={setDpi} />
+            <CameraFOV setFocalLength={setFocalLength} />
+            <button onClick={() => setShowBoxContainer(!showBoxContainer)}>
+              {showBoxContainer ? "Disable Target Practice" : "Enable Target Practice"}
+            </button>
+            <button onClick={() => setShowStabilityTest(!showStabilityTest)}>
+              {showStabilityTest ? "Hide Stability Test" : "Show Stability Test"}
+            </button>
+            <button onClick={() => setShowErrorTest(!showErrorTest)}>
+              {showErrorTest ? "Hide Error Test" : "Show Error Test"}
+            </button>
+            <button onClick={() => setShowMemoryGame(!showMemoryGame)}>
+              {showMemoryGame ? "Hide Memory Game" : "Show Memory Game"}
+            </button>
+            <button onClick={() => setShowOverlay(!showOverlay)}>
+              {showOverlay ? "Toggle Camera Display" : "Toggle Camera Display"}
+            </button>
+            <button onClick={() => setShowGazeTracing(!showGazeTracing)}>
+              {showGazeTracing ? "Leave Gaze Tracing" : "Enter Gaze Tracing"}
+            </button>
+            <div>
+              <label> Row Size </label>
+              <input
+                type="number"
+                value={rowSize}
+                onChange={(event) => setRowSize(Number(event.target.value))}
+              />
+              <label> Col Size </label>
+              <input
+                type="number"
+                value={colSize}
+                onChange={(event) => setColSize(Number(event.target.value))}
+              />
+            </div>
+          </div>
+          <div>
+            <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
+            <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
+            <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
+            <p>Focal Length : {focalLength.toFixed(2)} px</p>
+          </div>
+          <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 20, backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white', padding: '10px', borderRadius: '5px' }}>
+          <h4>Hotkeys</h4>
+          <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+            <li>"H" - Hide UI</li>
+            <li>-----------------------------------------------------</li>
+            <li>"C" - Cycle through static calibration</li>
+            <li>"R" - Reset Calibration</li>
+            <li>"LMB" - Create manual calibration point</li>
+            <li>----------------------------------------------------</li>
+            <li>"A" - Toggle Average Crosshair</li>
+            <li>"P" - Toggle Predicted Crosshair</li>
+            <li>"N" - Toggle Raw Array</li>
+            <li>"M" - Toggle Raw Cursor</li>
+            <li>"S" - Toggle Filtered Array (Disabled)</li>
+            <li>"B" - Toggle Blink Status</li>
+            <li>----------------------------------------------------</li>
+          </ul>
         </div>
+        </div>
+      )}
+
+      {/* Other UI Components */}
+      <div>
+        {showBoxContainer && <BoxContainer crosshairPosition={averageCrosshairPosition} />}
       </div>
       <div>
-        {showBoxContainer && <BoxContainer crosshairPosition={averageCrosshairPosition}/>}
-      </div>  
+        {showErrorTest && <ErrorSequenceTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={averageCrosshairPosition} />}
+      </div>
       <div>
-        {showErrorTest && <ErrorSequenceTest dimensions={dimensions} dpi={dpi} predictedCrosshairPosition={averageCrosshairPosition}/>}  
-      </div>    
-      <div>
-        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest}/>}
+        {showStabilityTest && <StabilityTest dimensions={dimensions} dpi={dpi} predictedCrosshairPositionRef={averageCrosshairPositionRef} showStabilityTest={showStabilityTest} />}
       </div>
       <div>
         {showGazeTracing && <GazeTracing {...gazetraceprop} />}
       </div>
       <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize} DPI={dpi}/>}  
+        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize} DPI={dpi} />}
       </div>
-      <div>
-        <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
-        <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
-        <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
-        <p>Focal Length : {focalLength.toFixed(2)} px</p>
-      </div>
-      <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 20, backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white', padding: '10px', borderRadius: '5px' }}>
-      <h4>Hotkeys</h4>
-      <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
-        <li>-----------------------------------------------------</li>
-        <li>"C" - Cycle through static calibration</li>
-        <li>"R" - Reset Calibration</li>
-        <li>"LMB" - Create manual calibration point</li>
-        <li>----------------------------------------------------</li>
-        <li>"A" - Toggle Average Crosshair</li>
-        <li>"P" - Toggle Predicted Crosshair</li>
-        <li>"N" - Toggle Raw Array</li>
-        <li>"M" - Toggle Raw Cursor</li>
-        <li>"S" - Toggle Filtered Array (Disabled)</li>
-        <li>"B" - Toggle Blink Status</li>
-        <li>----------------------------------------------------</li>
-      </ul>
+  </div>
+
     </div>
-    </div>
-    
-    
   );
-}
+}; 
+
 
 export default Home;
