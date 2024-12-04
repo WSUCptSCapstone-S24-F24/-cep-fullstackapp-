@@ -783,7 +783,6 @@ function Home() {
         <p>Yaw (left-right): {headPose.yaw.toFixed(2)}°</p>
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
-        <p>Distance : {distanceFromCam.toFixed(2)} cm</p>
         <p>Focal Length : {focalLength.toFixed(2)} px</p>
 
       </div>
