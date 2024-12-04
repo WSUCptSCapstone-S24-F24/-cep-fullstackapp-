@@ -761,8 +761,6 @@ function Home() {
             onChange={(event) => setColSize(Number(event.target.value))}
           /> 
         </div>
-        <p>Press "C" key to cycle through static calibration  |  Press "R" key to reset calibration</p>
-        <p>Press "LMB" anywhere on the screen to create manual calibration point</p>
       </div>
       <div>
         {showBoxContainer && <BoxContainer crosshairPosition={averageCrosshairPosition}/>}
@@ -784,8 +782,24 @@ function Home() {
         <p>Pitch (up-down): {headPose.pitch.toFixed(2)}°</p>
         <p>Roll (tilt): {headPose.roll.toFixed(2)}°</p>
         <p>Focal Length : {focalLength.toFixed(2)} px</p>
-
       </div>
+      <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 20, backgroundColor: 'rgba(0, 0, 0, 0.7)', color: 'white', padding: '10px', borderRadius: '5px' }}>
+      <h4>Hotkeys</h4>
+      <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+        <li>-----------------------------------------------------</li>
+        <li>"C" - Cycle through static calibration</li>
+        <li>"R" - Reset Calibration</li>
+        <li>"LMB" - Create manual calibration point</li>
+        <li>----------------------------------------------------</li>
+        <li>"A" - Toggle Average Crosshair</li>
+        <li>"P" - Toggle Predicted Crosshair</li>
+        <li>"N" - Toggle Raw Array</li>
+        <li>"M" - Toggle Raw Cursor</li>
+        <li>"S" - Toggle Filtered Array (Disabled)</li>
+        <li>"B" - Toggle Blink Status</li>
+        <li>----------------------------------------------------</li>
+      </ul>
+    </div>
     </div>
     
     
