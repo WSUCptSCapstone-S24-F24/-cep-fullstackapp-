@@ -769,8 +769,8 @@ function Home() {
             <li>----------------------------------------------------</li>
             <li>"A" - Toggle Average Crosshair</li>
             <li>"P" - Toggle Predicted Crosshair</li>
-            <li>"N" - Toggle Raw Array</li>
-            <li>"M" - Toggle Raw Cursor</li>
+            <li>"N" - Toggle Previous Points</li>
+            <li>"M" - Toggle Gaze Cursor</li>
             <li>"B" - Toggle Blink Status</li>
             <li>----------------------------------------------------</li>
           </ul>
