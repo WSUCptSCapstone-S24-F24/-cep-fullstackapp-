@@ -1,5 +1,6 @@
 import cv from "@techstark/opencv-js";
 import { globalFocalLengthRef } from './globals';
+import { buffer } from "d3";
 
 /**
  * Estimate head pose using landmarks and openCV
@@ -9,6 +10,8 @@ import { globalFocalLengthRef } from './globals';
  * @param setHeadPose Function to update headpose state
  * @param drawOrientationLine Function to draw orientation line
  */
+
+const poseBuffer: { yaw: number; pitch: number; roll: number; time: number }[] = [];
 
 export const estimateHeadPose =(
     landmarks: any,
@@ -81,11 +84,42 @@ export const estimateHeadPose =(
         const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
         const pitch = -(Math.atan2(-r21, -r22));
         const roll = Math.atan2(r10, r00);
-        setHeadPose({
-          yaw: yaw * (180 / Math.PI),
-          pitch: pitch * (180 / Math.PI),
-          roll: roll * (180 / Math.PI),
+
+        const adjustedYaw = Math.abs(yaw * 180 / Math.PI) <= 18 ? 0 : yaw;
+        const adjustedPitch = Math.abs(pitch * 180 / Math.PI) <= 18 ? 0 : pitch;
+        const adjustedRoll = Math.abs(roll*180/Math.PI) <= 18 ? 0 : roll;
+        // console.log(yaw*(180/Math.PI))
+
+        //populate buffer
+        const currentTime = Date.now()
+        poseBuffer.push({
+            yaw: adjustedYaw * (180 / Math.PI),
+            pitch: adjustedPitch * (180 / Math.PI),
+            roll: adjustedRoll * (180 / Math.PI),
+            time: currentTime,
         });
+        //remove entries older than 200ms
+        const cutoffTime = currentTime - 500;
+        while (poseBuffer.length && poseBuffer[0].time < cutoffTime) {
+            poseBuffer.shift();
+        }
+
+        const bufferSize = poseBuffer.length;
+        const averagePose = poseBuffer.reduce(
+            (acc, pose) => ({
+                yaw: acc.yaw + pose.yaw / bufferSize,
+                pitch: acc.pitch + pose.pitch / bufferSize,
+                roll: acc.roll + pose.roll / bufferSize,
+            }),
+            { yaw: 0, pitch: 0, roll: 0 }
+        );
+        console.log(poseBuffer[15])
+        setHeadPose(averagePose)
+        // setHeadPose({
+        //   yaw: yaw * (180 / Math.PI),
+        //   pitch: pitch * (180 / Math.PI),
+        //   roll: roll * (180 / Math.PI),
+        // });
 
         const noseLandmark = landmarks[4];
         drawOrientationLine(noseLandmark, yaw, pitch);

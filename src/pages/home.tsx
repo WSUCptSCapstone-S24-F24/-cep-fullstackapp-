@@ -79,6 +79,7 @@ function Home() {
     const [filteredLastCrosshairPositions, setFilteredLastCrosshairPositions] = useState<VectorDataB[]>([]);
     const [averageCrosshairPosition, setAverageCrosshairPosition] = useState({x:0, y: 0});
     const averageCrosshairPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [compensatedCrosshairPosition, setCompensatedCrosshairPosition] = useState({ x: 0, y: 0 });
 
     const [drawPredicted, setDrawPredicted] = useState<boolean>(false);
     const [drawAverage, setDrawAverage] = useState<boolean>(true);
@@ -197,6 +198,7 @@ function Home() {
       // Apply the compensation
       const correctedScreenX = predictedScreenX - yawCompensation;
       const correctedScreenY = predictedScreenY + pitchCompensation;
+      setCompensatedCrosshairPosition({ x: correctedScreenX, y: correctedScreenY })
       console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
       console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
 
@@ -260,7 +262,7 @@ function Home() {
       ctx.lineTo(x + 10, y);
       ctx.moveTo(x, y - 10);
       ctx.lineTo(x, y + 10);
-      ctx.strokeStyle = 'orange';
+      ctx.strokeStyle = 'blue';
       ctx.lineWidth = 4;
       ctx.stroke();
     }
@@ -316,15 +318,15 @@ function Home() {
 
     //average crosshair position logic
     useEffect(() => {
-      if (predictedCrosshairPosition && refreshRate) {
+      if (compensatedCrosshairPosition && refreshRate) {
           setLastCrosshairPositions(prevPositions => {
               const newPosition: VectorDataB = {
-                  x: predictedCrosshairPosition.x,
-                  y: predictedCrosshairPosition.y,
+                  x: compensatedCrosshairPosition.x,
+                  y: compensatedCrosshairPosition.y,
                   dotIndex: 0,
                   direction: '',
                   dotPosition: { x: 0, y: 0 },
-                  crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
+                  crosshairPosition: { x: compensatedCrosshairPosition.x, y: compensatedCrosshairPosition.y },
               };
               const n = refreshRate/10 //config
               const stddevs = stddevscale //config: lower stddevs = stricter filter
@@ -420,7 +422,7 @@ function Home() {
               return updatedPositions;
           });
       }
-  }, [predictedCrosshairPosition, stddevscale]);
+  }, [compensatedCrosshairPosition, stddevscale]);
   
 
   //debug: draw average crosshair and previous 5 points
