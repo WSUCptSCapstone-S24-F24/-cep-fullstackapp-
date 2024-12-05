@@ -81,10 +81,15 @@ export const estimateHeadPose =(
         const yaw = Math.atan2(-r20, Math.sqrt(r00 ** 2 + r10 ** 2));
         const pitch = -(Math.atan2(-r21, -r22));
         const roll = Math.atan2(r10, r00);
+
+        const adjustedYaw = Math.abs(yaw) <= 3 ? 0 : yaw;
+        const adjustedPitch = Math.abs(pitch) <= 3 ? 0 : pitch;
+        const adjustedRoll = Math.abs(roll) <= 3 ? 0 : roll;
+
         setHeadPose({
-          yaw: yaw * (180 / Math.PI),
-          pitch: pitch * (180 / Math.PI),
-          roll: roll * (180 / Math.PI),
+          yaw: adjustedYaw * (180 / Math.PI),
+          pitch: adjustedPitch * (180 / Math.PI),
+          roll: adjustedRoll * (180 / Math.PI),
         });
 
         const noseLandmark = landmarks[4];
