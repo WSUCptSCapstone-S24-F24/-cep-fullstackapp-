@@ -32,7 +32,7 @@ const GazeTracing: React.FC<GazeTracingProps> = ({ dimensions, dpi, predictedCro
       ctx.fillStyle = 'orange';
       ctx.fill();
 
-      const text = "Press R to begin gaze tracing.";
+      const text = "Press F to begin gaze tracing.";
       ctx.font = '16px Arial';
       ctx.fillText(text, centerX - ctx.measureText(text).width / 2, centerY + radius + 100);
     } else {
@@ -45,7 +45,7 @@ const GazeTracing: React.FC<GazeTracingProps> = ({ dimensions, dpi, predictedCro
     let frameRequestId: number | null = null;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "KeyR" && showGazeTracing) {
+      if (event.code === "KeyF" && showGazeTracing) {
         console.log("Stability sequence started...");
         event.preventDefault();
         const startTime = performance.now();

@@ -29,7 +29,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
             ctx.fillStyle = 'orange';
             ctx.fill();
 
-            const text = "Focus on center orange dot and press R to begin stability sequence.";
+            const text = "Focus on center orange dot and press F to begin stability sequence.";
             ctx.font = '16px Arial';
             ctx.fillText(text, centerX - ctx.measureText(text).width / 2, centerY + radius + 100);
         } else {
@@ -42,7 +42,7 @@ const StabilityTest: React.FC<StabilityTestProps> = ({ dimensions, dpi, predicte
         let frameRequestId: number | null = null;
 
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.code === "KeyR" && showStabilityTest) {
+            if (event.code === "KeyF" && showStabilityTest) {
                 console.log("Stability sequence started...");
                 event.preventDefault();
                 const startTime = performance.now();
