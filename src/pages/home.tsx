@@ -79,7 +79,7 @@ function Home() {
     const [filteredLastCrosshairPositions, setFilteredLastCrosshairPositions] = useState<VectorDataB[]>([]);
     const [averageCrosshairPosition, setAverageCrosshairPosition] = useState({x:0, y: 0});
     const averageCrosshairPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-    const [compensatedCrosshairPosition, setCompensatedCrosshairPosition] = useState({ x: 0, y: 0 });
+    const compensatedCrosshairPositionRef = useRef({x: 0, y: 0});
 
     const [drawPredicted, setDrawPredicted] = useState<boolean>(false);
     const [drawAverage, setDrawAverage] = useState<boolean>(true);
@@ -198,7 +198,7 @@ function Home() {
       // Apply the compensation
       const correctedScreenX = predictedScreenX - yawCompensation;
       const correctedScreenY = predictedScreenY + pitchCompensation;
-      setCompensatedCrosshairPosition({ x: correctedScreenX, y: correctedScreenY })
+      compensatedCrosshairPositionRef.current = { x: correctedScreenX, y: correctedScreenY };
       console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
       console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
 
@@ -237,10 +237,22 @@ function Home() {
         });
       }
 
-      // We will draw the crosshair
-      if (crosshairCanvasRef.current) {
-        drawCrosshair(crosshairCanvasRef.current, correctedScreenX, correctedScreenY);
+      let animationFrameId : number;
+
+      function updateCrosshair() {
+        // We will draw the crosshair
+        if (crosshairCanvasRef.current && compensatedCrosshairPositionRef.current) {
+          drawCrosshair(
+            crosshairCanvasRef.current,
+            compensatedCrosshairPositionRef.current.x,
+            compensatedCrosshairPositionRef.current.y);
+        }
+        animationFrameId = requestAnimationFrame(updateCrosshair);
       }
+
+      updateCrosshair();
+
+      return () => cancelAnimationFrame(animationFrameId);
 
     }, [leftIrisCoordinate, rightIrisCoordinate, calibrationPoints, savedMaxEyelidDistance, isBlinkCooldown, focalLength]); // These are our dependent variables
 
@@ -318,15 +330,15 @@ function Home() {
 
     //average crosshair position logic
     useEffect(() => {
-      if (compensatedCrosshairPosition && refreshRate) {
+      if (compensatedCrosshairPositionRef.current && refreshRate) {
           setLastCrosshairPositions(prevPositions => {
               const newPosition: VectorDataB = {
-                  x: compensatedCrosshairPosition.x,
-                  y: compensatedCrosshairPosition.y,
+                  x: compensatedCrosshairPositionRef.current.x,
+                  y: compensatedCrosshairPositionRef.current.y,
                   dotIndex: 0,
                   direction: '',
                   dotPosition: { x: 0, y: 0 },
-                  crosshairPosition: { x: compensatedCrosshairPosition.x, y: compensatedCrosshairPosition.y },
+                  crosshairPosition: { x: compensatedCrosshairPositionRef.current.x, y: compensatedCrosshairPositionRef.current.y },
               };
               const n = refreshRate/10 //config
               const stddevs = stddevscale //config: lower stddevs = stricter filter
@@ -422,7 +434,7 @@ function Home() {
               return updatedPositions;
           });
       }
-  }, [compensatedCrosshairPosition, stddevscale]);
+  }, [compensatedCrosshairPositionRef.current, stddevscale]);
   
 
   //debug: draw average crosshair and previous 5 points
