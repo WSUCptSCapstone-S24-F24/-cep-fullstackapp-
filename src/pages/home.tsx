@@ -11,7 +11,7 @@ import ErrorSequenceTest from '../components/error_sequence_test';
 import StabilityTest from '../components/stability_test';
 import GazeTracing from '../components/gaze_tracing';
 import useRefreshRate from '../components/get_refresh_rate'
-import MemoryGame from '../components/memory_game';
+const MemoryGame = React.lazy(() => import('../components/memory_game'));
 import { linearRegression } from '../utils/MathUtils'
 import { CalibrationPoint } from '../types/interfaces'
 import * as d3 from 'd3';
@@ -806,7 +806,11 @@ function Home() {
         {showGazeTracing && <GazeTracing {...gazetraceprop} />}
       </div>
       <div>
-        {showMemoryGame && <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize} DPI={dpi} />}
+        {showMemoryGame && (
+          <React.Suspense fallback={<div> Loading...</div>}>
+            <MemoryGame crosshairPosition={averageCrosshairPosition} rowSize={rowSize} colSize={colSize} DPI={dpi} />
+          </React.Suspense>
+        ) }
       </div>
   </div>
 
