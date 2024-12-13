@@ -47,13 +47,13 @@ The final goal is for the user to potentially be able to watch videos, do homewo
 ### Installation Steps
 
 1. Download files by `git clone https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-.git`
-2. Install all packages by `npm install`
-3. Run `npm run build`
-4. Run `npm run electron-start`
+2. Recommend opening project with Visual Studio Code 
+3. Install all packages by `npm install`
+4. Run `npm start`
 
 ## Functionality
 
-After start the application by `npm run electron-start`, the application automatically open and start tracking your iris by a webcam.
+After start the application by `npm start`, the application automatically open and start tracking your iris by a webcam.
 
 ## Known Problems
 
