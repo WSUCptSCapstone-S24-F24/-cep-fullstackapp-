@@ -63,7 +63,7 @@ function Home() {
     const [stddevscale, setstddevscale] = useState<number>(1); //the stdev scale changes during blinks to compensate
     const [isBlinkCooldown, setIsBlinkCooldown] = useState(false);
     // --Global predicted position
-    const [predictedCrosshairPosition, updateCrosshairPosition] = useState({x:0, y: 0});
+    const [predictedCrosshairPosition, setPredictedCrosshairPosition] = useState({x:0, y: 0});
     //predicted position for averages
     //this is not cool but could probably be fixed later kinda easily
     interface VectorDataB {
@@ -231,7 +231,7 @@ function Home() {
       else {
         setstddevscale(1);
         setIsBlinking(false)
-        updateCrosshairPosition({
+        setPredictedCrosshairPosition({
           x: predictedScreenX,
           y: predictedScreenY,
         });
@@ -318,17 +318,17 @@ function Home() {
 
     //average crosshair position logic
     useEffect(() => {
-      if (compensatedCrosshairPosition && refreshRate) {
+      if (predictedCrosshairPosition && refreshRate) {
           setLastCrosshairPositions(prevPositions => {
               const newPosition: VectorDataB = {
-                  x: compensatedCrosshairPosition.x,
-                  y: compensatedCrosshairPosition.y,
+                  x: predictedCrosshairPosition.x,
+                  y: predictedCrosshairPosition.y,
                   dotIndex: 0,
                   direction: '',
                   dotPosition: { x: 0, y: 0 },
-                  crosshairPosition: { x: compensatedCrosshairPosition.x, y: compensatedCrosshairPosition.y },
+                  crosshairPosition: { x: predictedCrosshairPosition.x, y: predictedCrosshairPosition.y },
               };
-              const n = refreshRate/10 //config
+              const n = refreshRate/20 //config
               const stddevs = stddevscale //config: lower stddevs = stricter filter
               const recentWeight = 2, olderWeight = 1; //config
               console.log("stddevs: ", stddevs)
@@ -422,7 +422,7 @@ function Home() {
               return updatedPositions;
           });
       }
-  }, [compensatedCrosshairPosition, stddevscale]);
+  }, [predictedCrosshairPosition, stddevscale]);
   
 
   //debug: draw average crosshair and previous 5 points
