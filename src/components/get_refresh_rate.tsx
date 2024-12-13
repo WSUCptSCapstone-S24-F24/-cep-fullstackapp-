@@ -34,7 +34,7 @@ const useRefreshRate = (duration = 3000) => {
         }, duration);
 
         return () => {
-            if (frameId) {
+            if (frameId) { 
                 window.cancelAnimationFrame(frameId);
             }
             clearTimeout(timeoutId);

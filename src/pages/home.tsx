@@ -199,11 +199,11 @@ function Home() {
       const correctedScreenX = predictedScreenX - yawCompensation;
       const correctedScreenY = predictedScreenY + pitchCompensation;
       compensatedCrosshairPositionRef.current = { x: correctedScreenX, y: correctedScreenY };
-      console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
-      console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
+      
+      //console.log(`YAW: Compensation: ${yawCompensation}, Position: ${predictedScreenX}, Corrected: ${correctedScreenX}, Scale: ${adaptiveYawScale}`);
+      //console.log(`PITCH: Compensation: ${pitchCompensation}, Position: ${predictedScreenY}, Corrected: ${correctedScreenY}, Scale: ${adaptivePitchScale}`);
 
-
-      const n = refreshRate * 0.8; //storing eyelid distances over the last .3s
+      const n = refreshRate * 0.5; //storing eyelid distances over the last .3s
       setEyelidDistances((prevDistances) => {
         const newDistances = [...prevDistances, savedMaxEyelidDistance];
 
@@ -220,7 +220,7 @@ function Home() {
       if (isBlinkCooldown) return; // Skip check if in cooldown
       //if the eyelid distance changed a lot over the period, its a blink
       console.log(isBlinkCooldown)
-      if (savedMaxEyelidDistance < (blinkThreshold * 0.75)) { //config: higher multiplier = more blinks detected. must be less than 1
+      if (savedMaxEyelidDistance < (blinkThreshold * .92)) { //config: higher multiplier = more blinks detected. must be less than 1
         setstddevscale(0.2); //so the crosshair doesnt freak out as much during blinks
         setIsBlinking(true)
         setIsBlinkCooldown(true);
@@ -340,7 +340,7 @@ function Home() {
                   dotPosition: { x: 0, y: 0 },
                   crosshairPosition: { x: compensatedCrosshairPositionRef.current.x, y: compensatedCrosshairPositionRef.current.y },
               };
-              const n = refreshRate/10 //config
+              const n = refreshRate/20 //config
               const stddevs = stddevscale //config: lower stddevs = stricter filter
               const recentWeight = 2, olderWeight = 1; //config
               console.log("stddevs: ", stddevs)
