@@ -77,6 +77,7 @@ After start the application by `npm start`, the application automatically open a
   * [Sprint5](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint5_report.md)
   * [Sprint6](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint6_report.md)
   * [Sprint7](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint7_report.md)
+  * [Sprint8](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint8_report.md)
 * Client reports
   * [Sprint1](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/client_report_sprint1_CEP.md)
   * [Sprint2](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint2_client_report.md)
@@ -85,6 +86,7 @@ After start the application by `npm start`, the application automatically open a
   * [Sprint5](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint5_client_report.md)
   * [Sprint6](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint6_client_report.md)
   * [Sprint7](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint7_client_report.md)
+  * [Sprint8](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/sprint8_client_report.md)
 * Research report
   * [Research for eye-tracking methods](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/Reserch_report.md)
   * [Research for Convolution](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/blob/main/documents/Convolution_Research_Report.md)
