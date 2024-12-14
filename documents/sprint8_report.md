@@ -31,7 +31,7 @@ Please review the following code files, which were actively developed during thi
  * [src/pages](https://github.com/WSUCptSCapstone-S24-F24/-cep-fullstackapp-/tree/main/src/pages)
 
 ## Demo
-Sprint 8 Demo: 
+Sprint 8 Demo: https://youtu.be/doF7Ew8C7uM
  
 ## Retrospective Summary
 Here's what went well:
